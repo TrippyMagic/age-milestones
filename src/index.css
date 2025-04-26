@@ -127,6 +127,31 @@ body::before {
   transform: scale(0.97);
 }
 
+.more-btn {
+  margin-top: 16px;
+  background-color: #374151;   /* gray-700 */
+  font-size: 0.9rem;
+  padding: 10px 28px;
+}
+
+.more-panel {
+  margin-top: 20px;
+  background: #1f2937;         /* gray-800 */
+  border: 1px solid #374151;
+  border-radius: 12px;
+  padding: 18px;
+  width: 100%;
+  max-width: 480px;
+  text-align: center;
+  color: #9ca3af;              /* gray-400 */
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* Feedback text */
 .result {
   margin-top: 32px;
@@ -143,4 +168,56 @@ body::before {
   margin-top: 24px;
   color: #f87171; /* red-400 */
   text-align: center;
+}
+
+/* ––––– chips ––––– */
+.chips { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+.chip {
+  padding:6px 12px; font-size:.85rem; border-radius:12px; border:1px solid #374151;
+  background:#111827; color:#f3f4f6; cursor:pointer; transition:.15s;
+}
+.chip:hover      { background:#1f2937; }
+.chip--active    { background:#4f46e5; border-color:#4f46e5; }
+
+/* ––––– slider ––––– */
+.slider {
+  -webkit-appearance: none;
+  width: 100%;
+  margin: 16px 0;
+  background: transparent;
+}
+
+/* track */
+.slider::-webkit-slider-runnable-track {
+  height: 4px;
+  background: #374151;              
+  border-radius: 2px;
+}
+.slider::-moz-range-track {
+  height: 4px;
+  background: #374151;
+  border-radius: 2px;
+}
+
+/* thumb */
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: #a070ff;             
+  cursor: pointer;
+  margin-top: -7px;                 
+}
+.slider::-moz-range-thumb {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: #a070ff;
+  cursor: pointer;
+}
+
+/* ––––– wheel (mobile) ––––– */
+.wheel {
+  width:100%; border:1px solid #374151; border-radius:8px;
+  background:#111827; color:#f3f4f6; padding:8px; margin-top:8px;
+  font-size:.9rem;
 }

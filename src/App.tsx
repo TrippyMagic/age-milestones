@@ -12,6 +12,12 @@ dayjs.extend(utc);
 
 /* ─────────  CONSTANTS  ───────── */
 const units = ["years", "months", "weeks", "days", "hours", "minutes", "seconds"] as const;
+const PRESETS = [10, 100, 1_000, 10_000, 100_000, 1_000_000, 10_000_000, 100_000_000, 1_000_000_000];
+const SLIDER_STEPS = [
+  10, 100, 1_000, 10_000, 100_000,
+  1_000_000, 10_000_000, 100_000_000, 1_000_000_000
+];
+
 type Unit = typeof units[number];
 
 /* ─────────  COMPONENT  ───────── */
@@ -21,9 +27,16 @@ export default function App() {
   const [birthTime, setBirthTime] = useState<string>("00:00");        
   const [tzOff, setTzOff]         = useState<number>(0);             
   const [amount, setAmount]       = useState<number>(1);
-  const [unit, setUnit]           = useState<Unit>("years");
+  const [unit, setUnit]           = useState<Unit>("days");
   const [result, setResult]       = useState<string | null>(null);
   const [error, setError]         = useState<string | null>(null);
+  const [showMore, setShowMore] = useState(false);
+
+  const sliderIndex = SLIDER_STEPS.findIndex((v) => v === amount);
+  const safeIndex = sliderIndex !== -1
+    ? sliderIndex
+    : SLIDER_STEPS.findIndex((v) => v > amount);
+  
 
   useEffect(() => {
     document.body.style.backgroundColor = "#111827"; 
@@ -43,19 +56,38 @@ export default function App() {
       return;
     }
     setError(null);
-
-    /* Combina data + ora in stringa ISO, poi applica offset */
+  
     const dateStr = dayjs(birthDate).format("YYYY-MM-DD");
     const dt      = dayjs(`${dateStr}T${birthTime}`).utcOffset(tzOff);
-
     const target  = dt.add(amount, unit).utcOffset(tzOff);
-
-    setResult(
-      `📅 You will be ${amount.toLocaleString()} ${unit} old on:\n` +
-      target.format("D MMMM YYYY HH:mm:ss") +
-      `  (UTC${tzOff >= 0 ? "+" : ""}${tzOff / 60})`
-    );
+  
+    const niceAmount = formatNice(amount);
+  
+    if (target.isValid()) {
+      /* normale */
+      setResult(
+        `📅 You will be ${niceAmount} ${unit} old on:\n` +
+        target.format("D MMMM YYYY HH:mm:ss") +
+        `  (UTC${tzOff >= 0 ? "+" : ""}${tzOff / 60})`
+      );
+    } else {
+      const years = dayjs.duration({ [unit]: amount }).asYears(); // es. 1 000 000 000 seconds → 31.7 years
+      const approxYear = dayjs(birthDate).year() + Math.round(years);
+      setResult(
+        `≈ Year ${approxYear} (about ${niceAmount} ${unit} from your birth)\n` +
+        "The exact calendar date is beyond what this tool can represents. :)\n"
+      );
+    }
   };
+
+  const formatNice = (n: number) => {
+    if (n >= 1_000_000_000)
+      return `${(n / 1_000_000_000).toFixed(n % 1_000_000_000 ? 1 : 0)} billion`;
+    if (n >= 1_000_000)
+      return `${(n / 1_000_000).toFixed(n % 1_000_000 ? 1 : 0)} million`;
+    return n.toLocaleString();
+  };
+  
 
   /* ─────────  UI  ───────── */
   return (
@@ -110,12 +142,36 @@ export default function App() {
             </select>
           </div>
         </section>
-
         {/* ③ Milestone */}
         <section className="card">
-          <span className="label">3️⃣ Set up your milestone</span>
-          <p className="muted">I want to know when I will be…</p>
+          <span className="label">3️⃣ Pick your milestone</span>
+          <p className="label">I want to know when I will be...</p>
+          {/* preset chips */}
+          <div className="chips">
+            {PRESETS.map((v) => (
+              <button
+                key={v}
+                type="button"
+                className={`chip ${amount === v ? "chip--active" : ""}`}
+                onClick={() => setAmount(v)}
+              >
+                {formatNice(v)}
+              </button>
+            ))}
+          </div>
 
+          {/* logarithmic slider */}
+          <input
+            type="range"
+            min={0}
+            max={SLIDER_STEPS.length - 1}
+            step={1}
+            value={safeIndex}
+            onChange={(e) => setAmount(SLIDER_STEPS[+e.target.value])}
+            className="slider"
+          />
+
+          {/* numeric input fallback */}
           <div className="milestone-row">
             <input
               type="number"
@@ -135,6 +191,18 @@ export default function App() {
             </select>
             <span className="muted">old</span>
           </div>
+          {window.innerWidth < 600 && (
+            <select
+              value={amount}
+              onChange={(e) => setAmount(+e.target.value)}
+              className="wheel"
+              size={5}
+            >
+              {SLIDER_STEPS.map((v) => (
+                <option key={v} value={v}>{formatNice(v)}</option>
+              ))}
+            </select>
+          )}
         </section>
       </div>
 
@@ -144,11 +212,28 @@ export default function App() {
 
       {error && <p className="error">{error}</p>}
       {result && !error && (
-        <pre className="result">
-          {result.split("\n").map((line) => (
-            <span key={line}>{line}<br /></span>
-          ))}
-        </pre>
+        <>
+          <pre className="result">
+            {result.split("\n").map((line) => (
+              <span key={line}>{line}<br /></span>
+            ))}
+          </pre>
+
+          {/* ─── NEW BUTTON ─── */}
+          <button
+            className="button more-btn"
+            onClick={() => setShowMore(!showMore)}
+          >
+            {showMore ? "Hide" : "Tell me more 🧙‍♂️🧙‍♂️🧙‍♂️!"}
+          </button>
+
+          {/* ─── COLLAPSIBLE PANEL ─── */}
+          {showMore && (
+            <div className="more-panel">
+              <p>🚧 <strong>Coming&nbsp;soon!</strong></p>
+            </div>
+          )}
+        </>
       )}
     </main>
   );
