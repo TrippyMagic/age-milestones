@@ -1,91 +1,51 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@import url("https://fonts.googleapis.com/css2?family=Audiowide&display=swap");
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
+  font-family: system-ui, sans-serif;
   min-width: 320px;
   min-height: 100vh;
+  display: flex;
+  place-items: center;
+  --bg-url: url("/bg-time.png");
+  background-image: var(--bg-url);      
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-color: #0d1128;                
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+body::before {                    
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  pointer-events: none;
+  z-index: -1;
 }
 
 /* Basic dark theme layout & typography */
 .page {
-  font-family: system-ui, sans-serif;
-  min-height: 100vh;
-  margin: 0;
-  padding: 24px;
-  background-color: #111827; /* slate-900 */
-  color: #f3f4f6;            /* gray-100 */
+  color: #f3f4f6;
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding: 24px;
 }
 
+
 .title {
-  font-size: 2.25rem;
-  font-weight: 700;
+  font-family: "Audiowide", system-ui, sans-serif;
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  background: linear-gradient(90deg, #00e3ff 0%, #a070ff 70%);
+  -webkit-background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 8px rgba(160, 112, 255, 0.4);
   margin-top: 12px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
+
 
 /* Wrapper that stacks the two cards */
 .wrapper {

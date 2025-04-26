@@ -26,11 +26,9 @@ export default function App() {
   const [error, setError]         = useState<string | null>(null);
 
   useEffect(() => {
-      document.body.style.background = "#111827";
-      return () => {
-        document.body.style.background = "";
-      };
-    }, []);
+    document.body.style.backgroundColor = "#111827"; 
+    return () => { document.body.style.backgroundColor = ""; };
+  }, []);
 
   /* helpers */
   const sanitizeAmount = (raw: string) => {
@@ -63,7 +61,6 @@ export default function App() {
   return (
     <main className="page">
       <h1 className="title">AGE MILESTONES</h1>
-
       <div className="wrapper">
         {/* ① Date */}
         <section className="card">
@@ -142,7 +139,7 @@ export default function App() {
       </div>
 
       <button onClick={handleCalculate} className="button">
-        Calculate 🚀
+        Tell me! 🧙‍♂️
       </button>
 
       {error && <p className="error">{error}</p>}
