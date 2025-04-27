@@ -14,10 +14,11 @@ export function useMilestone() {
   /* state */
   const [birthDate, setBirthDate] = useState<Date | null>(null);
   const [birthTime, setBirthTime] = useState("00:00");
-  const [amount,   setAmount]     = useState(1);
-  const [unit,     setUnit]       = useState<Unit>("days");
-  const [result,   setResult]     = useState<string | null>(null);
-  const [error,    setError]      = useState<string | null>(null);
+  const [amount, setAmount] = useState(1);
+  const [unit, setUnit] = useState<Unit>("days");
+  const [result, setResult] = useState<string | null>(null);
+  const [targetDate, setTarget] = useState<Date|null>(null);
+  const [error,setError] = useState<string | null>(null);
 
   /* calc */
   const calc = () => {
@@ -32,6 +33,7 @@ export function useMilestone() {
     const verb   = target.isBefore(now) ? "were" : "will be";
 
     if (target.isValid()) {
+      setTarget(target.toDate())
       setResult(
         `📅 You ${verb} ${nice} ${unit} old on:\n` +
         target.format("D MMMM YYYY HH:mm:ss") +
@@ -40,6 +42,7 @@ export function useMilestone() {
     } else {
       const years  = dayjs.duration({ [unit]: amount }).asYears();
       const approx = dayjs(birthDate).year() + Math.round(years);
+      setTarget(null);
       setResult(
         `≈ Year ${approx} (about ${nice} ${unit} from your birth)\n` +
         "The exact calendar date is beyond what this tool can represent. 🙂"
@@ -48,7 +51,7 @@ export function useMilestone() {
   };
 
   return {
-    state: { birthDate, birthTime, amount, unit, result, error },
+    state:{birthDate,birthTime,amount,unit,result,error,targetDate},
     actions: { setBirthDate, setBirthTime, setAmount, setUnit, calc }
   };
 }

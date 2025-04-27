@@ -4,13 +4,12 @@ import DateTimePicker from "./components/DateTimePicker";
 // import TimezoneSelect from "./components/TimezoneSelect";
 import MilestonePicker from "./components/MilestonePicker";
 import ResultBlock from "./components/ResultBlock";
-import MorePanel from "./components/MorePanel";
-import "./css/App.css";
+import "./css/Landing.css";
 
-export default function App() {
+export default function Landing() {
 
   const {state,actions} = useMilestone();
-  const {birthDate,birthTime,amount,unit,result,error} = state;
+  const {birthDate,birthTime,amount,unit,result,error,targetDate} = state;
   const {setBirthDate,setBirthTime,setAmount,setUnit,calc} = actions;
   const [showMore, setShowMore] = useState(false);
 
@@ -37,9 +36,9 @@ export default function App() {
         result={result}
         error={error}
         showMore={showMore}
-        onMore={()=>setShowMore(!showMore)}
+        onMore={() => setShowMore(!showMore)}
+        target={targetDate}
       />
-      {showMore && <MorePanel/>}
     </main>
     <footer></footer>
     </>
