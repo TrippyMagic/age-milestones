@@ -1,5 +1,10 @@
-
-const timezones = [
+export const TIME_UNITS   = ["years","months","weeks","days","hours","minutes","seconds"] as const;
+export const FUNKY_TIME_UNITS = ["We'll see"] as const; 
+export const PRESETS = [1_000,5_000,10_000,20_000,40_000,1_000_000,10_000_000,100_000_000,1_000_000_000];
+export const SLIDER  = PRESETS;                       
+export type Unit = typeof TIME_UNITS[number];
+export type FunkyUnit = typeof FUNKY_TIME_UNITS[number];
+export const timezones = [
     { off: -12, city: "Baker Island" },
     { off: -11, city: "Pago Pago" },
     { off: -10, city: "Honolulu" },
@@ -28,5 +33,3 @@ const timezones = [
     { off: 13,  city: "Apia" },
     { off: 14,  city: "Kiritimati" },
 ];
-
-export default timezones;
