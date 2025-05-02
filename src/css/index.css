@@ -1,5 +1,21 @@
+/* -----------------------------------------------------------
+   0.  Imports & global variables
+----------------------------------------------------------- */
 @import url("https://fonts.googleapis.com/css2?family=Audiowide&display=swap");
 
+/* -----------------------------------------------------------
+   1.  Global reset & background
+----------------------------------------------------------- */
+:root {
+  --indigo-100: #a5b4fc;
+  --indigo-300: #a070ff;
+  --indigo-600: #4f46e5;
+  --slate-700: #374151;
+  --slate-800: #1f2937;
+  --slate-900: #111827;
+  --text-light: #f3f4f6;
+  --text-muted: #9ca3af;
+}
 
 body {
   margin: 0;
@@ -8,92 +24,102 @@ body {
   min-height: 100vh;
   display: flex;
   place-items: center;
+
+  /* cosmic backdrop */
   --bg-url: url("/bg-time.png");
-  background-image: var(--bg-url);      
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  background-color: #0d1128;                
+  background:
+    var(--bg-url) center / cover no-repeat fixed,
+    #0d1128;                                 /* fallback colour */
 }
 
-body::before {                    
+body::before {
   content: "";
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.45);
+  background: rgba(0, 0, 0, .45);            /* dark overlay */
   pointer-events: none;
   z-index: -1;
 }
 
-/* Basic dark theme layout & typography */
+/* -----------------------------------------------------------
+   2.  Generic layout helpers
+----------------------------------------------------------- */
 .page {
-  color: #f3f4f6;
+  color: var(--text-light);
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 24px;
 }
 
-
-.title {
-  font-family: "Audiowide", system-ui, sans-serif;
-  font-size: clamp(2.5rem, 5vw, 4rem);
-  background: linear-gradient(90deg, #00e3ff 0%, #a070ff 70%);
-  -webkit-background-clip: text;
-  color: transparent;
-  text-shadow: 0 0 8px rgba(160, 112, 255, 0.4);
-  margin-top: 12px;
-}
-
-
-/* Wrapper that stacks the two cards */
 .wrapper {
   width: 100%;
-  max-width: 480px;
+  max-width: 640px;
   display: flex;
   flex-direction: column;
   gap: 24px;
   margin-top: 40px;
 }
 
-/* Card container */
-.card {
-  width: 100%;
-  background-color: #1f2937; /* gray-800 */
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  box-sizing: border-box;
+/* responsive tweak */
+@media (max-width: 480px) {
+  .wrapper,
+  .card { max-width: 100%; padding: 24px; }
 }
 
-.label {
+/* -----------------------------------------------------------
+   3.  Typography
+----------------------------------------------------------- */
+.title {
+  font-family: "Audiowide", system-ui, sans-serif;
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  background: linear-gradient(90deg, #00e3ff 0%, var(--indigo-300) 70%);
+  -webkit-background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 8px rgba(160, 112, 255, .4);
+  margin-top: 12px;
+}
+
+.subtitle {
+  text-align: center;
+  margin: 12px 0 16px;
   font-size: 1.25rem;
   font-weight: 600;
 }
 
-/* Inputs / selects share the same base style */
+/* -----------------------------------------------------------
+   4.  Card container
+----------------------------------------------------------- */
+.card {
+  width: 100%;
+  max-width: 640px;
+  background: #1d3252;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, .4);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-sizing: border-box;
+}
+
+/* -----------------------------------------------------------
+   5.  Form controls
+----------------------------------------------------------- */
+.label { font-size: 1.25rem; font-weight: 600; }
+
 .input,
 .select {
   padding: 10px;
   border-radius: 8px;
-  border: 1px solid #374151; /* gray-700 */
-  background-color: #111827; /* gray-900 */
-  color: #f3f4f6;
+  border: 1px solid var(--slate-700);
+  background: var(--slate-900);
+  color: var(--text-light);
   text-align: center;
 }
 
-/* Narrow number field */
-.input.short {
-  width: 90px;
-}
-
-.select {
-  text-align: left;
-}
+.input.short { width: 90px; }
+.select      { text-align: left; }
 
 .milestone-row,
 .timezone-row {
@@ -103,50 +129,122 @@ body::before {
   align-items: center;
 }
 
-.muted {
-  font-size: 0.9rem;
-  color: #9ca3af; /* gray-400 */
-}
+.muted { font-size: .9rem; color: var(--text-muted); }
 
-/* Action button */
+/* -----------------------------------------------------------
+   6.  Buttons
+----------------------------------------------------------- */
 .button {
   margin-top: 40px;
   padding: 14px 40px;
   border-radius: 16px;
-  background-color: #4f46e5; /* indigo-600 */
-  color: #ffffff;
+  background: var(--indigo-600);
+  color: #fff;
   font-weight: 600;
   border: none;
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-  transition: filter 0.15s, transform 0.15s;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, .4);
+  transition: filter .15s, transform .15s;
 }
-
-.button:hover {
-  filter: brightness(1.1);
-  transform: scale(0.97);
-}
+.button:hover  { filter: brightness(1.1); transform: scale(.97); }
 
 .more-btn {
   margin-top: 16px;
-  background-color: #374151;   /* gray-700 */
-  font-size: 0.9rem;
+  background: var(--slate-700);
+  font-size: .9rem;
   padding: 10px 28px;
 }
 
-.more-panel {
-  margin-top: 20px;
-  background: #1f2937;         /* gray-800 */
-  border: 1px solid #374151;
-  border-radius: 12px;
-  padding: 18px;
-  width: 100%;
-  max-width: 480px;
-  text-align: center;
-  color: #9ca3af;              /* gray-400 */
-  animation: fadeIn 0.3s ease-out;
+/* -----------------------------------------------------------
+   7.  Intro text gradient & overrides
+----------------------------------------------------------- */
+.intro {
+  font-family: "Audiowide", system-ui, sans-serif;
+  background: linear-gradient(90deg, #00e3ff 0%, var(--indigo-300) 70%);
+  -webkit-background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 6px rgba(160, 112, 255, .35);
+  line-height: 1.4;
 }
 
+.intro p     { margin: 0 0 .8rem; }
+.intro em,
+.intro strong,
+.intro .quote {
+  background: none;
+  -webkit-background-clip: initial;
+  color: var(--text-light);
+}
+.intro .quote {
+  font-style: italic;
+  color: var(--indigo-100);
+  text-shadow: 0 0 4px rgba(165, 180, 252, .45);
+}
+
+/* -----------------------------------------------------------
+   8.  Chips, slider, wheel
+----------------------------------------------------------- */
+.chips {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;
+}
+.chip {
+  padding: 6px 12px; font-size: .85rem; border-radius: 12px;
+  border: 1px solid var(--slate-700);
+  background: var(--slate-900); color: var(--text-light); cursor: pointer;
+  transition: .15s;
+}
+.chip:hover      { background: var(--slate-800); }
+.chip--active    { background: var(--indigo-600); border-color: var(--indigo-600); }
+
+.slider {
+  -webkit-appearance: none;
+  width: 100%;
+  margin: 16px 0;
+  background: transparent;
+}
+/* track */
+.slider::-webkit-slider-runnable-track,
+.slider::-moz-range-track {
+  height: 4px; background: var(--slate-700); border-radius: 2px;
+}
+/* thumb */
+.slider::-webkit-slider-thumb,
+.slider::-moz-range-thumb {
+  -webkit-appearance: none;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--indigo-300); cursor: pointer; margin-top: -7px;
+}
+
+.wheel {
+  width: 100%; border: 1px solid var(--slate-700); border-radius: 8px;
+  background: var(--slate-900); color: var(--text-light);
+  padding: 8px; margin-top: 8px; font-size: .9rem;
+}
+
+/* -----------------------------------------------------------
+   9.  Navbar & footer
+----------------------------------------------------------- */
+.navbar {
+  width: 100%; max-width: 960px; margin: 0 auto 24px;
+  display: flex; justify-content: flex-start;
+}
+.navbar a { color: var(--indigo-100); text-decoration: none; }
+.navbar a:hover { text-decoration: underline; }
+
+.footer {
+  margin-top: 40px; font-size: .8rem; color: var(--text-muted); text-align: center;
+}
+.footer a { color: var(--indigo-100); text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+
+/* -----------------------------------------------------------
+   10.  More-panel & animation
+----------------------------------------------------------- */
+.more-panel {
+  margin-top: 20px; background: var(--slate-800); border: 1px solid var(--slate-700);
+  border-radius: 12px; padding: 18px; max-width: 480px; text-align: center;
+  color: var(--text-muted); animation: fadeIn .3s ease-out;
+}
 .more-panel p { margin: 6px 0; }
 
 @keyframes fadeIn {
@@ -154,72 +252,68 @@ body::before {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Feedback text */
-.result {
-  margin-top: 32px;
-  font-size: 1.5rem;
-  font-weight: 600;
-  text-align: center;
+/* -----------------------------------------------------------
+   11.  Age table (striped, glow on update)
+----------------------------------------------------------- */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;               /* allow multiple lines on very narrow screens */
+  justify-content: center;
+  align-items: center;
+  gap: 12px;                     /* more breathing room */
+  margin-bottom: 24px;           /* spacing below the tabs */
 }
 
-.highlight {
-  color: #a5b4fc; /* indigo-300 */
+.tab {
+  padding: 8px 16px;
+  border: 1px solid var(--slate-700);
+  border-radius: 9999px;         /* pill shape */
+  background: var(--slate-900);
+  color: var(--text-light);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
 
-.error {
-  margin-top: 24px;
-  color: #f87171; /* red-400 */
-  text-align: center;
+.tab:hover {
+  background: var(--slate-800);
 }
 
-/* ––––– chips ––––– */
-.chips { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
-.chip {
-  padding:6px 12px; font-size:.85rem; border-radius:12px; border:1px solid #374151;
-  background:#111827; color:#f3f4f6; cursor:pointer; transition:.15s;
+.tab--active {
+  background: var(--indigo-600) !important;
+  border-color: var(--indigo-600) !important;
+  color: #fff !important;
 }
-.chip:hover      { background:#1f2937; }
-.chip--active    { background:#4f46e5; border-color:#4f46e5; }
-
-/* ––––– slider ––––– */
-.slider {
-  -webkit-appearance: none;
+.table-wrap {
   width: 100%;
-  margin: 16px 0;
-  background: transparent;
+  overflow-x: auto;      /* allow sideways scroll for huge values */
+  margin-bottom: 24px;    /* spacing below the table */
 }
+.table-wrap .subtitle {
+  text-align: center;
+  margin-bottom: 12px;
+}
+.age-table {
+  width: auto; max-width: 360px; margin: 0 auto 28px;
+  border-collapse: collapse; font-variant-numeric: tabular-nums;
+  overflow: hidden; border-radius: 10px; box-shadow: 0 0 8px rgba(0,0,0,.4);
+}
+.age-table tr:nth-child(odd)  { background: #243447; }
+.age-table tr:nth-child(even) { background: #1d2b3a; }
 
-/* track */
-.slider::-webkit-slider-runnable-track {
-  height: 4px;
-  background: #374151;              
-  border-radius: 2px;
-}
-.slider::-moz-range-track {
-  height: 4px;
-  background: #374151;
-  border-radius: 2px;
-}
+.age-table td { padding: 10px 24px; }
+.age-table tr:last-child td { border-bottom: none; }
 
-/* thumb */
-.slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 18px; height: 18px;
-  border-radius: 50%;
-  background: #a070ff;             
-  cursor: pointer;
-  margin-top: -7px;                 
+.age-table td:first-child { color: var(--text-muted); font-weight: 500; }
+.age-table .age-val {
+  color: var(--text-light); text-align: right; font-weight: 600;
+  position: relative; transition: color .3s; word-break: break-all;
 }
-.slider::-moz-range-thumb {
-  width: 18px; height: 18px;
-  border-radius: 50%;
-  background: #a070ff;
-  cursor: pointer;
+.age-table .age-val::after {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center, rgba(0,227,255,.35) 0%, transparent 70%);
+  opacity: 0; transition: opacity .3s;
 }
-
-/* ––––– wheel (mobile) ––––– */
-.wheel {
-  width:100%; border:1px solid #374151; border-radius:8px;
-  background:#111827; color:#f3f4f6; padding:8px; margin-top:8px;
-  font-size:.9rem;
-}
+.age-table .age-val.updated { color: var(--indigo-100); }
+.age-table .age-val.updated::after { opacity: 1; }

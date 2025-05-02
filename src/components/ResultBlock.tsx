@@ -20,7 +20,7 @@ export default function ResultBlock({result,error,onMore,showMore,target}:Props)
       <button className="button more-btn" onClick={onMore}>
         {showMore? "Hide":"Tell me more 🧙‍♂️"}
       </button>
-      {showMore && <MorePanel target={target} onEvenMore={()=>{ /* future */ }} />}
+      {showMore && <MorePanel target={target}/>}
     </>
   );
 }
