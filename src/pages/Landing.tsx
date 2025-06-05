@@ -1,13 +1,19 @@
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { useState } from "react";
 import { useBirthDate } from "../context/BirthDateContext";
 import { useNavigate } from "react-router-dom";
 import { landingIntro } from "../utils/constants";
-import  Footer  from "../components/Footer";
+import Footer from "../components/Footer";
 
 export default function Landing() {
   const { birthDate, setBirthDate, birthTime, setBirthTime } = useBirthDate();
   const nav = useNavigate();
+  const [expanded, setExpanded] = useState(false);
+  const [firstParagraph, ...restParagraphs] = landingIntro
+    .trim()
+    .split("<br/><br/>");
+  const remainder = restParagraphs.join("<br/><br/>");
 
   return (
     <>
@@ -18,8 +24,13 @@ export default function Landing() {
          {/* ---------- intro panel ---------- */}
          <div
             className="intro"
-            dangerouslySetInnerHTML={{ __html: landingIntro.trim() }}
+            dangerouslySetInnerHTML={{
+              __html: expanded ? `${firstParagraph}<br/><br/>${remainder}` : firstParagraph,
+            }}
           />
+         <button className="button more-btn" onClick={() => setExpanded(!expanded)}>
+           Learn more
+         </button>
         {/* ---------- divider ---------- */}
         <hr className="divider" />
         <label className="muted" htmlFor="date">Choose your date of birth (required)</label>
