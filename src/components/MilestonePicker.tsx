@@ -7,8 +7,10 @@ type Props={
 }
 
 export default function MilestonePicker({amount,setAmount,unit,setUnit}:Props){
-  const idx = SLIDER.indexOf(amount)!==-1 ? SLIDER.indexOf(amount)
-                                          : SLIDER.findIndex(v=>v>amount);
+  let idx = SLIDER.indexOf(amount)!==-1 ? SLIDER.indexOf(amount)
+                                        : SLIDER.findIndex(v=>v>amount);
+  // Clamp index to last slider value if value exceeds defined milestones
+  if (idx === -1) idx = SLIDER.length - 1;
 
   return(
     <section className="card">
