@@ -4,7 +4,7 @@
 
 ## Project Purpose
 
-Age Milestones is a small React + Vite application that helps visualize significant birthday milestones. Enter a birthdate and the site shows when you’ll reach ages like 18, 21, 30 and other notable years.
+Age Milestones is a small React + Vite application that helps visualize life from unusual perspectives. Enter a birthdate and the site shows countless way to measure how far you've come and when you’ll reach any funky and specific milestone you may choose.
 
 ## Development
 
