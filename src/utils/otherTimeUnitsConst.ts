@@ -6,6 +6,7 @@ const YEAR = 365.25 * DAY;
 export const TAB_ROWS: Record<string, UnitRow[]> = {
   Classic: [
     { label: "Years",    seconds: YEAR },
+    { label: "Centuries", seconds: 100 * YEAR },
     { label: "Months",   seconds: YEAR / 12 },
     { label: "Weeks",    seconds: 7 * DAY },
     { label: "Days",     seconds: DAY },
@@ -17,7 +18,12 @@ export const TAB_ROWS: Record<string, UnitRow[]> = {
   Biological: [
     { label: "Heartbeats", seconds: 0.8 },           // ~75 bpm
     { label: "Breaths",    seconds: 4 },             // ~15 rpm
+    { label: "Blinks",     seconds: 0.3 },           // ~0.3 s per blink
     { label: "Dog years",  seconds: NaN },           // special nonlinear
+    {
+      label: "Mosquito years",
+      seconds: (80 * YEAR) / (14 * DAY),              // 14d lifetime -> 80y human
+    },
   ],
 
   Cosmic: [
@@ -28,7 +34,14 @@ export const TAB_ROWS: Record<string, UnitRow[]> = {
   ],
 
   Geeky: [
-    { label: "Flicks",   seconds: 1 / 1_417_664 },   // 1/24fps×60×60
-    { label: "Jiffies",  seconds: 0.01 },            // 1/100 s
+    { label: "Bitcoin blocks",  seconds: 600 },
+    { label: "Ethereum blocks", seconds: 12 },
+  ],
+
+  Eons: [
+    { label: "Universe age",    seconds: 13.8e9 * YEAR },
+    { label: "Earth age",       seconds: 4.54e9 * YEAR },
+    { label: "Galactic year",   seconds: 230e6 * YEAR },
+    { label: "Homo sapiens",    seconds: 300_000 * YEAR },
   ],
 };

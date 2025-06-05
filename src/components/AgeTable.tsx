@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useBirthDate } from "../context/BirthDateContext";
-import { formatBig } from "../utils/format";
+import { formatBig, formatSmall } from "../utils/format";
 import dayjs from "dayjs";
 
 export type UnitRow = {
@@ -36,8 +36,8 @@ export default function AgeTable({ rows }: { rows: UnitRow[] }) {
             display = dogYears.toFixed(2);
           } else {
             const rawCount = (nowSeconds - birthSeconds) / r.seconds;
-            if ((r.label === "Halley orbits" || r.label === "Jovian years") && rawCount < 1) {
-              display = rawCount.toFixed(2);
+            if (rawCount < 1) {
+              display = formatSmall(rawCount);
             } else {
               display = formatBig(Math.floor(rawCount));
             }

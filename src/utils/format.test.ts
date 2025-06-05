@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatNice, formatBig } from './format';
+import { formatNice, formatBig, formatSmall } from './format';
 
 describe('formatNice', () => {
   it('handles numbers less than a million', () => {
@@ -25,5 +25,15 @@ describe('formatBig', () => {
 
   it('uses exponential notation for large numbers', () => {
     expect(formatBig(1.23e15)).toBe('1.23e15');
+  });
+});
+
+describe('formatSmall', () => {
+  it('shows leading zeros for tiny numbers', () => {
+    expect(formatSmall(1e-6)).toBe('0.000001');
+  });
+
+  it('handles zero', () => {
+    expect(formatSmall(0)).toBe('0');
   });
 });
