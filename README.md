@@ -25,3 +25,11 @@ To create a production build and preview it locally run:
 npm run build
 npm run preview
 ```
+
+## Testing
+
+Run the unit tests with:
+
+```bash
+npm test
+```
