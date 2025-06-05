@@ -15,5 +15,5 @@ export const formatSmall = (n: number) => {
     if (exponent >= 0) return n.toFixed(2);
     const digits = mantissa.replace('.', '');
     const zeros = Math.abs(exponent) - 1;
-    return '0.' + '0'.repeat(zeros) + digits;
+    return '0. ' + zeros + '...0' + digits.slice(0, 3)
 };

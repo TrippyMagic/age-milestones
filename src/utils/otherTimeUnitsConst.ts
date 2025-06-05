@@ -5,8 +5,8 @@ const YEAR = 365.25 * DAY;
 
 export const TAB_ROWS: Record<string, UnitRow[]> = {
   Classic: [
-    { label: "Years",    seconds: YEAR },
     { label: "Centuries", seconds: 100 * YEAR },
+    { label: "Years",    seconds: YEAR },
     { label: "Months",   seconds: YEAR / 12 },
     { label: "Weeks",    seconds: 7 * DAY },
     { label: "Days",     seconds: DAY },
@@ -16,9 +16,13 @@ export const TAB_ROWS: Record<string, UnitRow[]> = {
   ],
 
   Biological: [
-    { label: "Heartbeats", seconds: 0.8 },           // ~75 bpm
     { label: "Breaths",    seconds: 4 },             // ~15 rpm
-    { label: "Blinks",     seconds: 0.3 },           // ~0.3 s per blink
+    { label: "Blinks",     seconds: 3.5 },           // ~17 blinks/min 
+    { label: "Heartbeats", seconds: 0.8 },           // ~75 bpm
+    { label: "Dead cells", seconds:  0.00001},   
+  ],
+
+  Animals: [
     { label: "Dog years",  seconds: NaN },           // special nonlinear
     {
       label: "Mosquito years",
@@ -27,15 +31,16 @@ export const TAB_ROWS: Record<string, UnitRow[]> = {
   ],
 
   Cosmic: [
+    { label: "Halley orbits", seconds: 76 * YEAR },
+    { label: "Jovian years",  seconds: 11.862615 * YEAR },
     { label: "Lunar cycles",  seconds: 29.530588 * DAY },
     { label: "Martian sols",  seconds: 88775 },
-    { label: "Jovian years",  seconds: 11.862615 * YEAR },
-    { label: "Halley orbits", seconds: 76 * YEAR },
   ],
 
-  Geeky: [
+  Nerdy: [
     { label: "Bitcoin blocks",  seconds: 600 },
     { label: "Ethereum blocks", seconds: 12 },
+    { label: "Eye processed frames",  seconds: 0.022222 },
   ],
 
   Eons: [
