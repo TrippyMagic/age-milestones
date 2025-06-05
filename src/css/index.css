@@ -317,3 +317,37 @@ body::before {
 }
 .age-table .age-val.updated { color: var(--indigo-100); }
 .age-table .age-val.updated::after { opacity: 1; }
+
+/* -----------------------------------------------------------
+   Date/time picker overrides
+----------------------------------------------------------- */
+.react-datepicker {
+  font-family: system-ui, sans-serif;
+  background: #1d3252;
+  border: 1px solid var(--slate-700);
+  color: var(--text-light);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+}
+
+.react-datepicker__header {
+  background: var(--slate-800);
+  border-bottom: 1px solid var(--slate-700);
+}
+
+.react-datepicker__current-month,
+.react-datepicker-time__header,
+.react-datepicker-year-header {
+  color: var(--indigo-100);
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--keyboard-selected,
+.react-datepicker__time-list-item--selected {
+  background: var(--indigo-600);
+  color: #fff;
+}
+
+.input.datetime {
+  border-color: var(--indigo-600);
+  box-shadow: 0 0 8px rgba(160, 112, 255, 0.4);
+}
