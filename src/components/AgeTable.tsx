@@ -11,7 +11,7 @@ export type UnitRow = {
 export default function AgeTable({ rows }: { rows: UnitRow[] }) {
   const { birthDate, birthTime } = useBirthDate();
   const [vals, setVals] = useState(() => rows.map(r => ({ ...r, value: "--", updated: false })));
-  const glowResetId = useRef<ReturnType<typeof setTimeout>>();
+  const glowResetId = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!birthDate) return;
