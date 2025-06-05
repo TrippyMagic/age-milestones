@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useBirthDate } from "../context/BirthDateContext";
 import { formatBig } from "../utils/format";
 import dayjs from "dayjs";
@@ -11,6 +11,7 @@ export type UnitRow = {
 export default function AgeTable({ rows }: { rows: UnitRow[] }) {
   const { birthDate, birthTime } = useBirthDate();
   const [vals, setVals] = useState(() => rows.map(r => ({ ...r, value: "--", updated: false })));
+  const glowResetId = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
     if (!birthDate) return;
@@ -52,14 +53,18 @@ export default function AgeTable({ rows }: { rows: UnitRow[] }) {
       );
     
       // reset the glow flag
-      setTimeout(() =>
-        setVals(v => v.map(o => ({ ...o, updated: false }))),
+      if (glowResetId.current) clearTimeout(glowResetId.current);
+      glowResetId.current = setTimeout(
+        () => setVals(v => v.map(o => ({ ...o, updated: false }))),
       300);
     };
   
     tick();
     const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
+    return () => {
+      clearInterval(id);
+      if (glowResetId.current) clearTimeout(glowResetId.current);
+    };
   }, [birthDate, birthTime, rows]);
   
 
