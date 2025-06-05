@@ -24,9 +24,9 @@ export const TAB_ROWS: Record<string, UnitRow[]> = {
 
   Animals: [
     { label: "Dog years",  seconds: NaN },           // special nonlinear
-    { label: "Mouse years", seconds: (80 * YEAR) / (2 * YEAR) }, 
-    { label: "Dragonfly years", seconds: (80 * YEAR) / (60 * DAY) }, 
-    { label: "Mosquito years", seconds: (80 * YEAR) / (14 * DAY)},  
+    { label: "Mouse years", seconds: (2 * YEAR) / (80 * YEAR) }, 
+    { label: "Dragonfly years", seconds: (60 * DAY) / (80 * YEAR)}, 
+    { label: "Mosquito years", seconds: (14 * DAY) / (80 * YEAR)},  
   ],
 
   Cosmic: [

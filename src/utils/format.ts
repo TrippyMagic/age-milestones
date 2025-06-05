@@ -5,7 +5,7 @@ export const formatNice = (n: number) => {
 };
 
 export const formatBig = (n: number) => {
-    return n >= 1e12 ? n.toExponential(2).replace("+", "") : n.toLocaleString();
+    return n >= 1e15 ? n.toExponential(2).replace("+", "") : n.toLocaleString();
 };
 
 export const formatSmall = (n: number) => {
@@ -15,5 +15,6 @@ export const formatSmall = (n: number) => {
     if (exponent >= 0) return n.toFixed(2);
     const digits = mantissa.replace('.', '');
     const zeros = Math.abs(exponent) - 1;
-    return '0. ' + zeros + '...0' + digits.slice(0, 3)
+    if (zeros < 4) return n.toFixed(zeros + 2)
+    return '0,...' + zeros + ' zeros...' + digits.slice(0, 3)
 };
