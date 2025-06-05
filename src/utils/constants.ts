@@ -41,6 +41,6 @@ This tool flips the view. It turns abstract counts into concrete way-points, sho
 You’ll soon be able to drop any span of time onto the same timeline and compare scales at a glance.<br/><br/>
 
 No sugar coating, no melodrama, just a clear shift in perspective and a glimpse into the infinite stream of time that carries us all through our unique journeys.<br/><br/>
-A simple, powerful reminder that <span class="quote">“No man ever steps in the same river twice”</span> and <span class="quote">“The road up and the road down are one and the same”</span>, as Heraclitus said, are more than clever catch-phrases: they are ever lasting, enduring truths.
+A simple, powerful reminder that <span class="quote">“No man ever steps in the same river twice”</span> and <span class="quote">“The road up and the road down are one and the same”</span>, as Heraclitus said, are more than clever catch-phrases: they are everlasting, enduring truths.
 `;
 
