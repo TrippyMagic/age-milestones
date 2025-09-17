@@ -319,35 +319,163 @@ body::before {
 .age-table .age-val.updated::after { opacity: 1; }
 
 /* -----------------------------------------------------------
-   Date/time picker overrides
+   9. Landing wizard overlay
 ----------------------------------------------------------- */
-.react-datepicker {
-  font-family: system-ui, sans-serif;
-  background: #1d3252;
-  border: 1px solid var(--slate-700);
-  color: var(--text-light);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+.landing__content {
+  position: relative;
+  transition: filter 0.3s ease;
 }
 
-.react-datepicker__header {
-  background: var(--slate-800);
-  border-bottom: 1px solid var(--slate-700);
+.landing__content--blurred {
+  filter: blur(6px);
+  pointer-events: none;
+  user-select: none;
 }
 
-.react-datepicker__current-month,
-.react-datepicker-time__header,
-.react-datepicker-year-header {
+.landing__cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.landing__summary {
+  margin: 0;
+  font-size: 0.95rem;
   color: var(--indigo-100);
 }
 
-.react-datepicker__day--selected,
-.react-datepicker__day--keyboard-selected,
-.react-datepicker__time-list-item--selected {
+.birth-wizard {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 20;
+  background: rgba(6, 11, 25, 0.75);
+  backdrop-filter: blur(4px);
+}
+
+.birth-wizard__panel {
+  width: min(520px, 92vw);
+  background: linear-gradient(145deg, #0f1a31 0%, #15294a 100%);
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(79, 70, 229, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.birth-wizard__step {
+  margin: 0;
+  letter-spacing: 0.08em;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.birth-wizard__question {
+  margin: 0;
+  font-family: "Audiowide", system-ui, sans-serif;
+  font-size: clamp(1.6rem, 3vw, 2rem);
+  color: var(--text-light);
+}
+
+.birth-wizard__field {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.birth-wizard__field input,
+.birth-wizard__field select {
+  font-size: 1.1rem;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid var(--slate-700);
+  background: rgba(17, 24, 39, 0.85);
+  color: var(--text-light);
+  text-align: center;
+}
+
+.birth-wizard__field select {
+  text-align-last: center;
+}
+
+.birth-wizard__hint {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.birth-wizard__actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.birth-wizard__actions button {
+  flex: 1;
+  min-width: 140px;
+  padding: 12px 20px;
+  border-radius: 999px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.birth-wizard__actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.birth-wizard__primary {
   background: var(--indigo-600);
   color: #fff;
 }
 
-.input.datetime {
-  border-color: var(--indigo-600);
-  box-shadow: 0 0 8px rgba(160, 112, 255, 0.4);
+.birth-wizard__primary:hover {
+  filter: brightness(1.1);
+  transform: scale(0.97);
+}
+
+.birth-wizard__secondary {
+  background: rgba(148, 163, 184, 0.18);
+  color: var(--text-light);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.birth-wizard__secondary:hover {
+  background: rgba(148, 163, 184, 0.28);
+}
+
+.birth-wizard__skip {
+  width: 100%;
+  padding: 12px 20px;
+  border-radius: 999px;
+  border: 1px dashed rgba(129, 140, 248, 0.55);
+  background: rgba(79, 70, 229, 0.2);
+  color: var(--text-light);
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.15s ease, transform 0.15s ease;
+}
+
+.birth-wizard__skip:hover {
+  filter: brightness(1.1);
+  transform: scale(0.99);
+}
+
+@media (max-width: 520px) {
+  .birth-wizard__panel {
+    padding: 28px 24px;
+  }
+
+  .birth-wizard__actions button {
+    min-width: 120px;
+  }
 }

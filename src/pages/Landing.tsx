@@ -1,83 +1,87 @@
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useBirthDate } from "../context/BirthDateContext";
 import { useNavigate } from "react-router-dom";
 import { landingIntro } from "../utils/constants";
 import Footer from "../components/Footer";
+import BirthDateWizard from "../components/BirthDateWizard";
 
 export default function Landing() {
   const { birthDate, setBirthDate, birthTime, setBirthTime } = useBirthDate();
   const nav = useNavigate();
   const [expanded, setExpanded] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
   const [firstParagraph, ...restParagraphs] = landingIntro
     .trim()
     .split("<br/><br/>");
   const remainder = restParagraphs.join("<br/><br/>");
-
-  const selectedDT = (() => {
+  const storedSummary = useMemo(() => {
     if (!birthDate) return null;
-    const [h, m] = birthTime.split(":").map(Number);
-    const dt = new Date(birthDate);
-    dt.setHours(h);
-    dt.setMinutes(m);
-    dt.setSeconds(0);
-    dt.setMilliseconds(0);
-    return dt;
-  })();
+    const [hour = "00"] = birthTime.split(":");
+    const formatted = birthDate.toLocaleDateString(undefined, {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
+    return `${formatted} • ${hour.padStart(2, "0")}:00`;
+  }, [birthDate, birthTime]);
 
-  const handleChange = (d: Date | null) => {
-    if (d) {
-      setBirthDate(d);
-      setBirthTime(d.toTimeString().slice(0, 5));
-    }
+  useEffect(() => {
+    if (!wizardOpen) return;
+    const { overflow } = document.body.style;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = overflow;
+    };
+  }, [wizardOpen]);
+
+  const handleComplete = (date: Date, time: string) => {
+    setBirthDate(date);
+    setBirthTime(time);
+    setWizardOpen(false);
+    nav("/milestones");
   };
 
   return (
     <>
-      <main className="page">
-      <h1 className="title">AGE MILESTONES</h1>
+      <div className={`landing__content ${wizardOpen ? "landing__content--blurred" : ""}`}>
+        <main className="page">
+          <h1 className="title">AGE MILESTONES</h1>
 
-      <section className="card">
-         {/* ---------- intro panel ---------- */}
-         <div
-            className="intro"
-            dangerouslySetInnerHTML={{
-              __html: expanded ? `${firstParagraph}<br/><br/>${remainder}` : firstParagraph,
-            }}
-          />
-         <button className="button more-btn" onClick={() => setExpanded(!expanded)}>
-           Learn more
-         </button>
-        {/* ---------- divider ---------- */}
-        <hr className="divider" />
-        <label className="muted" htmlFor="date">Choose your date and time</label>
-        <div>
-          <DatePicker
-            selected={selectedDT}
-            onChange={handleChange}
-            dateFormat="dd-MM-yyyy HH:mm"
-            maxDate={new Date()}
-            showTimeSelect
-            timeIntervals={60}
-            showYearDropdown
-            scrollableYearDropdown
-            yearDropdownItemNumber={120}
-            className="input datetime"
-            placeholderText="Pick a date and time"
-          />
-        </div>
+          <section className="card">
+            <div
+              className="intro"
+              dangerouslySetInnerHTML={{
+                __html: expanded ? `${firstParagraph}<br/><br/>${remainder}` : firstParagraph,
+              }}
+            />
+            <button className="button more-btn" onClick={() => setExpanded(!expanded)}>
+              Learn more
+            </button>
+            <hr className="divider" />
+            <div className="landing__cta">
+              <p className="muted">
+                Rispondi a quattro domande per impostare la tua data di nascita.
+              </p>
+              {storedSummary && (
+                <p className="landing__summary">Ultima selezione: {storedSummary}</p>
+              )}
+              <button className="button" onClick={() => setWizardOpen(true)}>
+                Dive in!
+              </button>
+            </div>
+          </section>
+        </main>
+        <Footer />
+      </div>
 
-        <button
-          className="button"
-          disabled={!birthDate}
-          onClick={() => nav("/milestones")}
-        >
-          Dive in!
-        </button>
-      </section>
-    </main>
-    <Footer/>
+      {wizardOpen && (
+        <BirthDateWizard
+          initialDate={birthDate}
+          initialTime={birthTime}
+          onCancel={() => setWizardOpen(false)}
+          onComplete={handleComplete}
+        />
+      )}
     </>
   );
 }
