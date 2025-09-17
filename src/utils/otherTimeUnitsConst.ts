@@ -15,15 +15,39 @@ export const TAB_ROWS: Record<string, UnitRow[]> = {
   ],
 
   Biological: [
-    { label: "Breaths",    seconds: 4 },             // ~15 rpm
-    { label: "Blinks",     seconds: 3.5 },           // ~17 blinks/min 
+    { label: "Breaths", seconds: 4 },             // ~15 rpm
+    { label: "Air inhaled (Liters)", seconds: 8.64 },
+    { label: "Blinks",seconds: 3.5 },           // ~17 blinks/min
     { label: "Heartbeats", seconds: 0.8 },           // ~75 bpm
+    { label: "Blood pumped (Liters)", seconds: 12 },        // ~7200 L/day
     { label: "Dead cells", seconds: 0.00001},
-    { label: "Liters drank", seconds: DAY/1.8}
+    { label: "Liquid drank (Liters)", seconds: DAY/2.25},
+    { label: "Food eaten (kilograms)", seconds: DAY/1.2},
+    { label: "Calories burned (kcal)", seconds: DAY / 2100 },
+    { label: "Hair grown (cm)", seconds: 2010000 },    // ~0.43 mm/day
+    { label: "Nail grown (cm)", seconds: 8640000 },    // ~0.1 mm/day
+    { label: "Laughs", seconds: DAY / 13 },
+    { label: "Sneezes", seconds: DAY / 0.5 },
+    { label: "Toilet visits", seconds: DAY / 5 },
+    { label: "Dog years",  seconds: NaN },
   ],
 
-  Animals: [
-    { label: "Dog years",  seconds: NaN },           // special nonlinear
+   Everyday: [
+    { label: "Steps",             seconds: DAY / 6000 },
+    { label: "Km walked",         seconds: DAY / 4 },
+    { label: "Showers",           seconds: DAY / 0.55 },
+    { label: "Songs played",      seconds: DAY / 20 },
+    { label: "Words spoken",      seconds: DAY / 11000 }
+  ],
+
+  Nerdy: [
+    { label: "Smartphone unlocks",seconds: DAY / 36 },
+    { label: "Keystrokes",        seconds: DAY / 12000 },
+    { label: "Mouse clicks",      seconds: DAY / 4000 },
+    { label: "Notifications",     seconds: DAY / 100 },
+    { label: "Bitcoin blocks",  seconds: 600 },
+    { label: "Ethereum blocks", seconds: 12 },
+    { label: "Eye processed frames",  seconds: 0.022222 },
   ],
 
   Cosmic: [
@@ -31,12 +55,8 @@ export const TAB_ROWS: Record<string, UnitRow[]> = {
     { label: "Jovian years",  seconds: 11.862615 * YEAR },
     { label: "Lunar cycles",  seconds: 29.530588 * DAY },
     { label: "Martian sols",  seconds: 88775 },
-  ],
-
-  Nerdy: [
-    { label: "Bitcoin blocks",  seconds: 600 },
-    { label: "Ethereum blocks", seconds: 12 },
-    { label: "Eye processed frames",  seconds: 0.022222 },
+    { label: "Km in solar orbit", seconds: 1 / 29.78 },  // ~0.0336 s/km
+    { label: "Km in galactic orbit", seconds: 1 / 220 },    // ~0.00455 s/km
   ],
 
   Eons: [

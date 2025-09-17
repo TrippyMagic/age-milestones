@@ -1,6 +1,6 @@
 import { useMemo, type CSSProperties, type ChangeEvent, type ReactNode } from "react";
 
-const SLIDER_RESOLUTION = 1000;
+const SLIDER_RESOLUTION = 10000;
 
 type Range = {
   start: number;
@@ -106,7 +106,7 @@ export default function Timeline({ range, value, onChange, events, ticks = [], r
           const labelClasses = ["timeline__label", `timeline__label--${accent}`];
 
           const markerStyle: CSSProperties = {
-            ["--marker-color" as const]: accentColors[accent]
+            ["--marker-color"]: accentColors[accent]
           };
 
           return (

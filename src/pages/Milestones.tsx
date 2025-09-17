@@ -3,8 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 
 import Timeline, { type TimelineEvent, type TimelineTick } from "../components/Timeline";
-import MilestonePicker from "../components/MilestonePicker";
-import ResultBlock from "../components/ResultBlock";
 import AgeTable from "../components/AgeTable";
 import Footer from "../components/Footer";
 import { useMilestone } from "../hooks/useMilestone";
@@ -12,8 +10,8 @@ import { TAB_ROWS } from "../utils/otherTimeUnitsConst";
 
 import "../css/index.css";
 
-const CENTURY_WINDOW = 100;
-const TICK_STEP_YEARS = 20;
+const CENTURY_WINDOW = 40;
+const TICK_STEP_YEARS = 10;
 
 type TimelineData = {
   range: { start: number; end: number };
@@ -109,11 +107,8 @@ const buildTimelineData = (birthDate: Date, birthTime: string): TimelineData | n
 };
 
 export default function Milestones() {
-  const { state, actions } = useMilestone();
-  const { amount, unit, result, error, targetDate, birthDate, birthTime } = state;
-  const { setAmount, setUnit, calc } = actions;
-
-  const [showMore, setShowMore] = useState(false);
+  const { state } = useMilestone();
+  const {  birthDate, birthTime } = state;
   const [tab, setTab] = useState<keyof typeof TAB_ROWS>("Classic");
   const [focusValue, setFocusValue] = useState(() => dayjs().valueOf());
 
@@ -193,22 +188,6 @@ export default function Milestones() {
             />
           </section>
         )}
-
-        <div className="wrapper">
-          <MilestonePicker {...{ amount, setAmount, unit, setUnit }} />
-        </div>
-
-        <button className="button" onClick={calc}>
-          Tell me! 🧙‍♂️
-        </button>
-
-        <ResultBlock
-          result={result}
-          error={error}
-          showMore={showMore}
-          onMore={() => setShowMore(!showMore)}
-          target={targetDate}
-        />
       </main>
 
       <Footer />
