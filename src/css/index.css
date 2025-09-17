@@ -221,6 +221,199 @@ body::before {
   padding: 8px; margin-top: 8px; font-size: .9rem;
 }
 
+.timeline-card {
+  width: 100%;
+  max-width: 960px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-top: 32px;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.timeline__value {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.timeline__value-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.timeline__value-label {
+  font-size: .75rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.timeline__value-primary {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--text-light);
+}
+
+.timeline__value-secondary {
+  font-size: .9rem;
+  color: var(--indigo-100);
+}
+
+.timeline__slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  margin: 8px 0 12px;
+  background: transparent;
+}
+
+.timeline__slider::-webkit-slider-runnable-track,
+.timeline__slider::-moz-range-track {
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(79, 70, 229, 0.35), rgba(160, 112, 255, 0.4));
+  border: 1px solid rgba(79, 70, 229, 0.35);
+}
+
+.timeline__slider::-webkit-slider-thumb,
+.timeline__slider::-moz-range-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--indigo-300);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 14px rgba(160, 112, 255, 0.55);
+  cursor: pointer;
+}
+
+.timeline__slider::-webkit-slider-thumb {
+  margin-top: -9px;
+}
+
+.timeline__axis {
+  position: relative;
+  height: 220px;
+}
+
+.timeline__line {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(79, 70, 229, 0.45), rgba(160, 112, 255, 0.6));
+  box-shadow: 0 0 16px rgba(160, 112, 255, 0.35);
+}
+
+.timeline__tick {
+  position: absolute;
+  top: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.timeline__tick-line {
+  width: 2px;
+  height: 18px;
+  background: var(--slate-700);
+}
+
+.timeline__tick-label {
+  font-size: .75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.timeline__event {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 220px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.timeline__event--above { flex-direction: column; }
+.timeline__event--below { flex-direction: column-reverse; }
+
+.timeline__event--clamped {
+  opacity: .65;
+}
+
+.timeline__label {
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(17, 24, 39, 0.85);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+.timeline__label-title {
+  font-size: .95rem;
+  font-weight: 600;
+  color: var(--text-light);
+}
+
+.timeline__label-sub {
+  margin-top: 4px;
+  font-size: .75rem;
+  color: var(--text-muted);
+  display: block;
+}
+
+.timeline__label--highlight {
+  background: rgba(79, 70, 229, 0.4);
+}
+
+.timeline__label--muted {
+  background: rgba(31, 41, 55, 0.85);
+}
+
+.timeline__marker {
+  --marker-color: var(--indigo-300);
+}
+
+.timeline__marker--dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--marker-color);
+  box-shadow: 0 0 12px rgba(160, 112, 255, 0.45);
+}
+
+.timeline__marker--triangle {
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 16px solid var(--marker-color);
+  filter: drop-shadow(0 0 10px rgba(160, 112, 255, 0.4));
+}
+
+@media (max-width: 720px) {
+  .timeline-card { margin-top: 28px; }
+  .timeline__axis { height: 260px; }
+  .timeline__label { max-width: 180px; }
+  .timeline__value-primary { font-size: 1.3rem; }
+}
+
 /* -----------------------------------------------------------
    9.  Navbar & footer
 ----------------------------------------------------------- */
