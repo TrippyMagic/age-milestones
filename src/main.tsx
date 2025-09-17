@@ -2,7 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Analytics } from "@vercel/analytics/react";
-import { SpeedInsights } from "@vercel/speed-insights/next"
+//import { SpeedInsights } from "@vercel/speed-insights/next"
 import "./css/index.css";
 import { BirthDateProvider } from "./context/BirthDateContext";
 
@@ -21,7 +21,6 @@ createRoot(document.getElementById("root")!).render(
         </Routes>
       </BrowserRouter>
       <Analytics />
-      <SpeedInsights/>
     </BirthDateProvider>
   </StrictMode>
 );

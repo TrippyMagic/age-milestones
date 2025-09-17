@@ -119,13 +119,13 @@ export default function BirthDateWizard({
   const hintText = (() => {
     switch (step) {
       case "year":
-        return `Inserisci un anno tra ${MIN_YEAR} e ${CURRENT_YEAR}.`;
+        return `Choose the year between ${MIN_YEAR} and ${CURRENT_YEAR}.`;
       case "month":
-        return "Scegli il mese in cui sei nato.";
+        return "Choose the month";
       case "day":
-        return `Questo mese ha ${daysInMonth} giorni.`;
+        return `This month has ${daysInMonth} days`;
       case "hour":
-        return "Formato 24 ore (0-23).";
+        return "24 hour format (0-23)";
       default:
         return "";
     }
@@ -134,12 +134,12 @@ export default function BirthDateWizard({
   return (
     <div className="birth-wizard" role="dialog" aria-modal="true" aria-labelledby={questionId}>
       <form className="birth-wizard__panel" aria-describedby={hintId} onSubmit={handleSubmit}>
-        <p className="birth-wizard__step">Passo {stepIndex + 1} di {STEPS.length}</p>
+        <p className="birth-wizard__step">Step {stepIndex + 1} of {STEPS.length}</p>
         <h2 className="birth-wizard__question" id={questionId}>
-          {step === "year" && "In che anno sei nato?"}
-          {step === "month" && "Quale mese?"}
-          {step === "day" && "Quale giorno?"}
-          {step === "hour" && "A che ora?"}
+          {step === "year" && "What year were you born?"}
+          {step === "month" && "What month?"}
+          {step === "day" && "What day?"}
+          {step === "hour" && "What time?"}
         </h2>
 
         <div className="birth-wizard__field">
@@ -222,10 +222,10 @@ export default function BirthDateWizard({
 
         <div className="birth-wizard__actions">
           <button type="button" className="birth-wizard__secondary" onClick={goBack}>
-            {stepIndex === 0 ? "Chiudi" : "Indietro"}
+            {stepIndex === 0 ? "Close" : "Back"}
           </button>
           <button type="submit" className="birth-wizard__primary" disabled={!canContinue}>
-            {isLastStep ? "Conferma" : "Avanti"}
+            {isLastStep ? "Confirm data" : "Next"}
           </button>
         </div>
 
@@ -235,7 +235,7 @@ export default function BirthDateWizard({
             className="birth-wizard__skip"
             onClick={() => finish(0)}
           >
-            Non ricordo l'ora (usa 00:00)
+            I dont remember (using 00:00)
           </button>
         )}
       </form>

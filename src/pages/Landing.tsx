@@ -60,10 +60,10 @@ export default function Landing() {
             <hr className="divider" />
             <div className="landing__cta">
               <p className="muted">
-                Rispondi a quattro domande per impostare la tua data di nascita.
+                Set up your date of birth here
               </p>
               {storedSummary && (
-                <p className="landing__summary">Ultima selezione: {storedSummary}</p>
+                <p className="landing__summary">Last selection: {storedSummary}</p>
               )}
               <button className="button" onClick={() => setWizardOpen(true)}>
                 Dive in!

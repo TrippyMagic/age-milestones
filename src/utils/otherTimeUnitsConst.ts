@@ -5,7 +5,6 @@ const YEAR = 365.25 * DAY;
 
 export const TAB_ROWS: Record<string, UnitRow[]> = {
   Classic: [
-    { label: "Centuries", seconds: 100 * YEAR },
     { label: "Years",    seconds: YEAR },
     { label: "Months",   seconds: YEAR / 12 },
     { label: "Weeks",    seconds: 7 * DAY },
@@ -19,14 +18,12 @@ export const TAB_ROWS: Record<string, UnitRow[]> = {
     { label: "Breaths",    seconds: 4 },             // ~15 rpm
     { label: "Blinks",     seconds: 3.5 },           // ~17 blinks/min 
     { label: "Heartbeats", seconds: 0.8 },           // ~75 bpm
-    { label: "Dead cells", seconds:  0.00001},   
+    { label: "Dead cells", seconds: 0.00001},
+    { label: "Liters drank", seconds: DAY/1.8}
   ],
 
   Animals: [
     { label: "Dog years",  seconds: NaN },           // special nonlinear
-    { label: "Mouse years", seconds: (2 * YEAR) / (80 * YEAR) }, 
-    { label: "Dragonfly years", seconds: (60 * DAY) / (80 * YEAR)}, 
-    { label: "Mosquito years", seconds: (14 * DAY) / (80 * YEAR)},  
   ],
 
   Cosmic: [

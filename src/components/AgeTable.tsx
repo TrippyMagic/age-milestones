@@ -51,8 +51,7 @@ export default function AgeTable({ rows }: { rows: UnitRow[] }) {
           };
         })
       );
-    
-      // reset the glow flag
+
       if (glowResetId.current) clearTimeout(glowResetId.current);
       glowResetId.current = setTimeout(
         () => setVals(v => v.map(o => ({ ...o, updated: false }))),
