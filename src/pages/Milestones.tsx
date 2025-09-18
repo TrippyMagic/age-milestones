@@ -7,7 +7,7 @@ import AgeTable from "../components/AgeTable";
 import Footer from "../components/common/Footer.tsx";
 import { Title, Navbar } from "../components/common/Headers.tsx";
 import { useMilestone } from "../hooks/useMilestone";
-import { TAB_ROWS } from "../utils/otherTimeUnitsConst";
+import { TAB_ROWS } from "../utils/timeScalesConstants.ts";
 import "../css/index.css";
 
 const CENTURY_WINDOW = 40;
@@ -115,7 +115,6 @@ export default function Milestones() {
   const allTabs = useMemo(() => Object.keys(TAB_ROWS) as Array<keyof typeof TAB_ROWS>, []);
   const safeTab = allTabs.includes(tab) ? tab : "Classic";
   const rows = TAB_ROWS[safeTab];
-
   const nav = useNavigate();
 
   useEffect(() => {
@@ -173,7 +172,7 @@ export default function Milestones() {
 
         {timeline && (
           <section className="card timeline-card">
-            <span className="label">Explore your timeline</span>
+            <span className="subtitle">Explore your timeline and its upcoming milestones</span>
             <Timeline
               range={timeline.range}
               value={focusValue}

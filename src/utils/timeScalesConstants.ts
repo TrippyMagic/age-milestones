@@ -20,7 +20,7 @@ export const TAB_ROWS: Record<string, UnitRow[]> = {
     { label: "Blinks",seconds: 3.5 },           // ~17 blinks/min
     { label: "Heartbeats", seconds: 0.8 },           // ~75 bpm
     { label: "Blood pumped (Liters)", seconds: 12 },        // ~7200 L/day
-    { label: "Dead cells", seconds: 0.00001},
+    { label: "Dead and replaced cells", seconds: 0.00001},
     { label: "Liquid drank (Liters)", seconds: DAY/2.25},
     { label: "Food eaten (kilograms)", seconds: DAY/1.2},
     { label: "Calories burned (kcal)", seconds: DAY / 2100 },
@@ -60,9 +60,13 @@ export const TAB_ROWS: Record<string, UnitRow[]> = {
   ],
 
   Eons: [
-    { label: "Universe age",    seconds: 13.8e9 * YEAR },
-    { label: "Earth age",       seconds: 4.54e9 * YEAR },
-    { label: "Galactic year",   seconds: 230e6 * YEAR },
-    { label: "Homo sapiens",    seconds: 300_000 * YEAR },
+    { label: "Universe age portion", seconds: 13.9e9 * YEAR },
+    { label: "Earth age portion", seconds: 4.54e9 * YEAR },
+    { label: "Life on Earth portion", seconds: 3.7e9 * YEAR},
+    { label: "Complex life portion", seconds: 650e6 * YEAR},
+    { label: "Galactic year portion", seconds: 230e6 * YEAR },
+    { label: "Fire controlled portion", seconds: 1.5e6 * YEAR},
+    { label: "Homo sapiens portion", seconds: 300_000 * YEAR },
+    { label: "Written history portion", seconds: 5200 * YEAR}
   ],
 };

@@ -13,12 +13,12 @@ import {
 import { useElementSize } from "../hooks/useElementSize";
 import { useOutsideClick } from "../hooks/useOutsideClick";
 
-const SLIDER_RESOLUTION = 10000;
+const SLIDER_RESOLUTION = 5000;
 const GROUPING_GAP_PX = 48;
 const SUB_TIMELINE_MIN_WIDTH = 320;
-const SUB_TIMELINE_PADDING = 40;
-const SUB_TIMELINE_CONNECTOR_HEIGHT = 48;
-const SUB_TIMELINE_MARGIN_RATIO = 0.2;
+const SUB_TIMELINE_PADDING = 10;
+const SUB_TIMELINE_CONNECTOR_HEIGHT = 40;
+const SUB_TIMELINE_MARGIN_RATIO = 0.3;
 const MIN_SUB_TIMELINE_SPAN = 86_400_000;
 
 export type Range = {

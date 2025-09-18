@@ -522,11 +522,11 @@ body::before {
 
 .timeline__subtimeline {
   position: relative;
-  margin-top: 48px;
-  padding-top: 48px;
+  margin-top: 18px;
+  padding-top: 18px;
   padding-bottom: 40px;
   min-height: 280px;
-  --timeline-sub-gap: 48px;
+  --timeline-sub-gap: 108px;
 }
 
 .timeline__subtimeline-connectors {
@@ -540,7 +540,7 @@ body::before {
 
 .timeline__subtimeline-connectors line {
   stroke: rgba(160, 112, 255, 0.6);
-  stroke-width: 2;
+  stroke-width: 1;
 }
 
 .timeline__subtimeline-box {
@@ -556,8 +556,8 @@ body::before {
 
 .timeline__subtimeline-axis {
   position: relative;
-  height: 200px;
-  --timeline-line-top: 68%;
+  height: 180px;
+  --timeline-line-top: 80%;
 }
 
 .timeline__subtimeline-axis .timeline__event {
