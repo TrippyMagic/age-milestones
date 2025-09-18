@@ -15,6 +15,8 @@
   --slate-900: #111827;
   --text-light: #f3f4f6;
   --text-muted: #9ca3af;
+  --layout-max-width: 1100px;
+  --card-max-width: 720px;
 }
 
 body {
@@ -23,12 +25,25 @@ body {
   min-width: 320px;
   min-height: 100vh;
   display: flex;
-  place-items: center;
+  justify-content: center;
+  align-items: flex-start;
+  padding: clamp(16px, 4vw, 48px);
+  box-sizing: border-box;
 
   --bg-url: url("/bg-time.png");
-  background:
-    var(--bg-url) center / cover no-repeat fixed,
-    #0d1128;                                 /* fallback colour */
+  background-color: #0d1128;
+  background-image: var(--bg-url);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  background-attachment: fixed;              /* parallax feel on desktop */
+}
+
+#root {
+  width: min(var(--layout-max-width), 100%);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(24px, 5vh, 48px);
 }
 
 body::before {
@@ -40,6 +55,19 @@ body::before {
   z-index: -1;
 }
 
+@media (max-width: 768px) {
+  body {
+    align-items: stretch;
+    background-attachment: scroll;
+    background-position: center top;
+  }
+
+  #root {
+    width: 100%;
+    gap: 32px;
+  }
+}
+
 /* -----------------------------------------------------------
    2.  Generic layout helpers
 ----------------------------------------------------------- */
@@ -48,7 +76,10 @@ body::before {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 24px;
+  width: 100%;
+  padding: clamp(24px, 4vw, 48px);
+  gap: clamp(24px, 5vh, 36px);
+  box-sizing: border-box;
 }
 
 .wrapper {
@@ -62,8 +93,24 @@ body::before {
 
 /* responsive tweak */
 @media (max-width: 480px) {
-  .wrapper,
-  .card { max-width: 100%; padding: 24px; }
+  .page {
+    padding: 20px 16px;
+    gap: 20px;
+  }
+
+  .card {
+    width: 100%;
+    padding: 20px 16px;
+  }
+
+  .wrapper {
+    margin-top: 24px;
+  }
+
+  .footer {
+    padding-bottom: 16px;
+    font-size: 0.8rem;
+  }
 }
 
 /* -----------------------------------------------------------
@@ -76,7 +123,9 @@ body::before {
   -webkit-background-clip: text;
   color: transparent;
   text-shadow: 0 0 8px rgba(160, 112, 255, .4);
-  margin-top: 12px;
+  margin: 12px auto 0;
+  text-align: center;
+  width: min(100%, 22ch);
 }
 
 .subtitle {
@@ -90,15 +139,15 @@ body::before {
    4.  Card container
 ----------------------------------------------------------- */
 .card {
-  width: 100%;
-  max-width: 640px;
+  width: min(var(--card-max-width), 100%);
+  margin: 0 auto;
   background: #1d3252;
-  border-radius: 12px;
-  padding: 32px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, .4);
+  border-radius: 16px;
+  padding: clamp(24px, 3vw, 36px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, .35);
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: clamp(16px, 3vw, 24px);
   box-sizing: border-box;
 }
 
@@ -221,11 +270,10 @@ body::before {
 }
 
 .timeline-card {
-  width: 2000px;
-  max-width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
+  --card-max-width: var(--layout-max-width);
+  width: 100%;
+  align-self: stretch;
+  gap: clamp(20px, 3vw, 28px);
   margin-top: 32px;
 }
 
@@ -532,14 +580,23 @@ body::before {
    9.  Navbar & footer
 ----------------------------------------------------------- */
 .navbar {
-  width: 100%; max-width: 960px; margin: 0 auto 24px;
-  display: flex; justify-content: flex-start;
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  padding: 0 clamp(8px, 2vw, 16px);
+  box-sizing: border-box;
 }
 .navbar a { color: var(--indigo-100); text-decoration: none; }
 .navbar a:hover { text-decoration: underline; }
 
 .footer {
-  margin-top: 40px; font-size: .8rem; color: var(--text-muted); text-align: center;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 clamp(12px, 3vw, 24px) 24px;
+  font-size: .85rem;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.6;
 }
 .footer a { color: var(--indigo-100); text-decoration: none; }
 .footer a:hover { text-decoration: underline; }
@@ -594,22 +651,28 @@ body::before {
 }
 .table-wrap {
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
   overflow-x: auto;      /* allow sideways scroll for huge values */
+  padding-bottom: 8px;
   margin-bottom: 24px;    /* spacing below the table */
 }
 .table-wrap .subtitle {
   text-align: center;
-  margin-bottom: 12px;
+  margin: 0;
 }
 .age-table {
-  width: auto; max-width: 460px; margin: 0 auto 28px;
+  width: min(520px, 100%);
+  margin: 0 auto 28px;
   border-collapse: collapse; font-variant-numeric: tabular-nums;
-  overflow: hidden; border-radius: 10px; box-shadow: 0 0 8px rgba(0,0,0,.4);
+  overflow: hidden; border-radius: 12px; box-shadow: 0 12px 24px rgba(0,0,0,.35);
 }
 .age-table tr:nth-child(odd)  { background: #243447; }
 .age-table tr:nth-child(even) { background: #1d2b3a; }
 
-.age-table td { padding: 10px 24px; }
+.age-table td { padding: 10px clamp(16px, 4vw, 28px); }
 .age-table tr:last-child td { border-bottom: none; }
 
 .age-table td:first-child { color: var(--text-muted); font-weight: 500; }
@@ -630,6 +693,11 @@ body::before {
 ----------------------------------------------------------- */
 .landing__content {
   position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(32px, 6vh, 64px);
   transition: filter 0.3s ease;
 }
 
@@ -644,6 +712,9 @@ body::before {
   flex-direction: column;
   align-items: center;
   gap: 16px;
+  text-align: center;
+  width: min(100%, 340px);
+  margin: 0 auto;
 }
 
 .landing__summary {

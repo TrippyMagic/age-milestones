@@ -8,9 +8,6 @@ import Footer from "../components/common/Footer.tsx";
 import { Title, Navbar } from "../components/common/Headers.tsx";
 import { useMilestone } from "../hooks/useMilestone";
 import { TAB_ROWS } from "../utils/otherTimeUnitsConst";
-
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error
 import "../css/index.css";
 
 const CENTURY_WINDOW = 40;
