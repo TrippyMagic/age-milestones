@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useBirthDate } from "../context/BirthDateContext";
 import { useNavigate } from "react-router-dom";
 import { landingIntro } from "../utils/constants";
-import Footer from "../components/Footer";
+import Footer from "../components/common/Footer.tsx";
 import BirthDateWizard from "../components/BirthDateWizard";
+import { Title } from "../components/common/Headers.tsx";
 
 export default function Landing() {
   const { birthDate, setBirthDate, birthTime, setBirthTime } = useBirthDate();
@@ -45,8 +46,7 @@ export default function Landing() {
     <>
       <div className={`landing__content ${wizardOpen ? "landing__content--blurred" : ""}`}>
         <main className="page">
-          <h1 className="title">AGE MILESTONES</h1>
-
+          <Title/>
           <section className="card">
             <div
               className="intro"

@@ -1,4 +1,4 @@
-import MorePanel from "./MorePanel";
+import MorePanel from "./MorePanel.tsx";
 
 type Props={
   result:string|null,

@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 
 import Timeline, { type TimelineEvent, type TimelineTick } from "../components/Timeline";
 import AgeTable from "../components/AgeTable";
-import Footer from "../components/Footer";
+import Footer from "../components/common/Footer.tsx";
+import { Title, Navbar } from "../components/common/Headers.tsx";
 import { useMilestone } from "../hooks/useMilestone";
 import { TAB_ROWS } from "../utils/otherTimeUnitsConst";
 
@@ -151,13 +152,9 @@ export default function Milestones() {
 
   return (
     <>
-      <header className="navbar">
-        <Link to="/">← Edit date of birth</Link>
-      </header>
-
       <main className="page">
-        <h1 className="title">AGE MILESTONES</h1>
-
+        <Title/>
+        <Navbar/>
         <div className="tabs">
           {allTabs.map(t => (
             <button

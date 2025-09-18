@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatNice, formatBig, formatSmall } from './format';
+import { formatNice, formatBig, formatSmall } from '../utils/format.ts';
 
 describe('formatNice', () => {
   it('handles numbers less than a million', () => {
