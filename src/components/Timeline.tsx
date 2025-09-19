@@ -16,8 +16,10 @@ import { useOutsideClick } from "../hooks/useOutsideClick";
 const SLIDER_RESOLUTION = 5000;
 const GROUPING_GAP_PX = 48;
 const SUB_TIMELINE_MIN_WIDTH = 320;
-const SUB_TIMELINE_PADDING = 10;
-const SUB_TIMELINE_CONNECTOR_HEIGHT = 40;
+const SUB_TIMELINE_BUFFER_PX = 10;
+const SUB_TIMELINE_PADDING_X = 20;
+const SUB_TIMELINE_PADDING_Y = 16;
+const SUB_TIMELINE_CONNECTOR_HEIGHT = 72;
 const SUB_TIMELINE_MARGIN_RATIO = 0.3;
 const MIN_SUB_TIMELINE_SPAN = 86_400_000;
 
@@ -94,6 +96,13 @@ type SubTimelineProps = {
   group: RenderGroup;
   range: Range;
   onClose: () => void;
+};
+
+type SubTick = {
+  id: string;
+  value: number;
+  leftPercent: number;
+  label: string;
 };
 
 const getRatio = (value: number, range: Range, span: number) => {
@@ -207,6 +216,37 @@ const createSubRange = (group: RenderGroup, range: Range): Range => {
   }
 
   return { start: nextStart, end: nextEnd };
+};
+
+const createSubTicks = (range: Range): SubTick[] => {
+  const span = range.end - range.start;
+  if (span <= 0) return [];
+
+  const formatter = new Intl.DateTimeFormat(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric"
+  });
+
+  const midpoint = range.start + span / 2;
+  const values = [range.start, midpoint, range.end];
+  const seen = new Set<number>();
+
+  return values
+    .map((value, index) => {
+      const safeValue = clamp(value, range.start, range.end);
+      if (seen.has(safeValue)) return null;
+      seen.add(safeValue);
+      const ratio = getRatio(safeValue, range, span);
+
+      return {
+        id: `subtick-${safeValue}-${index}`,
+        value: safeValue,
+        leftPercent: toPercent(ratio),
+        label: formatter.format(new Date(safeValue))
+      } satisfies SubTick;
+    })
+    .filter((tick): tick is SubTick => Boolean(tick));
 };
 
 export default function Timeline({ range, value, onChange, events, ticks = [], renderValue }: Props) {
@@ -406,6 +446,8 @@ const SubTimeline = ({ axisWidth, group, range, onClose }: SubTimelineProps) => 
   const subRange = useMemo(() => createSubRange(group, range), [group, range]);
   const subSpan = subRange.end - subRange.start || 1;
 
+  const subTicks = useMemo(() => createSubTicks(subRange), [subRange]);
+
   const subEvents = useMemo(
     () =>
       group.events.map(event => ({
@@ -418,32 +460,57 @@ const SubTimeline = ({ axisWidth, group, range, onClose }: SubTimelineProps) => 
   const startPx = axisWidth * group.startRatio;
   const endPx = axisWidth * group.endRatio;
   const baseWidth = Math.max(endPx - startPx, 0);
-  const desiredWidth = Math.max(baseWidth + SUB_TIMELINE_PADDING * 2, SUB_TIMELINE_MIN_WIDTH);
+  const desiredWidth = Math.max(baseWidth + SUB_TIMELINE_BUFFER_PX * 2, SUB_TIMELINE_MIN_WIDTH);
   const width = Math.min(axisWidth, desiredWidth);
   const center = axisWidth * group.ratio;
   const left = clamp(center - width / 2, 0, Math.max(axisWidth - width, 0));
-  const right = left + width;
+  const innerWidth = Math.max(width - SUB_TIMELINE_PADDING_X * 2, 0);
+
+  const startConnectorRatio = getRatio(group.valueRange.start, subRange, subSpan);
+  const endConnectorRatio = getRatio(group.valueRange.end, subRange, subSpan);
+
+  const startConnectorTarget = left + SUB_TIMELINE_PADDING_X + innerWidth * startConnectorRatio;
+  const endConnectorTarget = left + SUB_TIMELINE_PADDING_X + innerWidth * endConnectorRatio;
+
+  const connectorsHeight = SUB_TIMELINE_CONNECTOR_HEIGHT;
+
+  const subTimelineStyle: CSSProperties = {
+    ["--timeline-sub-gap" as string]: `${connectorsHeight}px`
+  };
+
+  const boxStyle: CSSProperties = {
+    width: `${width}px`,
+    left: `${left}px`,
+    ["--timeline-sub-padding-x" as string]: `${SUB_TIMELINE_PADDING_X}px`,
+    ["--timeline-sub-padding-y" as string]: `${SUB_TIMELINE_PADDING_Y}px`
+  };
 
   return (
-    <div className="timeline__subtimeline">
+    <div className="timeline__subtimeline" style={subTimelineStyle}>
       <svg
         className="timeline__subtimeline-connectors"
         width={axisWidth}
-        height={SUB_TIMELINE_CONNECTOR_HEIGHT}
-        viewBox={`0 0 ${axisWidth} ${SUB_TIMELINE_CONNECTOR_HEIGHT}`}
+        height={connectorsHeight}
+        viewBox={`0 0 ${axisWidth} ${connectorsHeight}`}
         preserveAspectRatio="none"
       >
-        <line x1={startPx} y1={0} x2={left} y2={SUB_TIMELINE_CONNECTOR_HEIGHT} />
-        <line x1={endPx} y1={0} x2={right} y2={SUB_TIMELINE_CONNECTOR_HEIGHT} />
+        <line x1={startPx} y1={0} x2={startConnectorTarget} y2={connectorsHeight} />
+        <line x1={endPx} y1={0} x2={endConnectorTarget} y2={connectorsHeight} />
       </svg>
 
       <div
         ref={containerRef}
         className="timeline__subtimeline-box"
-        style={{ width: `${width}px`, left: `${left}px` }}
+        style={boxStyle}
       >
         <div className="timeline__subtimeline-axis">
           <div className="timeline__line" />
+          {subTicks.map(tick => (
+            <div key={tick.id} className="timeline__subtimeline-tick" style={{ left: `${tick.leftPercent}%` }}>
+              <span className="timeline__subtimeline-tick-line" />
+              <span className="timeline__subtimeline-tick-label">{tick.label}</span>
+            </div>
+          ))}
           {subEvents.map(item => (
             <EventElement
               key={`sub-${item.event.id}`}

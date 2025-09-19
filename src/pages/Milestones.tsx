@@ -46,6 +46,9 @@ const formatRelative = (now: dayjs.Dayjs, target: dayjs.Dayjs) => {
   return diffDays > 0 ? `In ${diffDays} days` : `${Math.abs(diffDays)} days ago`;
 };
 
+const formatWithWeekday = (instant: dayjs.Dayjs, withTime = false) =>
+  instant.format(withTime ? "ddd, MMM D, YYYY HH:mm" : "ddd, MMM D, YYYY");
+
 const generateTicks = (start: dayjs.Dayjs, end: dayjs.Dayjs, stepYears: number): TimelineTick[] => {
   if (stepYears <= 0) return [];
 
@@ -89,11 +92,38 @@ const buildTimelineData = (birthDate: Date, birthTime: string): TimelineData | n
   const billionSeconds = base.add(1_000_000_000, "second");
 
   const events: TimelineEvent[] = [
-    { id: "birth", label: "Birth", subLabel: base.format("MMM D, YYYY"), value: base.valueOf(), placement: "above" },
-    { id: "midpoint", label: "Midpoint", subLabel: midpoint.format("MMM D, YYYY"), value: midpoint.valueOf(), placement: "above", accent: "muted" },
-    { id: "today", label: "Today", subLabel: now.format("MMM D, YYYY"), value: now.valueOf(), placement: "below", markerShape: "triangle", accent: "highlight" },
-    { id: "tenk", label: "10,000 days old", subLabel: tenThousandDays.format("MMM D, YYYY"), value: tenThousandDays.valueOf(), placement: "below" },
-    { id: "billion", label: "1B seconds old", subLabel: billionSeconds.format("MMM D, YYYY HH:mm"), value: billionSeconds.valueOf(), placement: "above" }
+    { id: "birth", label: "Birth", subLabel: formatWithWeekday(base), value: base.valueOf(), placement: "above" },
+    {
+      id: "midpoint",
+      label: "Midpoint",
+      subLabel: formatWithWeekday(midpoint),
+      value: midpoint.valueOf(),
+      placement: "above",
+      accent: "muted"
+    },
+    {
+      id: "today",
+      label: "Today",
+      subLabel: formatWithWeekday(now),
+      value: now.valueOf(),
+      placement: "below",
+      markerShape: "triangle",
+      accent: "highlight"
+    },
+    {
+      id: "tenk",
+      label: "10,000 days old",
+      subLabel: formatWithWeekday(tenThousandDays),
+      value: tenThousandDays.valueOf(),
+      placement: "below"
+    },
+    {
+      id: "billion",
+      label: "1B seconds old",
+      subLabel: formatWithWeekday(billionSeconds, true),
+      value: billionSeconds.valueOf(),
+      placement: "above"
+    }
   ];
 
   const ticks = generateTicks(start, end, TICK_STEP_YEARS);
@@ -142,7 +172,7 @@ export default function Milestones() {
     return (
       <div className="timeline__value-content">
         <span className="timeline__value-label">Focus date</span>
-        <span className="timeline__value-primary">{instant.format("MMM D, YYYY")}</span>
+        <span className="timeline__value-primary">{formatWithWeekday(instant)}</span>
         <span className="timeline__value-secondary">{relative}</span>
       </div>
     );
