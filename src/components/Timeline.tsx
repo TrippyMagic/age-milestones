@@ -53,6 +53,7 @@ export type TimelineEvent = {
   placement?: "above" | "below";
   markerShape?: MarkerShape;
   accent?: Accent;
+  showRelativeLabel?: boolean;
 };
 
 export type TimelineTick = {
@@ -506,11 +507,9 @@ const SubTimeline = ({ axisWidth, group, range, onClose, now }: SubTimelineProps
   const left = clamp(center - width / 2, 0, Math.max(axisWidth - width, 0));
   const innerWidth = Math.max(width - SUB_TIMELINE_PADDING_X * 2, 0);
 
-  const startConnectorRatio = getRatio(group.valueRange.start, subRange, subSpan);
-  const endConnectorRatio = getRatio(group.valueRange.end, subRange, subSpan);
-
-  const startConnectorTarget = left + SUB_TIMELINE_PADDING_X + innerWidth * startConnectorRatio;
-  const endConnectorTarget = left + SUB_TIMELINE_PADDING_X + innerWidth * endConnectorRatio;
+  const connectorOrigin = axisWidth * group.ratio;
+  const subAxisStart = left + SUB_TIMELINE_PADDING_X;
+  const subAxisEnd = left + SUB_TIMELINE_PADDING_X + innerWidth;
 
   const connectorsHeight = SUB_TIMELINE_CONNECTOR_HEIGHT;
 
@@ -518,7 +517,7 @@ const SubTimeline = ({ axisWidth, group, range, onClose, now }: SubTimelineProps
     ["--timeline-sub-gap" as string]: `${connectorsHeight}px`
   };
 
-  const boxStyle: CSSProperties = {
+  const surfaceStyle: CSSProperties = {
     width: `${width}px`,
     left: `${left}px`,
     ["--timeline-sub-padding-x" as string]: `${SUB_TIMELINE_PADDING_X}px`,
@@ -534,14 +533,14 @@ const SubTimeline = ({ axisWidth, group, range, onClose, now }: SubTimelineProps
         viewBox={`0 0 ${axisWidth} ${connectorsHeight}`}
         preserveAspectRatio="none"
       >
-        <line x1={startPx} y1={0} x2={startConnectorTarget} y2={connectorsHeight} />
-        <line x1={endPx} y1={0} x2={endConnectorTarget} y2={connectorsHeight} />
+        <line x1={connectorOrigin} y1={0} x2={subAxisStart} y2={connectorsHeight} />
+        <line x1={connectorOrigin} y1={0} x2={subAxisEnd} y2={connectorsHeight} />
       </svg>
 
       <div
         ref={containerRef}
-        className="timeline__subtimeline-box"
-        style={boxStyle}
+        className="timeline__subtimeline-surface"
+        style={surfaceStyle}
       >
         <div className="timeline__subtimeline-axis">
           <div className="timeline__line" />
@@ -580,9 +579,17 @@ const EventElement = ({ event, leftPercent, variant, range, now }: EventElementP
   const markerShape = event.markerShape ?? "dot";
   const accent: Accent = event.accent ?? "default";
   const isClamped = event.value < range.start || event.value > range.end;
-  const timing = formatEventTiming(event.value, now);
-  const isFuture = event.value - now > 0;
-  const timingClass = isFuture ? "timeline__label-relative--future" : "timeline__label-relative--past";
+  const showRelativeLabel = event.showRelativeLabel ?? true;
+  let relativeLabel: ReactNode | null = null;
+  if (showRelativeLabel) {
+    const isFuture = event.value - now > 0;
+    const timingClass = isFuture ? "timeline__label-relative--future" : "timeline__label-relative--past";
+    relativeLabel = (
+      <span className={`timeline__label-relative ${timingClass}`}>
+        {formatEventTiming(event.value, now)}
+      </span>
+    );
+  }
   const labelId = `${variant}-${event.id}-label`;
 
   const eventClasses = [
@@ -612,7 +619,7 @@ const EventElement = ({ event, leftPercent, variant, range, now }: EventElementP
       <div className={labelClasses.join(" ")} id={labelId}>
         <span className="timeline__label-title">{event.label}</span>
         {event.subLabel && <span className="timeline__label-sub">{event.subLabel}</span>}
-        <span className={`timeline__label-relative ${timingClass}`}>{timing}</span>
+        {relativeLabel}
       </div>
     </div>
   );

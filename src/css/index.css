@@ -604,23 +604,19 @@ body::before {
   width: var(--timeline-marker-size);
   height: var(--timeline-marker-size);
   border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.45) 30%, var(--marker-color) 75%);
-  border: 2px solid rgba(226, 232, 240, 0.55);
-  box-shadow: 0 10px 22px rgba(79, 70, 229, 0.35);
+  background: var(--marker-color);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.35);
   transition: transform .2s ease, box-shadow .2s ease;
 }
 
 .timeline__marker::after {
-  content: "";
-  position: absolute;
-  inset: 4px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.18);
+  content: none;
 }
 
 .timeline__event:hover .timeline__marker {
   transform: scale(1.08);
-  box-shadow: 0 12px 26px rgba(79, 70, 229, 0.45);
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.4);
 }
 
 .timeline__subtimeline {
@@ -644,16 +640,13 @@ body::before {
 .timeline__subtimeline-connectors line {
   stroke: rgba(160, 112, 255, 0.6);
   stroke-width: 1;
+  stroke-linecap: round;
 }
 
-.timeline__subtimeline-box {
+.timeline__subtimeline-surface {
   position: absolute;
   top: 0;
   padding: var(--timeline-sub-padding-y, 18px) var(--timeline-sub-padding-x, 20px);
-  background: rgba(17, 24, 39, 0.95);
-  border: 1px solid rgba(79, 70, 229, 0.35);
-  border-radius: 18px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
   pointer-events: auto;
 }
 
