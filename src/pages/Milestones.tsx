@@ -92,7 +92,14 @@ const buildTimelineData = (birthDate: Date, birthTime: string): TimelineData | n
   const billionSeconds = base.add(1_000_000_000, "second");
 
   const events: TimelineEvent[] = [
-    { id: "birth", label: "Birth", subLabel: formatWithWeekday(base), value: base.valueOf(), placement: "above" },
+    {
+      id: "birth",
+      label: "Birth",
+      subLabel: formatWithWeekday(base),
+      value: base.valueOf(),
+      placement: "above",
+      accent: "highlight"
+    },
     {
       id: "midpoint",
       label: "Midpoint",
