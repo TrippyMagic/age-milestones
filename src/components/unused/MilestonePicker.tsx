@@ -1,4 +1,4 @@
-import { PRESETS, SLIDER, TIME_UNITS, Unit } from "../../utils/constants.ts";
+import { PRESETS, SLIDER, TIME_UNITS, Unit } from "./constants.ts";
 import { formatNice } from "../../utils/format.ts";
 
 type Props={

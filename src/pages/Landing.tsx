@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useBirthDate } from "../context/BirthDateContext";
 import { useNavigate } from "react-router-dom";
-import { landingIntro } from "../utils/constants";
+import { landingIntro } from "../components/unused/constants.ts";
 import Footer from "../components/common/Footer.tsx";
 import BirthDateWizard from "../components/BirthDateWizard";
 import { Title } from "../components/common/Headers.tsx";

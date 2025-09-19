@@ -1,4 +1,4 @@
-import { timezones } from "../../utils/constants.ts"
+import { timezones } from "./constants.ts"
 
 type Props={tzOff:number,setTzOff:(n:number)=>void}
 
