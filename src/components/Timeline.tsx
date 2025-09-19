@@ -17,8 +17,6 @@ const SLIDER_RESOLUTION = 5000;
 const GROUPING_GAP_PX = 48;
 const SUB_TIMELINE_MIN_WIDTH = 320;
 const SUB_TIMELINE_BUFFER_PX = 10;
-const SUB_TIMELINE_PADDING_X = 20;
-const SUB_TIMELINE_PADDING_Y = 16;
 const SUB_TIMELINE_CONNECTOR_HEIGHT = 72;
 const SUB_TIMELINE_MARGIN_RATIO = 0.3;
 const MIN_SUB_TIMELINE_SPAN = 86_400_000;
@@ -497,20 +495,15 @@ const SubTimeline = ({ axisWidth, group, range, onClose, now }: SubTimelineProps
     [group.events, subRange, subSpan]
   );
 
-  const startPx = axisWidth * group.startRatio;
-  const endPx = axisWidth * group.endRatio;
-  const baseWidth = Math.max(endPx - startPx, 0);
+  const baseWidth = Math.max(axisWidth * (group.endRatio - group.startRatio), 0);
   const desiredWidth = Math.max(baseWidth + SUB_TIMELINE_BUFFER_PX * 2, SUB_TIMELINE_MIN_WIDTH);
   const width = Math.min(axisWidth, desiredWidth);
   const center = axisWidth * group.ratio;
   const left = clamp(center - width / 2, 0, Math.max(axisWidth - width, 0));
-  const innerWidth = Math.max(width - SUB_TIMELINE_PADDING_X * 2, 0);
+  const groupCenterPx = axisWidth * group.ratio;
 
-  const startConnectorRatio = getRatio(group.valueRange.start, subRange, subSpan);
-  const endConnectorRatio = getRatio(group.valueRange.end, subRange, subSpan);
-
-  const startConnectorTarget = left + SUB_TIMELINE_PADDING_X + innerWidth * startConnectorRatio;
-  const endConnectorTarget = left + SUB_TIMELINE_PADDING_X + innerWidth * endConnectorRatio;
+  const startConnectorTarget = left;
+  const endConnectorTarget = left + width;
 
   const connectorsHeight = SUB_TIMELINE_CONNECTOR_HEIGHT;
 
@@ -518,11 +511,9 @@ const SubTimeline = ({ axisWidth, group, range, onClose, now }: SubTimelineProps
     ["--timeline-sub-gap" as string]: `${connectorsHeight}px`
   };
 
-  const boxStyle: CSSProperties = {
+  const axisWrapperStyle: CSSProperties = {
     width: `${width}px`,
-    left: `${left}px`,
-    ["--timeline-sub-padding-x" as string]: `${SUB_TIMELINE_PADDING_X}px`,
-    ["--timeline-sub-padding-y" as string]: `${SUB_TIMELINE_PADDING_Y}px`
+    left: `${left}px`
   };
 
   return (
@@ -534,14 +525,14 @@ const SubTimeline = ({ axisWidth, group, range, onClose, now }: SubTimelineProps
         viewBox={`0 0 ${axisWidth} ${connectorsHeight}`}
         preserveAspectRatio="none"
       >
-        <line x1={startPx} y1={0} x2={startConnectorTarget} y2={connectorsHeight} />
-        <line x1={endPx} y1={0} x2={endConnectorTarget} y2={connectorsHeight} />
+        <line x1={groupCenterPx} y1={0} x2={startConnectorTarget} y2={connectorsHeight} />
+        <line x1={groupCenterPx} y1={0} x2={endConnectorTarget} y2={connectorsHeight} />
       </svg>
 
       <div
         ref={containerRef}
-        className="timeline__subtimeline-box"
-        style={boxStyle}
+        className="timeline__subtimeline-axis-wrapper"
+        style={axisWrapperStyle}
       >
         <div className="timeline__subtimeline-axis">
           <div className="timeline__line" />
@@ -580,7 +571,8 @@ const EventElement = ({ event, leftPercent, variant, range, now }: EventElementP
   const markerShape = event.markerShape ?? "dot";
   const accent: Accent = event.accent ?? "default";
   const isClamped = event.value < range.start || event.value > range.end;
-  const timing = formatEventTiming(event.value, now);
+  const showTiming = event.id !== "today";
+  const timing = showTiming ? formatEventTiming(event.value, now) : null;
   const isFuture = event.value - now > 0;
   const timingClass = isFuture ? "timeline__label-relative--future" : "timeline__label-relative--past";
   const labelId = `${variant}-${event.id}-label`;
@@ -612,7 +604,9 @@ const EventElement = ({ event, leftPercent, variant, range, now }: EventElementP
       <div className={labelClasses.join(" ")} id={labelId}>
         <span className="timeline__label-title">{event.label}</span>
         {event.subLabel && <span className="timeline__label-sub">{event.subLabel}</span>}
-        <span className={`timeline__label-relative ${timingClass}`}>{timing}</span>
+        {showTiming && timing && (
+          <span className={`timeline__label-relative ${timingClass}`}>{timing}</span>
+        )}
       </div>
     </div>
   );

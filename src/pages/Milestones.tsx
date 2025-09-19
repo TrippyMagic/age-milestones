@@ -10,7 +10,8 @@ import { useMilestone } from "../hooks/useMilestone";
 import { TAB_ROWS } from "../utils/timePerspectivesConstants.ts";
 import "../css/index.css";
 
-const CENTURY_WINDOW = 40;
+const FUTURE_WINDOW_YEARS = 40;
+const LOOKBACK_YEARS = 20;
 const TICK_STEP_YEARS = 10;
 
 type TimelineData = {
@@ -85,8 +86,12 @@ const buildTimelineData = (birthDate: Date, birthTime: string): TimelineData | n
   const now = dayjs();
   const midpointValue = base.valueOf() + (now.valueOf() - base.valueOf()) / 2;
   const midpoint = dayjs(midpointValue);
-  const start = midpoint.subtract(CENTURY_WINDOW, "year");
-  const end = midpoint.add(CENTURY_WINDOW, "year");
+  const start = base.subtract(LOOKBACK_YEARS, "year");
+  let end = midpoint.add(FUTURE_WINDOW_YEARS, "year");
+
+  if (!end.isAfter(start)) {
+    end = start.add(FUTURE_WINDOW_YEARS * 2, "year");
+  }
 
   const tenThousandDays = base.add(10_000, "day");
   const billionSeconds = base.add(1_000_000_000, "second");
