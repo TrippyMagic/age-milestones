@@ -4,7 +4,7 @@ export const formatNice = (n: number) => {
     return n.toLocaleString();
 };
 
-const formatBig = (n: number) => {
+export const formatBig = (n: number) => {
     return n >= 1e15 ? n.toExponential(2).replace("+", "") : n.toLocaleString();
 };
 
@@ -12,7 +12,7 @@ const formatStandard = (n: number, digits: number) => {
     return n.toFixed(digits).toLocaleString();
 }
 
-const formatSmall = (n: number) => {
+export const formatSmall = (n: number) => {
     if (n === 0) return '0';
     const [mantissa, exp] = n.toExponential(16).split('e');
     const exponent = parseInt(exp, 10);
