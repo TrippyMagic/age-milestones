@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -100,6 +101,7 @@ type SubTimelineProps = {
   range: Range;
   onClose: () => void;
   now: number;
+  groupElement: HTMLButtonElement | null;
 };
 
 type SubTick = {
@@ -299,6 +301,15 @@ export default function Timeline({ range, value, onChange, events, ticks = [], r
     [axisRef]
   );
 
+  const groupNodesRef = useRef<Map<string, HTMLButtonElement>>(new Map());
+  const setGroupNode = useCallback((groupId: string, node: HTMLButtonElement | null) => {
+    if (node) {
+      groupNodesRef.current.set(groupId, node);
+    } else {
+      groupNodesRef.current.delete(groupId);
+    }
+  }, []);
+
   const sortedEvents = useMemo(() => events.slice().sort((a, b) => a.value - b.value), [events]);
   const sortedTicks = useMemo(() => ticks.slice().sort((a, b) => a.value - b.value), [ticks]);
 
@@ -315,6 +326,8 @@ export default function Timeline({ range, value, onChange, events, ticks = [], r
       renderItems.find(item => item.type === "group" && item.id === activeGroupId) as RenderGroup | undefined
     ) ?? null;
   }, [activeGroupId, renderItems]);
+
+  const activeGroupNode = activeGroup ? groupNodesRef.current.get(activeGroup.id) ?? null : null;
 
   useEffect(() => {
     if (!activeGroupId) return;
@@ -428,6 +441,7 @@ export default function Timeline({ range, value, onChange, events, ticks = [], r
               <button
                 key={item.id}
                 type="button"
+                ref={node => setGroupNode(item.id, node)}
                 className={`timeline__group ${isActive ? "timeline__group--active" : ""}`.trim()}
                 style={{ left: `${item.leftPercent}%` }}
                 onClick={() => handleGroupToggle(item.id)}
@@ -471,15 +485,57 @@ export default function Timeline({ range, value, onChange, events, ticks = [], r
           range={range}
           onClose={handleCloseSubTimeline}
           now={now}
+          groupElement={activeGroupNode}
         />
       )}
     </div>
   );
 }
 
-const SubTimeline = ({ axisWidth, group, range, onClose, now }: SubTimelineProps) => {
+const SubTimeline = ({ axisWidth, group, range, onClose, now, groupElement }: SubTimelineProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   useOutsideClick(containerRef, onClose);
+
+  const [connectorGap, setConnectorGap] = useState(SUB_TIMELINE_CONNECTOR_HEIGHT);
+
+  useLayoutEffect(() => {
+    const updateGap = () => {
+      const wrapper = containerRef.current;
+      if (!wrapper) return;
+
+      if (!groupElement) {
+        setConnectorGap(prev =>
+          Math.abs(prev - SUB_TIMELINE_CONNECTOR_HEIGHT) < 0.5 ? prev : SUB_TIMELINE_CONNECTOR_HEIGHT
+        );
+        return;
+      }
+
+      const containerRect = wrapper.getBoundingClientRect();
+      const groupRect = groupElement.getBoundingClientRect();
+      const measured = containerRect.top - groupRect.bottom;
+      const fallback = SUB_TIMELINE_CONNECTOR_HEIGHT;
+      const nextGap = Number.isFinite(measured) && measured > 0 ? measured : fallback;
+
+      setConnectorGap(prev => (Math.abs(prev - nextGap) < 0.5 ? prev : nextGap));
+    };
+
+    updateGap();
+
+    window.addEventListener("resize", updateGap);
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(updateGap);
+      const wrapper = containerRef.current;
+      if (wrapper) resizeObserver.observe(wrapper);
+      if (groupElement) resizeObserver.observe(groupElement);
+    }
+
+    return () => {
+      window.removeEventListener("resize", updateGap);
+      resizeObserver?.disconnect();
+    };
+  }, [groupElement]);
 
   const subRange = useMemo(() => createSubRange(group, range), [group, range]);
   const subSpan = subRange.end - subRange.start || 1;
@@ -505,7 +561,7 @@ const SubTimeline = ({ axisWidth, group, range, onClose, now }: SubTimelineProps
   const startConnectorTarget = left;
   const endConnectorTarget = left + width;
 
-  const connectorsHeight = SUB_TIMELINE_CONNECTOR_HEIGHT;
+  const connectorsHeight = Math.max(connectorGap, 1);
 
   const subTimelineStyle: CSSProperties = {
     ["--timeline-sub-gap" as string]: `${connectorsHeight}px`
