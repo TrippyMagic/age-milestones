@@ -407,8 +407,6 @@ export default function Timeline({ range, value, onChange, events, ticks = [], r
 
   return (
     <div className="timeline">
-      {valueNode && <div className="timeline__value">{valueNode}</div>}
-
       <input
         type="range"
         min={0}
@@ -420,74 +418,78 @@ export default function Timeline({ range, value, onChange, events, ticks = [], r
         aria-label="Timeline focus"
       />
 
-      <div className="timeline__axis" ref={setAxisRef}>
-        <div className="timeline__line" />
+      <div className="timeline__stack">
+        <div className="timeline__axis" ref={setAxisRef}>
+          <div className="timeline__line" />
 
-        {sortedTicks.map(tick => {
-          const ratio = getRatio(tick.value, range, span);
-          const left = toPercent(ratio);
-          return (
-            <div key={tick.id} className="timeline__tick" style={{ left: `${left}%` }}>
-              <span className="timeline__tick-line" />
-              <span className="timeline__tick-label">{tick.label}</span>
-            </div>
-          );
-        })}
-
-        {renderItems.map(item => {
-          if (item.type === "group") {
-            const isActive = activeGroup?.id === item.id;
+          {sortedTicks.map(tick => {
+            const ratio = getRatio(tick.value, range, span);
+            const left = toPercent(ratio);
             return (
-              <button
-                key={item.id}
-                type="button"
-                ref={node => setGroupNode(item.id, node)}
-                className={`timeline__group ${isActive ? "timeline__group--active" : ""}`.trim()}
-                style={{ left: `${item.leftPercent}%` }}
-                onClick={() => handleGroupToggle(item.id)}
-                aria-pressed={isActive}
-                aria-label={`${item.events.length} overlapping events`}
-              >
-                <span className="timeline__group-count">{item.events.length}</span>
-              </button>
+              <div key={tick.id} className="timeline__tick" style={{ left: `${left}%` }}>
+                <span className="timeline__tick-line" />
+                <span className="timeline__tick-label">{tick.label}</span>
+              </div>
             );
-          }
+          })}
 
-          return (
-            <EventElement
-              key={item.event.id}
-              event={item.event}
-              leftPercent={item.leftPercent}
-              variant="main"
-              range={range}
-              now={now}
-            />
-          );
-        })}
+          {renderItems.map(item => {
+            if (item.type === "group") {
+              const isActive = activeGroup?.id === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  ref={node => setGroupNode(item.id, node)}
+                  className={`timeline__group ${isActive ? "timeline__group--active" : ""}`.trim()}
+                  style={{ left: `${item.leftPercent}%` }}
+                  onClick={() => handleGroupToggle(item.id)}
+                  aria-pressed={isActive}
+                  aria-label={`${item.events.length} overlapping events`}
+                >
+                  <span className="timeline__group-count">{item.events.length}</span>
+                </button>
+              );
+            }
 
-        <div
-          className="timeline__focus"
-          style={{ left: `${toPercent(valueRatio)}%` }}
-          onPointerDown={handleFocusPointerDown}
-          onPointerMove={handleFocusPointerMove}
-          onPointerUp={handleFocusPointerUp}
-          role="presentation"
-        >
-          <span className="timeline__focus-handle" />
-          <span className="timeline__focus-stem" />
+            return (
+              <EventElement
+                key={item.event.id}
+                event={item.event}
+                leftPercent={item.leftPercent}
+                variant="main"
+                range={range}
+                now={now}
+              />
+            );
+          })}
+
+          <div
+            className="timeline__focus"
+            style={{ left: `${toPercent(valueRatio)}%` }}
+            onPointerDown={handleFocusPointerDown}
+            onPointerMove={handleFocusPointerMove}
+            onPointerUp={handleFocusPointerUp}
+            role="presentation"
+          >
+            <span className="timeline__focus-handle" />
+            <span className="timeline__focus-stem" />
+          </div>
         </div>
+
+        {activeGroup && axisSize.width > 0 && (
+          <SubTimeline
+            axisWidth={axisSize.width}
+            group={activeGroup}
+            range={range}
+            onClose={handleCloseSubTimeline}
+            now={now}
+            groupElement={activeGroupNode}
+          />
+        )}
       </div>
 
-      {activeGroup && axisSize.width > 0 && (
-        <SubTimeline
-          axisWidth={axisSize.width}
-          group={activeGroup}
-          range={range}
-          onClose={handleCloseSubTimeline}
-          now={now}
-          groupElement={activeGroupNode}
-        />
-      )}
+      {valueNode && <div className="timeline__value timeline__value--below">{valueNode}</div>}
     </div>
   );
 }

@@ -183,7 +183,7 @@ export default function Milestones() {
 
     return (
       <div className="timeline__value-content">
-        <span className="timeline__value-label">Focus date</span>
+        <span className="timeline__value-label">Slider position</span>
         <span className="timeline__value-primary">{formatWithWeekday(instant)}</span>
         <span className="timeline__value-secondary">{relative}</span>
       </div>
