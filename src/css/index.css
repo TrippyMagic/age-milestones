@@ -129,6 +129,7 @@ body::before {
 }
 
 .subtitle {
+  font-family: system-ui, sans-serif;
   text-align: center;
   margin: 12px 0 16px;
   font-size: 1.25rem;
@@ -147,6 +148,19 @@ body::before {
   box-shadow: 0 12px 28px rgba(0, 0, 0, .35);
   display: flex;
   flex-direction: column;
+  gap: clamp(16px, 3vw, 24px);
+  box-sizing: border-box;
+}
+
+.inline-card {
+  width: min(var(--card-max-width), 100%);
+  margin: 0 auto;
+  background: #2b2b59;
+  border-radius: 6px;
+  padding: clamp(9px, 14px, 19px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, .35);
+  display: flex;
+  flex-direction: row;
   gap: clamp(16px, 3vw, 24px);
   box-sizing: border-box;
 }
@@ -631,14 +645,14 @@ body::before {
   flex-wrap: wrap;               /* allow multiple lines on very narrow screens */
   justify-content: center;
   align-items: center;
-  gap: 12px;                     /* more breathing room */
+  gap: 0px;                     /* more breathing room */
   margin-bottom: 24px;           /* spacing below the tabs */
 }
 
 .tab {
   padding: 8px 16px;
   border: 1px solid var(--slate-700);
-  border-radius: 9999px;         /* pill shape */
+  border-radius: 1px;
   background: var(--slate-900);
   color: var(--text-light);
   font-size: 0.9rem;
