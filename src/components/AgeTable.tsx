@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useBirthDate } from "../context/BirthDateContext";
-import { formatBig, formatSmall } from "../utils/format";
+import { formatDisplay } from "../utils/format";
 import dayjs from "dayjs";
 
 export type UnitRow = {
@@ -25,7 +25,6 @@ export default function AgeTable({ rows }: { rows: UnitRow[] }) {
       setVals(prev =>
         rows.map((r, idx) => {
           let display: string;
-    
           if (r.label === "Dog years") {
             const humanYears = now.diff(base, "year", true);
             const dogYears = humanYears <= 15
@@ -35,12 +34,7 @@ export default function AgeTable({ rows }: { rows: UnitRow[] }) {
                 : 2 + (humanYears - 24) / 5;
             display = dogYears.toFixed(2);
           } else {
-            const rawCount = (nowSeconds - birthSeconds) / r.seconds;
-            if (rawCount < 1) {
-              display = formatSmall(rawCount);
-            } else {
-              display = formatBig(Math.floor(rawCount));
-            }
+            display = formatDisplay((nowSeconds - birthSeconds) / r.seconds)
           }
     
           const oldVal = prev[idx]?.value ?? "--";

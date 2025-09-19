@@ -2,16 +2,17 @@ import type { UnitRow } from "../components/AgeTable";
 
 const DAY = 86400;
 const YEAR = 365.25 * DAY;
+// { label: "", seconds: DAY },
 
 export const TAB_ROWS: Record<string, UnitRow[]> = {
   Classic: [
-    { label: "Years",    seconds: YEAR },
-    { label: "Months",   seconds: YEAR / 12 },
-    { label: "Weeks",    seconds: 7 * DAY },
-    { label: "Days",     seconds: DAY },
-    { label: "Hours",    seconds: 3600 },
-    { label: "Minutes",  seconds: 60 },
-    { label: "Seconds",  seconds: 1 },
+    { label: "Years", seconds: YEAR },
+    { label: "Months", seconds: YEAR / 12 },
+    { label: "Weeks", seconds: 7 * DAY },
+    { label: "Days", seconds: DAY },
+    { label: "Hours", seconds: 3600 },
+    { label: "Minutes", seconds: 60 },
+    { label: "Seconds", seconds: 1 },
   ],
 
   Biological: [
@@ -20,41 +21,52 @@ export const TAB_ROWS: Record<string, UnitRow[]> = {
     { label: "Blinks",seconds: 3.5 },           // ~17 blinks/min
     { label: "Heartbeats", seconds: 0.8 },           // ~75 bpm
     { label: "Blood pumped (Liters)", seconds: 12 },        // ~7200 L/day
-    { label: "Dead and replaced cells", seconds: 0.00001},
+    { label: "Dead and replaced cells", seconds: 0.0000099},
     { label: "Liquid drank (Liters)", seconds: DAY/2.25},
     { label: "Food eaten (kilograms)", seconds: DAY/1.2},
     { label: "Calories burned (kcal)", seconds: DAY / 2100 },
     { label: "Hair grown (cm)", seconds: 2010000 },    // ~0.43 mm/day
     { label: "Nail grown (cm)", seconds: 8640000 },    // ~0.1 mm/day
-    { label: "Laughs", seconds: DAY / 13 },
-    { label: "Sneezes", seconds: DAY / 0.5 },
     { label: "Toilet visits", seconds: DAY / 5 },
     { label: "Dog years",  seconds: NaN },
   ],
 
    Everyday: [
-    { label: "Steps",             seconds: DAY / 6000 },
-    { label: "Km walked",         seconds: DAY / 4 },
-    { label: "Showers",           seconds: DAY / 0.55 },
-    { label: "Songs played",      seconds: DAY / 20 },
-    { label: "Words spoken",      seconds: DAY / 11000 }
+    { label: "Steps", seconds: DAY / 6000 },
+    { label: "Km walked", seconds: DAY / 4 },
+    { label: "Showers", seconds: DAY / 0.55 },
+    { label: "Songs played", seconds: DAY / 20 },
+    { label: "Words spoken", seconds: DAY / 11000 },
+    { label: "Curses spoken", seconds: DAY / 40},
+    { label: "Laughs", seconds: DAY / 13 },
+    { label: "Sneezes", seconds: DAY / 0.5 },
+    { label: "Yawns", seconds: DAY / 7.2},
   ],
 
   Nerdy: [
     { label: "Smartphone unlocks",seconds: DAY / 36 },
-    { label: "Keystrokes",        seconds: DAY / 12000 },
-    { label: "Mouse clicks",      seconds: DAY / 4000 },
-    { label: "Notifications",     seconds: DAY / 100 },
-    { label: "Bitcoin blocks",  seconds: 600 },
-    { label: "Ethereum blocks", seconds: 12 },
-    { label: "Eye processed frames",  seconds: 0.022222 },
+    { label: "Photos taken", seconds: DAY / 12.5 },
+    { label: "Videos taken", seconds: DAY / 0.3 },
+    { label: "Keystrokes", seconds: DAY / 12000 },
+    { label: "Mouse clicks", seconds: DAY / 4000 },
+    { label: "Notifications", seconds: DAY / 100 },
+    { label: "Terabytes downloaded", seconds: DAY / 0.008 },
+    { label: "Terabytes uploaded", seconds: DAY / 0.00075 },
+    { label: "Mined Bitcoin blocks",  seconds: 600 },
+    { label: "Chained Ethereum blocks", seconds: 12 },
+    { label: "Eye processed frames", seconds: 0.022222 },
   ],
 
   Cosmic: [
-    { label: "Halley orbits", seconds: 76 * YEAR },
-    { label: "Jovian years",  seconds: 11.862615 * YEAR },
+    { label: "Sun equatorial rotations", seconds: 24.5 * DAY},
     { label: "Lunar cycles",  seconds: 29.530588 * DAY },
-    { label: "Martian sols",  seconds: 88775 },
+    { label: "Venus days", seconds: 243 * DAY},
+    { label: "Venus years", seconds: 225 * DAY},
+    { label: "Martian days",  seconds: 88775 },
+    { label: "Martian years", seconds: 687 * DAY},
+    { label: "Jovian days", seconds: 35700},
+    { label: "Jovian years",  seconds: 11.862615 * YEAR },
+    { label: "Halley comet orbits", seconds: 76 * YEAR },
     { label: "Km in solar orbit", seconds: 1 / 29.78 },  // ~0.0336 s/km
     { label: "Km in galactic orbit", seconds: 1 / 220 },    // ~0.00455 s/km
   ],

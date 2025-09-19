@@ -4,17 +4,37 @@ export const formatNice = (n: number) => {
     return n.toLocaleString();
 };
 
-export const formatBig = (n: number) => {
+const formatBig = (n: number) => {
     return n >= 1e15 ? n.toExponential(2).replace("+", "") : n.toLocaleString();
 };
 
-export const formatSmall = (n: number) => {
+const formatStandard = (n: number, digits: number) => {
+    return n.toFixed(digits).toLocaleString();
+}
+
+const formatSmall = (n: number) => {
     if (n === 0) return '0';
     const [mantissa, exp] = n.toExponential(16).split('e');
     const exponent = parseInt(exp, 10);
     if (exponent >= 0) return n.toFixed(2);
     const digits = mantissa.replace('.', '');
     const zeros = Math.abs(exponent) - 1;
-    if (zeros < 5) return n.toFixed(zeros + 2)
-    return '0, ' + zeros + ' zeros...' + digits.slice(0, 3)
+    if (zeros < 5) return n.toFixed(zeros + 4).replace("0.", "0,")
+    return '0, ' + zeros + ' zeros ...' + digits.slice(0, 4)
 };
+
+export const formatDisplay = (n: number) => {
+    let display;
+    if (n < 1) {
+        display = formatSmall(n);
+    } else if (n < 10){
+        display = formatStandard(n, 4);
+        display = display.slice(0, -5) + display.slice(-5).replace(".", ",")
+    } else if (n < 1000) {
+        display = formatStandard(n, 2);
+        display = display.slice(0, -3) + display.slice(-3).replace(".", ",")
+    } else {
+        display = formatBig(Math.floor(n));
+    }
+    return display;
+}

@@ -7,7 +7,7 @@ import AgeTable from "../components/AgeTable";
 import Footer from "../components/common/Footer.tsx";
 import { Title, Navbar } from "../components/common/Headers.tsx";
 import { useMilestone } from "../hooks/useMilestone";
-import { TAB_ROWS } from "../utils/timeScalesConstants.ts";
+import { TAB_ROWS } from "../utils/timePerspectivesConstants.ts";
 import "../css/index.css";
 
 const CENTURY_WINDOW = 40;
