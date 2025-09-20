@@ -85,14 +85,16 @@ const buildTimelineData = (birthDate: Date, birthTime: string): TimelineData | n
   if (!end.isAfter(start)) end = start.add(FUTURE_WINDOW_YEARS * 2, "year");
 
   const tenThousandDays = base.add(10_000, "day");
+  const fiveHundredMonth = base.add(500, "month");
   const billionSeconds = base.add(1_000_000_000, "second");
 
   const events: TimelineEvent[] = [
     { id:"birth", label:"Birth", subLabel:formatWithWeekday(base), value:base.valueOf(), placement:"above", accent:"highlight" },
     { id:"midpoint", label:"Midpoint", subLabel:formatWithWeekday(midpoint), value:midpoint.valueOf(), placement:"above", accent:"muted" },
     { id:"today", label:"Today", subLabel:formatWithWeekday(now), value:now.valueOf(), placement:"below", markerShape:"triangle", accent:"highlight" },
-    { id:"tenk", label:"10,000 days old", subLabel:formatWithWeekday(tenThousandDays), value:tenThousandDays.valueOf(), placement:"below" },
-    { id:"billion", label:"1B seconds old", subLabel:formatWithWeekday(billionSeconds, true), value:billionSeconds.valueOf(), placement:"above" }
+    { id:"10kdays", label:"10,000 days old", subLabel:formatWithWeekday(tenThousandDays), value:tenThousandDays.valueOf(), placement:"below" },
+    { id:"1Bseconds", label:"1 billion seconds old", subLabel:formatWithWeekday(billionSeconds, true), value:billionSeconds.valueOf(), placement:"above" },
+    { id:"500months", label:"500 months old", subLabel:formatWithWeekday(fiveHundredMonth, true), value:fiveHundredMonth.valueOf(), placement:"above" }
   ];
 
   const ticks = generateTicks(start, end, TICK_STEP_YEARS);
