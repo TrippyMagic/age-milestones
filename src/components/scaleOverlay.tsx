@@ -4,7 +4,7 @@
 import type { JSX, ReactNode, MouseEvent } from "react";
 import { createPortal } from "react-dom";
 import { Canvas } from "@react-three/fiber";
-import { Environment, OrbitControls, Html } from "@react-three/drei";
+import { Environment, OrbitControls } from "@react-three/drei";
 import { Physics, InstancedRigidBodies, RigidBody } from "@react-three/rapier";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMemo, useState } from "react";
