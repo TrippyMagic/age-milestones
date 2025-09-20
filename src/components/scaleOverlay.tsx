@@ -146,23 +146,17 @@ const ScaleOverlay = ({ open, onClose, value, unit, kind }: ScaleOverlayProps) =
 
 /* ---------- Helper UI nel 3D ---------- */
 
-const Legend = ({ text }: { text: string }) => (
-  <Html position={[0, 1.2, 0]} center distanceFactor={8}>
-    <div
-      style={{
-        background: "rgba(0,0,0,0.55)",
-        color: "#e5e7eb",
-        padding: "6px 10px",
-        borderRadius: 8,
-        fontSize: 12,
-        border: "1px solid rgba(255,255,255,0.15)",
-        whiteSpace: "nowrap",
-      }}
-    >
-      {text}
-    </div>
-  </Html>
-);
+const Legend = ({ text }: { text: string }) => {
+  void text;
+  return (
+    <group position={[0, 1.15, 0]}>
+      <mesh>
+        <planeGeometry args={[2.8, 0.46]} />
+        <meshBasicMaterial color="#0e1627" transparent opacity={0.6} />
+      </mesh>
+    </group>
+  );
+};
 
 /* ---------- Scenes ---------- */
 
