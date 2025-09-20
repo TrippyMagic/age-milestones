@@ -10,9 +10,10 @@ import { useMilestone } from "../hooks/useMilestone";
 import { TAB_ROWS } from "../utils/perspectivesConstants";
 import "../css/index.css";
 import { formatDisplay } from "../utils/format";
-import {HowMuchHint} from "../components/common/scaleHint.tsx";
-import {inferKindUnit} from "../utils/scaleConstants.ts";
-
+import { HowMuchHint } from "../components/common/scaleHint.tsx";
+import { inferKindUnit } from "../utils/scaleConstants.ts";
+import BirthDateWizard from "../components/BirthDateWizard";
+import { useBirthWizard } from "../hooks/useBirthWizard";
 
 const FUTURE_WINDOW_YEARS = 40;
 const LOOKBACK_YEARS = 20;
@@ -89,26 +90,28 @@ const buildTimelineData = (birthDate: Date, birthTime: string): TimelineData | n
   const billionSeconds = base.add(1_000_000_000, "second");
 
   const events: TimelineEvent[] = [
-    { id:"birth", label:"Birth", subLabel:formatWithWeekday(base), value:base.valueOf(), placement:"above", accent:"highlight" },
-    { id:"midpoint", label:"Midpoint", subLabel:formatWithWeekday(midpoint), value:midpoint.valueOf(), placement:"above", accent:"muted" },
-    { id:"today", label:"Today", subLabel:formatWithWeekday(now), value:now.valueOf(), placement:"below", markerShape:"triangle", accent:"highlight" },
-    { id:"10kdays", label:"10,000 days old", subLabel:formatWithWeekday(tenThousandDays), value:tenThousandDays.valueOf(), placement:"below" },
-    { id:"1Bseconds", label:"1 billion seconds old", subLabel:formatWithWeekday(billionSeconds, true), value:billionSeconds.valueOf(), placement:"above" },
-    { id:"500months", label:"500 months old", subLabel:formatWithWeekday(fiveHundredMonth, true), value:fiveHundredMonth.valueOf(), placement:"above" }
+    { id: "birth", label: "Birth", subLabel: formatWithWeekday(base), value: base.valueOf(), placement: "above", accent: "highlight" },
+    { id: "midpoint", label: "Midpoint", subLabel: formatWithWeekday(midpoint), value: midpoint.valueOf(), placement: "above", accent: "muted" },
+    { id: "today", label: "Today", subLabel: formatWithWeekday(now), value: now.valueOf(), placement: "below", markerShape: "triangle", accent: "highlight" },
+    { id: "10kdays", label: "10,000 days old", subLabel: formatWithWeekday(tenThousandDays), value: tenThousandDays.valueOf(), placement: "below" },
+    { id: "1Bseconds", label: "1 billion seconds old", subLabel: formatWithWeekday(billionSeconds, true), value: billionSeconds.valueOf(), placement: "above" },
+    { id: "500months", label: "500 months old", subLabel: formatWithWeekday(fiveHundredMonth, true), value: fiveHundredMonth.valueOf(), placement: "above" },
   ];
 
   const ticks = generateTicks(start, end, TICK_STEP_YEARS);
 
   return {
     range: { start: start.valueOf(), end: end.valueOf() },
-    events, ticks,
-    focus: clamp(now.valueOf(), start.valueOf(), end.valueOf())
+    events,
+    ticks,
+    focus: clamp(now.valueOf(), start.valueOf(), end.valueOf()),
   };
 };
 
 export default function Milestones() {
   const { state } = useMilestone();
   const { birthDate, birthTime } = state;
+  const { isOpen: wizardOpen, openWizard, closeWizard, completeWizard } = useBirthWizard();
   const [tab, setTab] = useState<keyof typeof TAB_ROWS>("Classic");
   const [focusValue, setFocusValue] = useState(() => dayjs().valueOf());
 
@@ -117,14 +120,23 @@ export default function Milestones() {
   const rows = TAB_ROWS[safeTab];
   const nav = useNavigate();
 
-  useEffect(() => { if (!birthDate) nav("/"); }, [birthDate, nav]);
+  useEffect(() => {
+    if (!birthDate) nav("/");
+  }, [birthDate, nav]);
   useEffect(() => {
     document.body.style.backgroundColor = "#111827";
-    return () => { document.body.style.backgroundColor = ""; };
+    return () => {
+      document.body.style.backgroundColor = "";
+    };
   }, []);
 
-  const timeline = useMemo(() => (birthDate ? buildTimelineData(birthDate, birthTime) : null), [birthDate, birthTime]);
-  useEffect(() => { if (timeline) setFocusValue(timeline.focus); }, [timeline]);
+  const timeline = useMemo(
+    () => (birthDate ? buildTimelineData(birthDate, birthTime) : null),
+    [birthDate, birthTime],
+  );
+  useEffect(() => {
+    if (timeline) setFocusValue(timeline.focus);
+  }, [timeline]);
 
   const renderFocus = useCallback((value: number) => {
     const instant = dayjs(value);
@@ -149,23 +161,41 @@ export default function Milestones() {
     );
   }, []);
 
+  const perspectiveLabel = safeTab.toLowerCase();
+
   return (
     <>
-      <main className="page">
-        <Title/>
-        <Navbar/>
-        <div className="tabs">
-          {allTabs.map(t => (
-            <button key={t} className={`tab ${t === safeTab ? "tab--active" : ""}`} onClick={() => setTab(t)}>
-              {t}
-            </button>
-          ))}
-        </div>
-
-        <div className="table-wrap">
-          <h2 className="subtitle">Your age in {safeTab.toLocaleLowerCase()} perspective</h2>
-          <AgeTable rows={rows} renderNumber={renderNumber} />
-        </div>
+      <Navbar onEditBirthDate={openWizard} />
+      <main className="page milestones-page">
+        <Title />
+        <section className="perspective-card">
+          <div className="tabs perspective-card__tabs" role="tablist" aria-label="Perspectives">
+            {allTabs.map(t => (
+              <button
+                key={t}
+                type="button"
+                className={`tab ${t === safeTab ? "tab--active" : ""}`}
+                onClick={() => setTab(t)}
+                aria-pressed={t === safeTab}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+          <div className="perspective-card__body">
+            <h2 className="perspective-card__title">
+              Your age in{" "}
+              <span className="perspective-card__title-accent">{perspectiveLabel}</span>{" "}
+              perspective
+            </h2>
+            <p className="perspective-card__subtitle">
+              Switch the lens to reveal how your lifetime translates across different units.
+            </p>
+            <div className="perspective-card__table">
+              <AgeTable rows={rows} renderNumber={renderNumber} />
+            </div>
+          </div>
+        </section>
 
         {timeline && (
           <section className="card timeline-card">
@@ -183,6 +213,15 @@ export default function Milestones() {
       </main>
 
       <Footer />
+
+      {wizardOpen && (
+        <BirthDateWizard
+          initialDate={birthDate}
+          initialTime={birthTime}
+          onCancel={closeWizard}
+          onComplete={completeWizard}
+        />
+      )}
     </>
   );
 }

@@ -133,14 +133,17 @@ const ScaleOverlay = ({ open, onClose, value, unit, kind }: ScaleOverlayProps) =
 
 /* ---------- Scenes ---------- */
 
-const Legend = ({ }: { text: string }) => (
-  <group position={[0, 1.15, 0]}>
-    <mesh>
-      <planeGeometry args={[2.8, 0.46]} />
-      <meshBasicMaterial color="#0e1627" transparent opacity={0.6} />
-    </mesh>
-  </group>
-);
+const Legend = ({ text }: { text: string }) => {
+  void text;
+  return (
+    <group position={[0, 1.15, 0]}>
+      <mesh>
+        <planeGeometry args={[2.8, 0.46]} />
+        <meshBasicMaterial color="#0e1627" transparent opacity={0.6} />
+      </mesh>
+    </group>
+  );
+};
 
 // numeri discreti → sfere
 const BallsScene = ({ value, unit }: SceneProps) => {

@@ -1,20 +1,22 @@
-import { useEffect, useMemo, useState } from "react";
-import { useBirthDate } from "../context/BirthDateContext";
+import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
 import { landingIntro } from "../components/unused/constants.ts";
 import Footer from "../components/common/Footer.tsx";
 import BirthDateWizard from "../components/BirthDateWizard";
 import { Title } from "../components/common/Headers.tsx";
+import { useBirthWizard } from "../hooks/useBirthWizard";
 
 export default function Landing() {
-  const { birthDate, setBirthDate, birthTime, setBirthTime } = useBirthDate();
   const nav = useNavigate();
+  const { birthDate, birthTime, isOpen: wizardOpen, openWizard, closeWizard, completeWizard } =
+    useBirthWizard();
   const [expanded, setExpanded] = useState(false);
-  const [wizardOpen, setWizardOpen] = useState(false);
   const [firstParagraph, ...restParagraphs] = landingIntro
     .trim()
     .split("<br/><br/>");
   const remainder = restParagraphs.join("<br/><br/>");
+
   const storedSummary = useMemo(() => {
     if (!birthDate) return null;
     const [hour = "00"] = birthTime.split(":");
@@ -26,27 +28,19 @@ export default function Landing() {
     return `${formatted} • ${hour.padStart(2, "0")}:00`;
   }, [birthDate, birthTime]);
 
-  useEffect(() => {
-    if (!wizardOpen) return;
-    const { overflow } = document.body.style;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = overflow;
-    };
-  }, [wizardOpen]);
-
-  const handleComplete = (date: Date, time: string) => {
-    setBirthDate(date);
-    setBirthTime(time);
-    setWizardOpen(false);
-    nav("/milestones");
-  };
+  const handleComplete = useCallback(
+    (date: Date, time: string) => {
+      completeWizard(date, time);
+      nav("/milestones");
+    },
+    [completeWizard, nav],
+  );
 
   return (
     <>
       <div className={`landing__content ${wizardOpen ? "landing__content--blurred" : ""}`}>
         <main className="page">
-          <Title/>
+          <Title />
           <section className="card">
             <div
               className="intro"
@@ -59,15 +53,18 @@ export default function Landing() {
             </button>
             <hr className="divider" />
             <div className="landing__cta">
-              <p className="muted">
-                Set up your date of birth here
-              </p>
-              {storedSummary && (
-                <p className="landing__summary">Last selection: {storedSummary}</p>
-              )}
-              <button className="button" onClick={() => setWizardOpen(true)}>
-                Dive in!
-              </button>
+              <p className="muted">Set up your date of birth here</p>
+              {storedSummary && <p className="landing__summary">Last selection: {storedSummary}</p>}
+              <div className="landing__buttons">
+                <button className="button" onClick={openWizard}>
+                  Dive in!
+                </button>
+                {storedSummary && (
+                  <button className="button button--ghost" onClick={() => nav("/milestones")}>
+                    Use saved details
+                  </button>
+                )}
+              </div>
             </div>
           </section>
         </main>
@@ -78,7 +75,7 @@ export default function Landing() {
         <BirthDateWizard
           initialDate={birthDate}
           initialTime={birthTime}
-          onCancel={() => setWizardOpen(false)}
+          onCancel={closeWizard}
           onComplete={handleComplete}
         />
       )}

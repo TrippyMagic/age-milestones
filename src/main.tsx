@@ -7,6 +7,9 @@ import "./css/index.css";
 import { BirthDateProvider } from "./context/BirthDateContext";
 import Landing from "./pages/Landing";
 import Milestones from "./pages/Milestones";
+import Timescales from "./pages/Timescales";
+import Personalize from "./pages/Personalize";
+import About from "./pages/About";
 
 
 createRoot(document.getElementById("root")!).render(
@@ -14,8 +17,11 @@ createRoot(document.getElementById("root")!).render(
     <BirthDateProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Landing/>}/>
-          <Route path="/milestones" element={<Milestones/>}/>
+          <Route path="/" element={<Landing />} />
+          <Route path="/milestones" element={<Milestones />} />
+          <Route path="/timescales" element={<Timescales />} />
+          <Route path="/personalize" element={<Personalize />} />
+          <Route path="/about" element={<About />} />
         </Routes>
       </BrowserRouter>
       <Analytics />
