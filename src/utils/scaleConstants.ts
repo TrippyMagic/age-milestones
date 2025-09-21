@@ -146,7 +146,13 @@ export const KIND_BY_LABEL: Array<{ test: RegExp; k: KindUnit }> = [
 
 export const inferKindUnit = (label: string): KindUnit => {
   for (const r of KIND_BY_LABEL) {
-    if (r.test.test(label)) return r.k;
+    if (r.test.test(label)) {
+      const result: KindUnit = { ...r.k };
+      if (result.kind !== "count") {
+        result.disableOverlay = true;
+      }
+      return result;
+    }
   }
   return { kind: "count" };
 };
