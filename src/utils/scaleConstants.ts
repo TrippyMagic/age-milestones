@@ -2,12 +2,17 @@ import {ScaleKind} from "../components/scaleOverlay.tsx";
 
 type AnchorUnit = { label: string; value: number };
 type Scales = Record<string, { anchors: AnchorUnit[] }>;
+// { label: "", value: 0 },
 
 export const SCALES: Scales = {
   count: { anchors: [
-    { label: "scatola uova", value: 12 },
-    { label: "pacco carte", value: 52 },
-    { label: "stadio pieno", value: 50000 },
+    { label: "Card decks", value: 54 },
+    { label: "Roman legions", value: 6000 },
+    { label: "Full Camp Nou stadiums", value: 105000 },
+    { label: "Londons worth of people", value: 14000000 },
+    { label: "Brains worth of neurons", value: 86000000000 },
+    { label: "Humans worth of cells", value: 30_000_000_000_000 },
+    { label: "Earths worth of ants", value: 9_000_000_000_000_000}
   ]},
   volume_L: { anchors: [
     { label: "cucchiaino", value: 0.005 },
@@ -80,26 +85,34 @@ export type KindUnit = {
 const R = (k: KindUnit) => k;
 
 export const KIND_BY_LABEL: Array<{ test: RegExp; k: KindUnit }> = [
-  { test:/^(Years|Months|Weeks|Days|Hours|Minutes|Seconds)$/i, k:R({ kind:"time_s", unit:"s" }) },
+  // --- Classic (voci separate + unit) ---
+  { test:/^Years$/i,        k:R({ kind:"count", unit:"years"  }) },
+  { test:/^Months$/i,       k:R({ kind:"count", unit:"months"  }) },
+  { test:/^Weeks$/i,        k:R({ kind:"count", unit:"weeks"  }) },
+  { test:/^Days$/i,         k:R({ kind:"count", unit:"days"   }) },
+  { test:/^Hours$/i,        k:R({ kind:"count", unit:"hours"   }) },
+  { test:/^Minutes$/i,      k:R({ kind:"count", unit:"min" }) },
+  { test:/^Seconds$/i,      k:R({ kind:"count", unit:"sec"   }) },
+  { test:/^Nanoseconds$/i,  k:R({ kind:"count", unit:"ns"  }) },
 
   // --- Biological ---
   { test:/^Breaths$/i,                        k:R({ kind:"count" }) },
-  { test:/^Air inhaled \(Liters\)$/i,         k:R({ kind:"volume_L", unit:"L" }) },
+  { test:/^Air inhaled \(Liters\)$/i,         k:R({ kind:"count", unit:"L" }) },
   { test:/^Blinks$/i,                         k:R({ kind:"count" }) },
   { test:/^Heartbeats$/i,                     k:R({ kind:"count" }) },
-  { test:/^Blood pumped \(Liters\)$/i,        k:R({ kind:"volume_L", unit:"L" }) },
+  { test:/^Blood pumped \(Liters\)$/i,        k:R({ kind:"count", unit:"L" }) },
   { test:/^Dead and replaced cells$/i,        k:R({ kind:"count" }) },
-  { test:/^Liquid drank \(Liters\)$/i,        k:R({ kind:"volume_L", unit:"L" }) },
-  { test:/^Food eaten \(kilograms\)$/i,       k:R({ kind:"mass_kg",  unit:"kg" }) },
-  { test:/^Calories burned \(kcal\)$/i,       k:R({ kind:"count",    unit:"kcal" }) },
-  { test:/^Hair grown \(cm\)$/i,              k:R({ kind:"distance_m", unit:"m", factor:0.01 }) },
-  { test:/^Nail grown \(cm\)$/i,              k:R({ kind:"distance_m", unit:"m", factor:0.01 }) },
+  { test:/^Liquid drank \(Liters\)$/i,        k:R({ kind:"count", unit:"L" }) },
+  { test:/^Food eaten \(kilograms\)$/i,       k:R({ kind:"count", unit:"kg" }) },
+  { test:/^Calories burned \(kcal\)$/i,       k:R({ kind:"count", unit:"kcal" }) },
+  { test:/^Hair grown \(cm\)$/i,              k:R({ kind:"count", unit:"cm" }) },
+  { test:/^Nail grown \(cm\)$/i,              k:R({ kind:"count", unit:"cm" }) },
   { test:/^Toilet visits$/i,                  k:R({ kind:"count" }) },
   { test:/^Dog years$/i,                      k:R({ kind:"count", disableOverlay:true }) },
 
   // --- Everyday ---
-  { test:/^Steps$/i,                          k:R({ kind:"count" }) },
-  { test:/^Km walked$/i,                      k:R({ kind:"distance_m", unit:"m", factor:1000 }) },
+  { test:/^Steps taken$/i,                    k:R({ kind:"count" }) },
+  { test:/^Kilometers walked$/i,              k:R({ kind:"count", unit:"km" }) },
   { test:/^Showers$/i,                        k:R({ kind:"count" }) },
   { test:/^Songs played$/i,                   k:R({ kind:"count" }) },
   { test:/^Words spoken$/i,                   k:R({ kind:"count" }) },
@@ -115,25 +128,28 @@ export const KIND_BY_LABEL: Array<{ test: RegExp; k: KindUnit }> = [
   { test:/^Keystrokes$/i,                     k:R({ kind:"count" }) },
   { test:/^Mouse clicks$/i,                   k:R({ kind:"count" }) },
   { test:/^Notifications$/i,                  k:R({ kind:"count" }) },
-  { test:/^Terabytes downloaded$/i,           k:R({ kind:"count", unit:"TB" }) },
-  { test:/^Terabytes uploaded$/i,             k:R({ kind:"count", unit:"TB" }) },
-  { test:/^Mined Bitcoin blocks$/i,           k:R({ kind:"count" }) },
-  { test:/^Chained Ethereum blocks$/i,        k:R({ kind:"count" }) },
-  { test:/^Eye processed frames$/i,           k:R({ kind:"count" }) },
+  { test:/^Gigabytes downloaded$/i,           k:R({ kind:"count", unit:"GB" }) },
+  { test:/^Gigabytes uploaded$/i,             k:R({ kind:"count", unit:"GB" }) },
+  { test:/^Mined Bitcoin blocks$/i,           k:R({ kind:"count", unit:"Blocks" }) },
+  { test:/^Chained Ethereum blocks$/i,        k:R({ kind:"count", unit:"Blocks" })},
+  { test:/^Eye processed frames$/i,           k:R({ kind:"count", unit:"Frames" }) },
 
   // --- Cosmic ---
   { test:/^Sun equatorial rotations$/i,       k:R({ kind:"count" }) },
   { test:/^Lunar cycles$/i,                   k:R({ kind:"count" }) },
-  { test:/^Venus days$/i,                     k:R({ kind:"count" }) },
-  { test:/^Venus years$/i,                    k:R({ kind:"count" }) },
-  { test:/^Martian days$/i,                   k:R({ kind:"count" }) },
-  { test:/^Martian years$/i,                  k:R({ kind:"count" }) },
-  { test:/^Jovian days$/i,                    k:R({ kind:"count" }) },
-  { test:/^Jovian years$/i,                   k:R({ kind:"count" }) },
+  { test:/^Venus days$/i,                     k:R({ kind:"count", unit:"days"}) },
+  { test:/^Venus years$/i,                    k:R({ kind:"count", unit:"years" }) },
+  { test:/^Martian days$/i,                   k:R({ kind:"count", unit:"days" }) },
+  { test:/^Martian years$/i,                  k:R({ kind:"count", unit:"years" }) },
+  { test:/^Jovian days$/i,                    k:R({ kind:"count", unit:"days" }) },
+  { test:/^Jovian years$/i,                   k:R({ kind:"count", unit:"years" }) },
   { test:/^Halley comet orbits$/i,            k:R({ kind:"count" }) },
-  { test:/^Km in solar orbit$/i,              k:R({ kind:"distance_m", unit:"m", factor:1000 }) },
-  { test:/^Km in galactic orbit$/i,           k:R({ kind:"distance_m", unit:"m", factor:1000 }) },
+  { test:/^Kms in equatorial rotations$/i,    k:R({ kind:"count", unit:"km" }) },
+  { test:/^Kms in solar orbit$/i,             k:R({ kind:"count", unit:"km" }) },
+  { test:/^Kms in galactic motion$/i,         k:R({ kind:"count", unit:"km" }) },
+  { test:/^Kms in Local Group motion\s*$/i,   k:R({ kind:"count", unit:"km" }) },
 
+  // --- Eons ---
   { test:/^Universe age portion$/i,           k:R({ kind:"count" }) },
   { test:/^Earth age portion$/i,              k:R({ kind:"count" }) },
   { test:/^Life on Earth portion$/i,          k:R({ kind:"count" }) },

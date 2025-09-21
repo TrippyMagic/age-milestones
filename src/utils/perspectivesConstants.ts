@@ -13,6 +13,7 @@ export const TAB_ROWS: Record<string, UnitRow[]> = {
     { label: "Hours", seconds: 3600 },
     { label: "Minutes", seconds: 60 },
     { label: "Seconds", seconds: 1 },
+    { label: "Nanoseconds", seconds: 0.000000001}
   ],
 
   Biological: [
@@ -32,8 +33,8 @@ export const TAB_ROWS: Record<string, UnitRow[]> = {
   ],
 
    Everyday: [
-    { label: "Steps", seconds: DAY / 6000 },
-    { label: "Km walked", seconds: DAY / 4 },
+    { label: "Steps taken", seconds: DAY / 6000 },
+    { label: "Kilometers walked", seconds: DAY / 4 },
     { label: "Showers", seconds: DAY / 0.55 },
     { label: "Songs played", seconds: DAY / 20 },
     { label: "Words spoken", seconds: DAY / 11000 },
@@ -50,8 +51,8 @@ export const TAB_ROWS: Record<string, UnitRow[]> = {
     { label: "Keystrokes", seconds: DAY / 12000 },
     { label: "Mouse clicks", seconds: DAY / 4000 },
     { label: "Notifications", seconds: DAY / 100 },
-    { label: "Terabytes downloaded", seconds: DAY / 0.008 },
-    { label: "Terabytes uploaded", seconds: DAY / 0.00075 },
+    { label: "Gigabytes downloaded", seconds: DAY / 8},
+    { label: "Gigabytes uploaded", seconds: DAY / 0.75 },
     { label: "Mined Bitcoin blocks",  seconds: 600 },
     { label: "Chained Ethereum blocks", seconds: 12 },
     { label: "Eye processed frames", seconds: 0.022222 },
@@ -67,8 +68,10 @@ export const TAB_ROWS: Record<string, UnitRow[]> = {
     { label: "Jovian days", seconds: 35700},
     { label: "Jovian years",  seconds: 11.862615 * YEAR },
     { label: "Halley comet orbits", seconds: 76 * YEAR },
-    { label: "Km in solar orbit", seconds: 1 / 29.78 },  // ~0.0336 s/km
-    { label: "Km in galactic orbit", seconds: 1 / 220 },    // ~0.00455 s/km
+    { label: "Kms in equatorial rotations", seconds: 1 / 0.4651 }, // ≈2.150 s/km
+    { label: "Kms in solar orbit", seconds: 1 / 29.78 },  // ~0.0336 s/km
+    { label: "Kms in galactic motion", seconds: 1 / 220 },    // ~0.00455 s/km
+    { label: "Kms in Local Group motion ", seconds: 1 / 620 },   // ≈ 0.00161 s/km
   ],
 
   Eons: [
