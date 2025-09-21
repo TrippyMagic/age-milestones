@@ -1,8 +1,14 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
-export function Title() {
-  return <h1 className="title">AGE MILESTONES</h1>;
+type TitleProps = {
+  variant?: "page" | "navbar";
+};
+
+export function Title({ variant = "page" }: TitleProps) {
+  const Element: keyof JSX.IntrinsicElements = variant === "page" ? "h1" : "span";
+  const className = variant === "page" ? "title" : "title title--navbar";
+  return <Element className={className}>AGE MILESTONES</Element>;
 }
 
 const NAV_ITEMS = [
@@ -55,9 +61,9 @@ export function Navbar({ onEditBirthDate }: NavbarProps) {
 
   return (
     <header className="app-navbar">
-      <Link to="/" className="app-navbar__brand">
+      <Link to="/" className="app-navbar__brand" aria-label="Go to landing page">
         <span className="app-navbar__brand-mark" aria-hidden="true" />
-        Age Milestones
+        <Title variant="navbar" />
       </Link>
 
       <div className="app-navbar__actions">

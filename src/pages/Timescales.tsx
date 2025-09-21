@@ -1,6 +1,6 @@
 import BirthDateWizard from "../components/BirthDateWizard";
 import Footer from "../components/common/Footer";
-import { Navbar, Title } from "../components/common/Headers";
+import { Navbar } from "../components/common/Headers";
 import MockCard from "../components/common/MockCard";
 import { useBirthWizard } from "../hooks/useBirthWizard";
 
@@ -11,7 +11,6 @@ export default function Timescales() {
     <>
       <Navbar onEditBirthDate={openWizard} />
       <main className="page">
-        <Title />
         <section className="section-grid">
           <MockCard />
           <MockCard />

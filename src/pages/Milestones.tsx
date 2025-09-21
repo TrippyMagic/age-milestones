@@ -5,7 +5,7 @@ import dayjs from "dayjs";
 import Timeline, { type TimelineEvent, type TimelineTick } from "../components/Timeline";
 import AgeTable from "../components/AgeTable";
 import Footer from "../components/common/Footer";
-import { Title, Navbar } from "../components/common/Headers";
+import { Navbar } from "../components/common/Headers";
 import { useMilestone } from "../hooks/useMilestone";
 import { TAB_ROWS } from "../utils/perspectivesConstants";
 import "../css/index.css";
@@ -167,7 +167,6 @@ export default function Milestones() {
     <>
       <Navbar onEditBirthDate={openWizard} />
       <main className="page milestones-page">
-        <Title />
         <section className="perspective-card">
           <div className="tabs perspective-card__tabs" role="tablist" aria-label="Perspectives">
             {allTabs.map(t => (

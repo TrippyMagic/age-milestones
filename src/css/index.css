@@ -128,6 +128,15 @@ body::before {
   width: min(100%, 22ch);
 }
 
+.title--navbar {
+  margin: 0;
+  width: auto;
+  text-align: left;
+  font-size: clamp(1.4rem, 3vw, 2.4rem);
+  letter-spacing: .06em;
+  display: inline-block;
+}
+
 .subtitle {
   font-family: system-ui, sans-serif;
   text-align: center;
@@ -778,6 +787,8 @@ body::before {
     border-radius: 24px;
     box-shadow: 0 26px 48px rgba(15, 23, 42, 0.45);
     backdrop-filter: blur(18px);
+    position: relative;
+    z-index: 1800;
   }
 
   .app-navbar__brand {
@@ -785,11 +796,8 @@ body::before {
     align-items: center;
     gap: 12px;
     text-decoration: none;
-    font-size: .95rem;
-    letter-spacing: .12em;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: var(--text-light);
+    color: inherit;
+    min-width: 0;
   }
 
   .app-navbar__brand-mark {
@@ -1090,6 +1098,7 @@ body::before {
   background: radial-gradient(ellipse at center, rgba(0, 227, 255, 0.35) 0%, transparent 70%);
   opacity: 0;
   transition: opacity .3s ease;
+  pointer-events: none;
 }
 
 .age-table .age-val.updated {
@@ -1196,6 +1205,22 @@ body::before {
   color: var(--text-muted);
   font-size: .95rem;
   line-height: 1.6;
+}
+
+.about-card {
+  align-items: flex-start;
+  gap: 18px;
+  text-align: left;
+}
+
+.about-card__content {
+  color: var(--text-light);
+  line-height: 1.6;
+}
+
+.about-card__content .quote {
+  color: var(--indigo-100);
+  text-shadow: 0 0 4px rgba(165, 180, 252, .35);
 }
 
 .section-card__list {

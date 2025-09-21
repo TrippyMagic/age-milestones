@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { landingIntro } from "../components/unused/constants.ts";
@@ -11,11 +11,7 @@ export default function Landing() {
   const nav = useNavigate();
   const { birthDate, birthTime, isOpen: wizardOpen, openWizard, closeWizard, completeWizard } =
     useBirthWizard();
-  const [expanded, setExpanded] = useState(false);
-  const [firstParagraph, ...restParagraphs] = landingIntro
-    .trim()
-    .split("<br/><br/>");
-  const remainder = restParagraphs.join("<br/><br/>");
+  const [firstParagraph = ""] = landingIntro.trim().split("<br/><br/>");
 
   const storedSummary = useMemo(() => {
     if (!birthDate) return null;
@@ -45,12 +41,9 @@ export default function Landing() {
             <div
               className="intro"
               dangerouslySetInnerHTML={{
-                __html: expanded ? `${firstParagraph}<br/><br/>${remainder}` : firstParagraph,
+                __html: firstParagraph,
               }}
             />
-            <button className="button more-btn" onClick={() => setExpanded(!expanded)}>
-              Learn more
-            </button>
             <hr className="divider" />
             <div className="landing__cta">
               <p className="muted">Set up your date of birth here</p>
