@@ -152,11 +152,11 @@ export default function Milestones() {
   }, []);
 
   const renderNumber = useCallback((value: number, label: string) => {
-    const { kind, unit } = inferKindUnit(label);
+    const { kind, unit, disableOverlay } = inferKindUnit(label);
     return (
       <span className="inline-flex items-center">
         <span>{formatDisplay(value)}</span>
-        <HowMuchHint value={value} unit={unit} kind={kind} />
+        <HowMuchHint value={value} unit={unit} kind={kind} disabled={disableOverlay} />
       </span>
     );
   }, []);
