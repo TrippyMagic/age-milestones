@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import {JSX, useEffect, useId, useRef, useState} from "react";
 import { Link, useLocation } from "react-router-dom";
 
 type TitleProps = {
