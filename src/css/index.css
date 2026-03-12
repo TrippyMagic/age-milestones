@@ -82,6 +82,25 @@ body::before {
   box-sizing: border-box;
 }
 
+.milestones-page {
+  max-width: var(--layout-max-width);
+  align-self: center;
+}
+
+.divider {
+  border: 0;
+  height: 1px;
+  width: 100%;
+  margin: 12px 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(79, 70, 229, 0.7) 40%,
+    rgba(160, 112, 255, 0.6) 60%,
+    transparent
+  );
+}
+
 .wrapper {
   width: 100%;
   max-width: 640px;
@@ -426,6 +445,8 @@ body::before {
   height: 240px;
   --timeline-line-top: 56%;
   --timeline-stripe-height: 16px;
+  cursor: pointer;
+  user-select: none;
 }
 
 .timeline__line {
@@ -686,6 +707,21 @@ body::before {
   border: 2px solid rgba(255, 255, 255, 0.18);
   box-shadow: 0 12px 28px rgba(15, 23, 42, 0.45);
   transition: transform .2s ease, box-shadow .2s ease;
+}
+
+/* Triangle variant (e.g. "Today" marker) */
+.timeline__marker--triangle {
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%); /* ▲ upward triangle */
+  filter: drop-shadow(0 4px 8px rgba(165, 180, 252, 0.45));
+  transition: transform .2s ease, filter .2s ease;
+}
+
+.timeline__event:hover .timeline__marker--triangle {
+  filter: drop-shadow(0 6px 12px rgba(165, 180, 252, 0.7));
+  box-shadow: none;
 }
 
 .timeline__event:hover .timeline__marker {
@@ -1670,8 +1706,9 @@ body::before {
 
 .count-scene__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(20px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, 20px);
+  gap: 8px;
+  justify-content: center;
 }
 
 .count-scene__dot {

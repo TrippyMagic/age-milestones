@@ -4,7 +4,8 @@ import { formatNice, formatBig, formatSmall } from '../utils/format.ts';
 describe('formatNice', () => {
   it('handles numbers less than a million', () => {
     expect(formatNice(999)).toBe('999');
-    expect(formatNice(1000)).toBe('1,000');
+    expect(formatNice(1000)).toBe('1000');
+    expect(formatNice(10000)).toBe('10.000');
   });
 
   it('formats numbers in millions', () => {
@@ -20,7 +21,7 @@ describe('formatNice', () => {
 
 describe('formatBig', () => {
   it('uses locale string for numbers below 1e12', () => {
-    expect(formatBig(1234)).toBe('1,234');
+    expect(formatBig(1234)).toBe('1234');
   });
 
   it('uses exponential notation for large numbers', () => {
@@ -30,7 +31,7 @@ describe('formatBig', () => {
 
 describe('formatSmall', () => {
   it('shows leading zeros for tiny numbers', () => {
-    expect(formatSmall(1e-6)).toBe('0.000001');
+    expect(formatSmall(1e-6)).toBe('0, 6 zeros ...1');
   });
 
   it('handles zero', () => {

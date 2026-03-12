@@ -265,14 +265,16 @@ const formatEventTiming = (eventValue: number, now: number) => {
   const minutes = Math.floor((absDiff % MS_IN_HOUR) / MS_IN_MINUTE);
   const seconds = Math.floor((absDiff % MS_IN_MINUTE) / MS_IN_SECOND);
 
+  // Collect non-zero parts, fall back to seconds if all zero
   const parts: string[] = [];
-  if (days > 0) parts.push(`${days} d`);
+  if (days > 0) parts.push(`${days}d`);
   if (hours > 0) parts.push(`${hours}h`);
   if (minutes > 0) parts.push(`${minutes}m`);
-  parts.push(`${seconds}s`);
+  if (parts.length === 0) parts.push(`${seconds}s`);
 
-  const descriptor = parts.join(" ");
-  return diff > 0 ? `In ${descriptor}` : `Time elapsed ${descriptor}`;
+  // Show at most 2 most-significant units for readability
+  const descriptor = parts.slice(0, 2).join(" ");
+  return diff > 0 ? `In ${descriptor}` : `${descriptor} ago`;
 };
 
 export default function Timeline({ range, value, onChange, events, ticks = [], renderValue }: Props) {
@@ -359,20 +361,19 @@ export default function Timeline({ range, value, onChange, events, ticks = [], r
 
   const draggingRef = useRef(false);
 
-  const handleFocusPointerDown = useCallback(
+  const handleAxisPointerDown = useCallback(
     (evt: ReactPointerEvent<HTMLDivElement>) => {
+      // Don't intercept group-button or other button clicks
+      if ((evt.target as HTMLElement).closest("button")) return;
       evt.preventDefault();
       draggingRef.current = true;
-      const target = evt.target as HTMLElement | null;
-      if (target && typeof target.setPointerCapture === "function") {
-        target.setPointerCapture(evt.pointerId);
-      }
+      evt.currentTarget.setPointerCapture(evt.pointerId);
       updateValueFromClientX(evt.clientX);
     },
     [updateValueFromClientX]
   );
 
-  const handleFocusPointerMove = useCallback(
+  const handleAxisPointerMove = useCallback(
     (evt: ReactPointerEvent<HTMLDivElement>) => {
       if (!draggingRef.current) return;
       updateValueFromClientX(evt.clientX);
@@ -380,13 +381,10 @@ export default function Timeline({ range, value, onChange, events, ticks = [], r
     [updateValueFromClientX]
   );
 
-  const handleFocusPointerUp = useCallback((evt: ReactPointerEvent<HTMLDivElement>) => {
+  const handleAxisPointerUp = useCallback((evt: ReactPointerEvent<HTMLDivElement>) => {
     if (!draggingRef.current) return;
     draggingRef.current = false;
-    const target = evt.target as HTMLElement | null;
-    if (target && typeof target.releasePointerCapture === "function") {
-      target.releasePointerCapture(evt.pointerId);
-    }
+    evt.currentTarget.releasePointerCapture(evt.pointerId);
   }, []);
 
   const handleSliderChange = (evt: ChangeEvent<HTMLInputElement>) => {
@@ -419,7 +417,13 @@ export default function Timeline({ range, value, onChange, events, ticks = [], r
       />
 
       <div className="timeline__stack">
-        <div className="timeline__axis" ref={setAxisRef}>
+        <div
+          className="timeline__axis"
+          ref={setAxisRef}
+          onPointerDown={handleAxisPointerDown}
+          onPointerMove={handleAxisPointerMove}
+          onPointerUp={handleAxisPointerUp}
+        >
           <div className="timeline__line" />
 
           {sortedTicks.map(tick => {
@@ -467,10 +471,8 @@ export default function Timeline({ range, value, onChange, events, ticks = [], r
           <div
             className="timeline__focus"
             style={{ left: `${toPercent(valueRatio)}%` }}
-            onPointerDown={handleFocusPointerDown}
-            onPointerMove={handleFocusPointerMove}
-            onPointerUp={handleFocusPointerUp}
             role="presentation"
+            aria-hidden="true"
           >
             <span className="timeline__focus-handle" />
             <span className="timeline__focus-stem" />

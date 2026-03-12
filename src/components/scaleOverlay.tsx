@@ -58,11 +58,11 @@ const formatLegend = (value: number, unit?: string) => {
 
 const useAnimatedNumber = (target: number, active: boolean, duration = 700) => {
   const [display, setDisplay] = useState(target);
-  const fromRef = useRef(target);
+  const fromRef = useRef(0);
 
   useEffect(() => {
     if (!active) {
-      fromRef.current = target;
+      fromRef.current = 0; // reset so next open always counts up from 0
       setDisplay(target);
       return;
     }
@@ -229,7 +229,7 @@ const CountScene = ({ value, unit, active }: CountSceneProps) => {
           <span
             key={index}
             className="count-scene__dot"
-            style={{ animationDelay: active ? `${index * 0.018}s` : undefined }}
+            style={{ animationDelay: active ? `${(index / Math.max(dots.length - 1, 1)) * 0.4}s` : undefined }}
           />
         ))}
       </div>
