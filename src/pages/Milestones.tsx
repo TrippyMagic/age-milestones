@@ -8,12 +8,14 @@ import Footer from "../components/common/Footer";
 import { Navbar } from "../components/common/Headers";
 import { useMilestone } from "../hooks/useMilestone";
 import { TAB_ROWS } from "../utils/perspectivesConstants";
-import "../css/index.css";
 import { formatDisplay } from "../utils/format";
 import { HowMuchHint } from "../components/common/scaleHint.tsx";
 import { inferKindUnit } from "../utils/scaleConstants.ts";
 import BirthDateWizard from "../components/BirthDateWizard";
 import { useBirthWizard } from "../hooks/useBirthWizard";
+import { useHistoricalEvents } from "../hooks/useHistoricalEvents";
+import { usePreferences } from "../context/PreferencesContext";
+import { CATEGORY_META, type EventCategory } from "../types/events";
 
 const FUTURE_WINDOW_YEARS = 40;
 const LOOKBACK_YEARS = 20;
@@ -86,6 +88,8 @@ export default function Milestones() {
   const { isOpen: wizardOpen, openWizard, closeWizard, completeWizard } = useBirthWizard();
   const [tab, setTab] = useState<keyof typeof TAB_ROWS>("Classic");
   const [focusValue, setFocusValue] = useState(() => dayjs().valueOf());
+  const { events: historicalEvents } = useHistoricalEvents();
+  const { activeCategories, toggleCategory } = usePreferences();
 
   const allTabs = useMemo(() => Object.keys(TAB_ROWS) as Array<keyof typeof TAB_ROWS>, []);
   const safeTab = allTabs.includes(tab) ? tab : "Classic";
@@ -109,6 +113,31 @@ export default function Milestones() {
   useEffect(() => {
     if (timeline) setFocusValue(timeline.focus);
   }, [timeline]);
+
+  /** Merge personal + filtered historical events */
+  const allEvents = useMemo<TimelineEvent[]>(() => {
+    if (!timeline) return [];
+    const { range, events: personal } = timeline;
+
+    const historical: TimelineEvent[] = historicalEvents
+      .filter(e =>
+        activeCategories.has(e.category) &&
+        e.timestamp >= range.start &&
+        e.timestamp <= range.end
+      )
+      .map(e => ({
+        id: `hist-${e.id}`,
+        label: e.label,
+        value: e.timestamp,
+        subLabel: e.description,
+        placement: e.placement ?? "above",
+        accent: "muted" as const,
+      }));
+
+    return [...personal, ...historical];
+  }, [timeline, historicalEvents, activeCategories]);
+
+  const CATEGORIES = Object.keys(CATEGORY_META) as EventCategory[];
 
   const renderFocus = useCallback((value: number) => {
     const instant = dayjs(value);
@@ -170,11 +199,36 @@ export default function Milestones() {
         {timeline && (
           <section className="card timeline-card">
             <span className="subtitle">Explore your timeline and its upcoming milestones</span>
+
+            {/* ── Historical event category filters ── */}
+            <div className="timeline__category-filters" role="group" aria-label="Event categories">
+              {CATEGORIES.map(cat => {
+                const meta  = CATEGORY_META[cat];
+                const active = activeCategories.has(cat);
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    className={`timeline__category-filter${active ? " timeline__category-filter--active" : ""}`}
+                    onClick={() => toggleCategory(cat)}
+                    aria-pressed={active}
+                  >
+                    <span
+                      className="timeline__category-filter__dot"
+                      style={{ background: meta.color }}
+                      aria-hidden="true"
+                    />
+                    {meta.label}
+                  </button>
+                );
+              })}
+            </div>
+
             <Timeline
               range={timeline.range}
               value={focusValue}
               onChange={setFocusValue}
-              events={timeline.events}
+              events={allEvents}
               renderValue={renderFocus}
             />
           </section>
