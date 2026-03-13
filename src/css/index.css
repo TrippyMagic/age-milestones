@@ -445,8 +445,12 @@ body::before {
   height: 240px;
   --timeline-line-top: 56%;
   --timeline-stripe-height: 16px;
-  cursor: pointer;
+  cursor: grab;
   user-select: none;
+}
+
+.timeline__axis--panning {
+  cursor: grabbing;
 }
 
 .timeline__line {
@@ -459,6 +463,119 @@ body::before {
   background: linear-gradient(90deg, rgba(79, 70, 229, 0.3), rgba(160, 112, 255, 0.5));
   box-shadow: inset 0 0 0 1px rgba(165, 180, 252, 0.25), 0 12px 32px rgba(79, 70, 229, 0.35);
   z-index: 0;
+}
+
+/* Highlighted range on main axis when a group is expanded */
+.timeline__group-range {
+  position: absolute;
+  top: calc(var(--timeline-line-top) - var(--timeline-stripe-height) / 2);
+  height: var(--timeline-stripe-height);
+  min-width: 4px;
+  background: rgba(165, 180, 252, 0.38);
+  border: 1px solid rgba(165, 180, 252, 0.6);
+  border-radius: 999px;
+  z-index: 1;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+/* Hover tooltip on timeline axis */
+.timeline__hover-tooltip {
+  position: absolute;
+  top: calc(var(--timeline-line-top) - var(--timeline-stripe-height) / 2);
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.timeline__hover-line {
+  display: block;
+  width: 1px;
+  height: var(--timeline-stripe-height);
+  background: rgba(165, 180, 252, 0.9);
+  box-shadow: 0 0 4px rgba(165, 180, 252, 0.6);
+  flex-shrink: 0;
+}
+
+.timeline__hover-card {
+  margin-top: 6px;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(129, 140, 248, 0.45);
+  border-radius: 10px;
+  padding: 5px 10px;
+  white-space: nowrap;
+  backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  box-shadow: 0 8px 20px rgba(2, 6, 23, 0.5);
+}
+
+.timeline__hover-date {
+  font-size: .78rem;
+  color: var(--text-light);
+  font-weight: 500;
+}
+
+.timeline__hover-rel {
+  font-size: .7rem;
+  color: var(--indigo-100);
+}
+
+/* ── Zoom / pan controls ──────────────────────────────────────────────────── */
+.timeline__controls {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  display: flex;
+  gap: 4px;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+.timeline__ctrl-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid rgba(129, 140, 248, 0.45);
+  background: rgba(15, 23, 42, 0.72);
+  color: var(--indigo-100);
+  font-size: .95rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+  transition: background .15s ease, transform .12s ease, box-shadow .15s ease;
+  box-shadow: 0 4px 12px rgba(2, 6, 23, 0.4);
+}
+
+.timeline__ctrl-btn:hover {
+  background: rgba(79, 70, 229, 0.55);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(79, 70, 229, 0.4);
+}
+
+.timeline__ctrl-btn:active {
+  transform: translateY(0);
+}
+
+.timeline__ctrl-btn--reset {
+  font-size: .85rem;
+  color: var(--text-muted);
+  border-color: rgba(100, 116, 139, 0.35);
+}
+
+.timeline__ctrl-btn--reset:hover {
+  color: var(--text-light);
+  background: rgba(55, 65, 81, 0.7);
+  box-shadow: 0 6px 14px rgba(2, 6, 23, 0.3);
 }
 
 .timeline__tick {
@@ -577,31 +694,21 @@ body::before {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  cursor: grab;
-  pointer-events: auto;
+  gap: 0;
+  pointer-events: none;
   z-index: 4;
   touch-action: none;
+  transform: translate(-50%, 0);
 }
 
-.timeline__focus:active {
-  cursor: grabbing;
-}
-
-.timeline__focus-handle {
-  width: 0;
-  height: 0;
-  border-left: 12px solid transparent;
-  border-right: 12px solid transparent;
-  border-top: 20px solid var(--indigo-100);
-  filter: drop-shadow(0 16px 26px rgba(79, 70, 229, 0.55));
-}
+/* timeline__focus-handle removed (inverted triangle cursor) */
 
 .timeline__focus-stem {
   width: 2px;
-  height: 26px;
+  height: calc(var(--timeline-stripe-height) + 28px);
   border-radius: 999px;
-  background: linear-gradient(180deg, rgba(79, 70, 229, 0.6), rgba(160, 112, 255, 0.65));
+  background: linear-gradient(180deg, rgba(79, 70, 229, 0.5), rgba(160, 112, 255, 0.45));
+  margin-top: calc(-1 * var(--timeline-stripe-height) / 2);
 }
 
 .timeline__event {
@@ -731,7 +838,7 @@ body::before {
 
 .timeline__subtimeline {
   position: relative;
-  margin-top: 8px;
+  margin-top: 0;
   padding-top: 0;
   padding-bottom: 20px;
   min-height: 220px;
@@ -748,8 +855,9 @@ body::before {
 }
 
 .timeline__subtimeline-connectors line {
-  stroke: rgba(165, 180, 252, 0.55);
-  stroke-width: 1.5;
+  stroke: rgba(165, 180, 252, 0.65);
+  stroke-width: 2;
+  stroke-dasharray: 5 4;
 }
 
 .timeline__subtimeline-axis-wrapper {
@@ -758,6 +866,13 @@ body::before {
   left: 0;
   height: 100%;
   pointer-events: auto;
+  border-top: 2px solid rgba(165, 180, 252, 0.55);
+  border-left: 1px solid rgba(129, 140, 248, 0.25);
+  border-right: 1px solid rgba(129, 140, 248, 0.25);
+  border-bottom: 1px solid rgba(129, 140, 248, 0.2);
+  border-radius: 0 0 14px 14px;
+  background: rgba(15, 23, 42, 0.28);
+  box-shadow: 0 8px 24px rgba(2, 6, 23, 0.35);
 }
 
 .timeline__subtimeline-axis {

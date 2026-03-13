@@ -23,6 +23,16 @@ export const formatSmall = (n: number) => {
     return '0, ' + zeros + ' zeros ...' + digits.slice(0, 4)
 };
 
+export const formatFraction = (n: number): string => {
+  if (!Number.isFinite(n) || n <= 0) return "< 1";
+  if (n >= 1) return formatDisplay(n);
+  const inv = 1 / n;
+  if (inv >= 1_000_000_000) return `1 in ${(inv / 1e9).toFixed(1)} billion`;
+  if (inv >= 1_000_000)     return `1 in ${(inv / 1e6).toFixed(1)} million`;
+  if (inv >= 1_000)         return `1 in ${Math.round(inv).toLocaleString()}`;
+  return `1 in ${Math.round(inv)}`;
+};
+
 export const formatDisplay = (n: number) => {
     let display;
     if (n < 1) {

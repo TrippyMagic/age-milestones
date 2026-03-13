@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 
-import Timeline, { type TimelineEvent, type TimelineTick } from "../components/Timeline";
+import Timeline, { type TimelineEvent } from "../components/Timeline";
 import AgeTable from "../components/AgeTable";
 import Footer from "../components/common/Footer";
 import { Navbar } from "../components/common/Headers";
@@ -17,12 +17,10 @@ import { useBirthWizard } from "../hooks/useBirthWizard";
 
 const FUTURE_WINDOW_YEARS = 40;
 const LOOKBACK_YEARS = 20;
-const TICK_STEP_YEARS = 10;
 
 type TimelineData = {
   range: { start: number; end: number };
   events: TimelineEvent[];
-  ticks: TimelineTick[];
   focus: number;
 };
 
@@ -52,29 +50,6 @@ const formatRelative = (now: dayjs.Dayjs, target: dayjs.Dayjs) => {
 const formatWithWeekday = (instant: dayjs.Dayjs, withTime = false) =>
   instant.format(withTime ? "ddd, MMM D, YYYY HH:mm" : "ddd, MMM D, YYYY");
 
-const generateTicks = (start: dayjs.Dayjs, end: dayjs.Dayjs, stepYears: number): TimelineTick[] => {
-  if (stepYears <= 0) return [];
-  const ticks: TimelineTick[] = [];
-  const seen = new Set<number>();
-  const pushTick = (instant: dayjs.Dayjs, key: string) => {
-    const value = instant.valueOf();
-    if (value < start.valueOf() || value > end.valueOf()) return;
-    if (seen.has(value)) return;
-    seen.add(value);
-    ticks.push({ id: `${key}-${value}`, value, label: instant.format("YYYY") });
-  };
-  pushTick(start, "start");
-  const firstYear = Math.ceil(start.year() / stepYears) * stepYears;
-  let cursor = dayjs(`${firstYear}-01-01T00:00:00`);
-  if (cursor.isBefore(start)) cursor = cursor.add(stepYears, "year");
-  while (!cursor.isAfter(end)) {
-    pushTick(cursor, "tick");
-    cursor = cursor.add(stepYears, "year");
-  }
-  pushTick(end, "end");
-  return ticks.sort((a, b) => a.value - b.value);
-};
-
 const buildTimelineData = (birthDate: Date, birthTime: string): TimelineData | null => {
   const base = dayjs(`${dayjs(birthDate).format("YYYY-MM-DD")}T${birthTime}`);
   if (!base.isValid()) return null;
@@ -98,12 +73,9 @@ const buildTimelineData = (birthDate: Date, birthTime: string): TimelineData | n
     { id: "500months", label: "500 months old", subLabel: formatWithWeekday(fiveHundredMonth, true), value: fiveHundredMonth.valueOf(), placement: "above" },
   ];
 
-  const ticks = generateTicks(start, end, TICK_STEP_YEARS);
-
   return {
     range: { start: start.valueOf(), end: end.valueOf() },
     events,
-    ticks,
     focus: clamp(now.valueOf(), start.valueOf(), end.valueOf()),
   };
 };
@@ -144,7 +116,6 @@ export default function Milestones() {
     const relative = formatRelative(now, instant);
     return (
       <div className="timeline__value-content">
-        <span className="timeline__value-label">Slider position</span>
         <span className="timeline__value-primary">{formatWithWeekday(instant)}</span>
         <span className="timeline__value-secondary">{relative}</span>
       </div>
@@ -204,7 +175,6 @@ export default function Milestones() {
               value={focusValue}
               onChange={setFocusValue}
               events={timeline.events}
-              ticks={timeline.ticks}
               renderValue={renderFocus}
             />
           </section>

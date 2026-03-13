@@ -1,11 +1,12 @@
 import { useEffect, useState, useRef, type ReactNode } from "react";
 import { useBirthDate } from "../context/BirthDateContext";
-import { formatDisplay } from "../utils/format";
+import { formatDisplay, formatFraction } from "../utils/format";
 import dayjs from "dayjs";
 
 export type UnitRow = {
   label: string;
   seconds: number;
+  displayMode?: "fraction";
 };
 
 type AgeTableProps = {
@@ -52,7 +53,7 @@ export default function AgeTable({ rows, renderNumber }: AgeTableProps) {
             display = dogYears.toFixed(4);
           } else {
             raw = (nowSeconds - birthSeconds) / r.seconds;
-            display = formatDisplay(raw);
+            display = r.displayMode === "fraction" ? formatFraction(raw) : formatDisplay(raw);
           }
 
           const oldVal = prev[idx]?.value ?? "--";
@@ -89,7 +90,11 @@ export default function AgeTable({ rows, renderNumber }: AgeTableProps) {
           <tr key={r.label}>
             <td>{r.label}</td>
             <td className={`age-val ${r.updated ? "updated" : ""}`}>
-              {renderNumber ? renderNumber(r.raw, r.label) : r.value}
+              {r.displayMode === "fraction"
+                ? r.value
+                : renderNumber
+                ? renderNumber(r.raw, r.label)
+                : r.value}
             </td>
           </tr>
         ))}

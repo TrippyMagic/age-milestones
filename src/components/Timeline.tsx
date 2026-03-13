@@ -8,6 +8,7 @@ import {
   type CSSProperties,
   type ChangeEvent,
   type PointerEvent as ReactPointerEvent,
+  type MouseEvent as ReactMouseEvent,
   type ReactNode
 } from "react";
 
@@ -22,9 +23,23 @@ const SUB_TIMELINE_CONNECTOR_HEIGHT = 72;
 const SUB_TIMELINE_MARGIN_RATIO = 0.3;
 const MIN_SUB_TIMELINE_SPAN = 86_400_000;
 
+// Pan / zoom constants
+const ZOOM_FACTOR_IN  = 0.65;
+const ZOOM_FACTOR_OUT = 1 / ZOOM_FACTOR_IN;
+const MIN_SPAN_MS = 7 * 24 * 60 * 60 * 1000;               // 1 week
+const MAX_SPAN_MS = 2000 * 365.25 * 24 * 60 * 60 * 1000;   // 2 000 years
+const PAN_THRESHOLD_PX = 5;
+const MS_PER_YEAR = 365.25 * 24 * 60 * 60 * 1000;
+
 export type Range = {
   start: number;
   end: number;
+};
+
+/** Internal viewport – what is currently visible on the axis */
+type Viewport = {
+  center: number;
+  spanMs: number;
 };
 
 type Accent = "default" | "highlight" | "muted";
@@ -255,8 +270,7 @@ const createSubTicks = (range: Range): SubTick[] => {
     .filter((tick): tick is SubTick => Boolean(tick));
 };
 
-const formatEventTiming = (eventValue: number, now: number) => {
-  const diff = eventValue - now;
+const formatEventTiming = (eventValue: number, now: number) => {  const diff = eventValue - now;
   const absDiff = Math.abs(diff);
   if (absDiff < MS_IN_SECOND) return "Happening now";
 
@@ -277,13 +291,120 @@ const formatEventTiming = (eventValue: number, now: number) => {
   return diff > 0 ? `In ${descriptor}` : `${descriptor} ago`;
 };
 
-export default function Timeline({ range, value, onChange, events, ticks = [], renderValue }: Props) {
-  const rawSpan = range.end - range.start;
-  const span = rawSpan <= 0 ? 1 : rawSpan;
-  const isInvalidRange = rawSpan <= 0;
+const hoverDateFormatter = new Intl.DateTimeFormat(undefined, {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+});
 
-  const safeValue = clamp(value, range.start, range.end);
-  const valueRatio = getRatio(safeValue, range, span);
+// ── Viewport helpers ──────────────────────────────────────────────────────────
+
+const viewportToRange = (vp: Viewport): Range => ({
+  start: vp.center - vp.spanMs / 2,
+  end:   vp.center + vp.spanMs / 2,
+});
+
+const applyZoom = (vp: Viewport, factor: number, anchorMs?: number): Viewport => {
+  const newSpan = clamp(vp.spanMs * factor, MIN_SPAN_MS, MAX_SPAN_MS);
+  if (anchorMs === undefined) return { center: vp.center, spanMs: newSpan };
+  const currentStart = vp.center - vp.spanMs / 2;
+  const anchorRatio = (anchorMs - currentStart) / vp.spanMs;
+  const newStart = anchorMs - anchorRatio * newSpan;
+  return { center: newStart + newSpan / 2, spanMs: newSpan };
+};
+
+const generateAutoTicks = (viewRange: Range): TimelineTick[] => {
+  const span = viewRange.end - viewRange.start;
+  const spanYears = span / MS_PER_YEAR;
+  const ticks: TimelineTick[] = [];
+
+  const pushYear = (year: number) => {
+    const v = new Date(year, 0, 1).getTime();
+    if (v >= viewRange.start && v <= viewRange.end)
+      ticks.push({ id: `atick-${v}`, value: v, label: `${year}` });
+  };
+
+  if (spanYears > 200) {
+    const s = 100; const f = Math.ceil(new Date(viewRange.start).getFullYear() / s) * s;
+    for (let y = f; y <= new Date(viewRange.end).getFullYear() + s; y += s) pushYear(y);
+  } else if (spanYears > 80) {
+    const s = 50;  const f = Math.ceil(new Date(viewRange.start).getFullYear() / s) * s;
+    for (let y = f; y <= new Date(viewRange.end).getFullYear() + s; y += s) pushYear(y);
+  } else if (spanYears > 30) {
+    const s = 10;  const f = Math.ceil(new Date(viewRange.start).getFullYear() / s) * s;
+    for (let y = f; y <= new Date(viewRange.end).getFullYear() + s; y += s) pushYear(y);
+  } else if (spanYears > 10) {
+    const s = 5;   const f = Math.ceil(new Date(viewRange.start).getFullYear() / s) * s;
+    for (let y = f; y <= new Date(viewRange.end).getFullYear() + s; y += s) pushYear(y);
+  } else if (spanYears > 4) {
+    const s = 2;   const f = Math.ceil(new Date(viewRange.start).getFullYear() / s) * s;
+    for (let y = f; y <= new Date(viewRange.end).getFullYear() + s; y += s) pushYear(y);
+  } else if (spanYears > 1.5) {
+    const f = new Date(viewRange.start).getFullYear();
+    for (let y = f; y <= new Date(viewRange.end).getFullYear() + 1; y++) pushYear(y);
+  } else if (spanYears > 0.35) {
+    const fmt = new Intl.DateTimeFormat(undefined, { month: "short", year: "numeric" });
+    let d = new Date(viewRange.start); d = new Date(d.getFullYear(), Math.floor(d.getMonth() / 3) * 3, 1);
+    while (d.getTime() <= viewRange.end) {
+      const v = d.getTime();
+      if (v >= viewRange.start) ticks.push({ id: `atick-${v}`, value: v, label: fmt.format(new Date(v)) });
+      d = new Date(d.getFullYear(), d.getMonth() + 3, 1);
+    }
+  } else {
+    const fmt = new Intl.DateTimeFormat(undefined, { month: "short", year: "numeric" });
+    let d = new Date(viewRange.start); d = new Date(d.getFullYear(), d.getMonth(), 1);
+    while (d.getTime() <= viewRange.end) {
+      const v = d.getTime();
+      if (v >= viewRange.start) ticks.push({ id: `atick-${v}`, value: v, label: fmt.format(new Date(v)) });
+      d = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+    }
+  }
+  return ticks;
+};
+
+const formatHoverTiming = (dateMs: number, now: number): string => {
+  const diff = dateMs - now;
+  const absDiff = Math.abs(diff);
+  if (absDiff < MS_IN_SECOND) return "Now";
+  const years = absDiff / (365.25 * MS_IN_DAY);
+  if (years >= 1.5) {
+    const descriptor = `${years >= 10 ? Math.round(years) : years.toFixed(1)} years`;
+    return diff > 0 ? `In ${descriptor}` : `${descriptor} ago`;
+  }
+  const days = Math.floor(absDiff / MS_IN_DAY);
+  const hours = Math.floor((absDiff % MS_IN_DAY) / MS_IN_HOUR);
+  const parts: string[] = [];
+  if (days > 0) parts.push(`${days}d`);
+  if (hours > 0 && days < 60) parts.push(`${hours}h`);
+  if (parts.length === 0) {
+    const minutes = Math.floor((absDiff % MS_IN_HOUR) / MS_IN_MINUTE);
+    parts.push(`${minutes > 0 ? minutes + "m" : "< 1m"}`);
+  }
+  const descriptor = parts.slice(0, 2).join(" ");
+  return diff > 0 ? `In ${descriptor}` : `${descriptor} ago`;
+};
+
+export default function Timeline({ range, value, onChange, events, renderValue }: Props) {
+  // ── Viewport state (infinite pan + zoom) ─────────────────────────────────
+  const [viewport, setViewport] = useState<Viewport>(() => ({
+    center: (range.start + range.end) / 2,
+    spanMs: range.end - range.start,
+  }));
+
+  // Reset when source range changes (e.g. birthdate edited)
+  useEffect(() => {
+    setViewport({ center: (range.start + range.end) / 2, spanMs: range.end - range.start });
+  }, [range.start, range.end]);
+
+  // Always-current ref for wheel/pointer listeners (avoids stale closures)
+  const viewportRef = useRef(viewport);
+  viewportRef.current = viewport;
+
+  const viewRange = useMemo(() => viewportToRange(viewport), [viewport]);
+  const viewSpan  = viewport.spanMs;
+
+  const safeValue  = clamp(value, viewRange.start, viewRange.end);
+  const valueRatio = getRatio(safeValue, viewRange, viewSpan);
   const sliderValue = valueRatio * SLIDER_RESOLUTION;
 
   const [now, setNow] = useState(() => Date.now());
@@ -296,31 +417,29 @@ export default function Timeline({ range, value, onChange, events, ticks = [], r
   const [axisRef, axisSize] = useElementSize<HTMLDivElement>();
   const axisNodeRef = useRef<HTMLDivElement | null>(null);
   const setAxisRef = useCallback(
-    (node: HTMLDivElement | null) => {
-      axisNodeRef.current = node;
-      axisRef(node);
-    },
+    (node: HTMLDivElement | null) => { axisNodeRef.current = node; axisRef(node); },
     [axisRef]
   );
 
   const groupNodesRef = useRef<Map<string, HTMLButtonElement>>(new Map());
   const setGroupNode = useCallback((groupId: string, node: HTMLButtonElement | null) => {
-    if (node) {
-      groupNodesRef.current.set(groupId, node);
-    } else {
-      groupNodesRef.current.delete(groupId);
-    }
+    if (node) groupNodesRef.current.set(groupId, node);
+    else groupNodesRef.current.delete(groupId);
   }, []);
 
   const sortedEvents = useMemo(() => events.slice().sort((a, b) => a.value - b.value), [events]);
-  const sortedTicks = useMemo(() => ticks.slice().sort((a, b) => a.value - b.value), [ticks]);
+
+  // Auto-ticks that adapt to the current zoom level
+  const autoTicks = useMemo(() => generateAutoTicks(viewRange), [viewRange]);
 
   const renderItems = useMemo(
-    () => buildRenderItems(sortedEvents, range, span, axisSize.width),
-    [sortedEvents, range, span, axisSize.width]
+    () => buildRenderItems(sortedEvents, viewRange, viewSpan, axisSize.width),
+    [sortedEvents, viewRange, viewSpan, axisSize.width]
   );
 
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
+  const [hoverState, setHoverState] = useState<{ dateMs: number; leftPercent: number } | null>(null);
+  const [isPanning, setIsPanning] = useState(false);
 
   const activeGroup = useMemo(() => {
     if (!activeGroupId) return null;
@@ -346,51 +465,91 @@ export default function Timeline({ range, value, onChange, events, ticks = [], r
     return () => window.removeEventListener("keydown", handleKey);
   }, [activeGroupId]);
 
-  const updateValueFromClientX = useCallback(
-    (clientX: number) => {
-      const axis = axisNodeRef.current;
-      if (!axis) return;
-      const rect = axis.getBoundingClientRect();
-      if (rect.width === 0) return;
-      const relative = clamp((clientX - rect.left) / rect.width, 0, 1);
-      const next = range.start + relative * span;
-      onChange(clamp(next, range.start, range.end));
-    },
-    [onChange, range.end, range.start, span]
-  );
-
-  const draggingRef = useRef(false);
+  // ── Pan handlers ──────────────────────────────────────────────────────────
+  const panStartRef = useRef<{ clientX: number; centerAtStart: number; spanAtStart: number } | null>(null);
+  const isPanningRef = useRef(false);
 
   const handleAxisPointerDown = useCallback(
     (evt: ReactPointerEvent<HTMLDivElement>) => {
-      // Don't intercept group-button or other button clicks
       if ((evt.target as HTMLElement).closest("button")) return;
       evt.preventDefault();
-      draggingRef.current = true;
       evt.currentTarget.setPointerCapture(evt.pointerId);
-      updateValueFromClientX(evt.clientX);
+      const vp = viewportRef.current;
+      panStartRef.current = { clientX: evt.clientX, centerAtStart: vp.center, spanAtStart: vp.spanMs };
+      isPanningRef.current = false;
     },
-    [updateValueFromClientX]
+    []
   );
 
   const handleAxisPointerMove = useCallback(
     (evt: ReactPointerEvent<HTMLDivElement>) => {
-      if (!draggingRef.current) return;
-      updateValueFromClientX(evt.clientX);
+      if (!panStartRef.current) return;
+      const dx = evt.clientX - panStartRef.current.clientX;
+      if (!isPanningRef.current && Math.abs(dx) > PAN_THRESHOLD_PX) {
+        isPanningRef.current = true;
+        setIsPanning(true);
+      }
+      if (!isPanningRef.current) return;
+      const axis = axisNodeRef.current;
+      if (!axis) return;
+      const rect = axis.getBoundingClientRect();
+      if (rect.width === 0) return;
+      const msPerPx = panStartRef.current.spanAtStart / rect.width;
+      setViewport(prev => ({ ...prev, center: panStartRef.current!.centerAtStart - dx * msPerPx }));
     },
-    [updateValueFromClientX]
+    []
   );
 
-  const handleAxisPointerUp = useCallback((evt: ReactPointerEvent<HTMLDivElement>) => {
-    if (!draggingRef.current) return;
-    draggingRef.current = false;
-    evt.currentTarget.releasePointerCapture(evt.pointerId);
-  }, []);
+  const handleAxisPointerUp = useCallback(
+    (evt: ReactPointerEvent<HTMLDivElement>) => {
+      evt.currentTarget.releasePointerCapture(evt.pointerId);
+      if (!isPanningRef.current && panStartRef.current) {
+        // Click → set focus value
+        const axis = axisNodeRef.current;
+        if (axis) {
+          const rect = axis.getBoundingClientRect();
+          const relative = clamp((evt.clientX - rect.left) / rect.width, 0, 1);
+          const vp = viewportRef.current;
+          onChange(vp.center - vp.spanMs / 2 + relative * vp.spanMs);
+        }
+      }
+      panStartRef.current = null;
+      isPanningRef.current = false;
+      setIsPanning(false);
+    },
+    [onChange]
+  );
 
+  // ── Ctrl + scroll wheel zoom ───────────────────────────────────────────────
+  useEffect(() => {
+    const axis = axisNodeRef.current;
+    if (!axis) return;
+    const onWheel = (evt: WheelEvent) => {
+      if (!evt.ctrlKey) return;
+      evt.preventDefault();
+      const rect = axis.getBoundingClientRect();
+      const relative = clamp((evt.clientX - rect.left) / rect.width, 0, 1);
+      const vp = viewportRef.current;
+      const anchorMs = (vp.center - vp.spanMs / 2) + relative * vp.spanMs;
+      setViewport(prev => applyZoom(prev, evt.deltaY > 0 ? ZOOM_FACTOR_OUT : ZOOM_FACTOR_IN, anchorMs));
+    };
+    axis.addEventListener("wheel", onWheel, { passive: false });
+    return () => axis.removeEventListener("wheel", onWheel);
+  }, []); // uses viewportRef – no re-registration needed
+
+  // ── Zoom / reset buttons ───────────────────────────────────────────────────
+  const handleZoomIn  = useCallback(() => setViewport(p => applyZoom(p, ZOOM_FACTOR_IN)),  []);
+  const handleZoomOut = useCallback(() => setViewport(p => applyZoom(p, ZOOM_FACTOR_OUT)), []);
+  const handleReset   = useCallback(() =>
+    setViewport({ center: (range.start + range.end) / 2, spanMs: range.end - range.start }),
+    [range.start, range.end]
+  );
+
+  // ── Slider (accessibility) ────────────────────────────────────────────────
   const handleSliderChange = (evt: ChangeEvent<HTMLInputElement>) => {
     const ratio = Number(evt.target.value) / SLIDER_RESOLUTION;
-    const next = range.start + ratio * span;
-    onChange(clamp(next, range.start, range.end));
+    const vp = viewportRef.current;
+    onChange(vp.center - vp.spanMs / 2 + ratio * vp.spanMs);
   };
 
   const handleGroupToggle = useCallback((groupId: string) => {
@@ -399,9 +558,24 @@ export default function Timeline({ range, value, onChange, events, ticks = [], r
 
   const handleCloseSubTimeline = useCallback(() => setActiveGroupId(null), []);
 
-  const valueNode = renderValue?.(safeValue);
+  const handleAxisMouseMove = useCallback(
+    (evt: ReactMouseEvent<HTMLDivElement>) => {
+      if (isPanningRef.current || panStartRef.current) { setHoverState(null); return; }
+      if ((evt.target as HTMLElement).closest(".timeline__event, .timeline__group")) { setHoverState(null); return; }
+      const axis = axisNodeRef.current;
+      if (!axis) return;
+      const rect = axis.getBoundingClientRect();
+      if (rect.width === 0) return;
+      const relative = clamp((evt.clientX - rect.left) / rect.width, 0, 1);
+      const vp = viewportRef.current;
+      setHoverState({ dateMs: (vp.center - vp.spanMs / 2) + relative * vp.spanMs, leftPercent: relative * 100 });
+    },
+    []
+  );
+  const handleAxisMouseLeave = useCallback(() => setHoverState(null), []);
 
-  if (isInvalidRange) return null;
+  const valueNode = renderValue?.(safeValue);
+  if (viewport.spanMs <= 0) return null;
 
   return (
     <div className="timeline">
@@ -418,17 +592,29 @@ export default function Timeline({ range, value, onChange, events, ticks = [], r
 
       <div className="timeline__stack">
         <div
-          className="timeline__axis"
+          className={`timeline__axis${isPanning ? " timeline__axis--panning" : ""}`}
           ref={setAxisRef}
           onPointerDown={handleAxisPointerDown}
           onPointerMove={handleAxisPointerMove}
           onPointerUp={handleAxisPointerUp}
+          onMouseMove={handleAxisMouseMove}
+          onMouseLeave={handleAxisMouseLeave}
         >
           <div className="timeline__line" />
 
-          {sortedTicks.map(tick => {
-            const ratio = getRatio(tick.value, range, span);
-            const left = toPercent(ratio);
+          {activeGroup && (
+            <div
+              className="timeline__group-range"
+              style={{
+                left: `${activeGroup.startRatio * 100}%`,
+                width: `${Math.max((activeGroup.endRatio - activeGroup.startRatio) * 100, 0.5)}%`,
+              }}
+              aria-hidden="true"
+            />
+          )}
+
+          {autoTicks.map(tick => {
+            const left = toPercent(getRatio(tick.value, viewRange, viewSpan));
             return (
               <div key={tick.id} className="timeline__tick" style={{ left: `${left}%` }}>
                 <span className="timeline__tick-line" />
@@ -455,14 +641,13 @@ export default function Timeline({ range, value, onChange, events, ticks = [], r
                 </button>
               );
             }
-
             return (
               <EventElement
                 key={item.event.id}
                 event={item.event}
                 leftPercent={item.leftPercent}
                 variant="main"
-                range={range}
+                range={viewRange}
                 now={now}
               />
             );
@@ -474,8 +659,28 @@ export default function Timeline({ range, value, onChange, events, ticks = [], r
             role="presentation"
             aria-hidden="true"
           >
-            <span className="timeline__focus-handle" />
             <span className="timeline__focus-stem" />
+          </div>
+
+          {hoverState !== null && (
+            <div
+              className="timeline__hover-tooltip"
+              style={{ left: `${hoverState.leftPercent}%` }}
+              aria-hidden="true"
+            >
+              <span className="timeline__hover-line" />
+              <div className="timeline__hover-card">
+                <span className="timeline__hover-date">{hoverDateFormatter.format(new Date(hoverState.dateMs))}</span>
+                <span className="timeline__hover-rel">{formatHoverTiming(hoverState.dateMs, now)}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Zoom controls – overlaid top-right */}
+          <div className="timeline__controls" aria-label="Timeline controls">
+            <button type="button" className="timeline__ctrl-btn" onClick={handleZoomIn}  title="Zoom in (Ctrl+scroll)">+</button>
+            <button type="button" className="timeline__ctrl-btn" onClick={handleZoomOut} title="Zoom out (Ctrl+scroll)">−</button>
+            <button type="button" className="timeline__ctrl-btn timeline__ctrl-btn--reset" onClick={handleReset} title="Reset view">↺</button>
           </div>
         </div>
 
@@ -483,7 +688,7 @@ export default function Timeline({ range, value, onChange, events, ticks = [], r
           <SubTimeline
             axisWidth={axisSize.width}
             group={activeGroup}
-            range={range}
+            range={viewRange}
             onClose={handleCloseSubTimeline}
             now={now}
             groupElement={activeGroupNode}

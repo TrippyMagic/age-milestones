@@ -75,13 +75,13 @@ export const TAB_ROWS: Record<string, UnitRow[]> = {
   ],
 
   Eons: [
-    { label: "Universe age portion", seconds: 13.9e9 * YEAR },
-    { label: "Earth age portion", seconds: 4.54e9 * YEAR },
-    { label: "Life on Earth portion", seconds: 3.7e9 * YEAR},
-    { label: "Complex life portion", seconds: 650e6 * YEAR},
-    { label: "Galactic year portion", seconds: 230e6 * YEAR },
-    { label: "Fire controlled portion", seconds: 1.5e6 * YEAR},
-    { label: "Homo sapiens portion", seconds: 300_000 * YEAR },
-    { label: "Written history portion", seconds: 5200 * YEAR}
+    { label: "Universe age portion",   seconds: 13.9e9 * YEAR,  displayMode: "fraction" as const },
+    { label: "Earth age portion",      seconds: 4.54e9 * YEAR,  displayMode: "fraction" as const },
+    { label: "Life on Earth portion",  seconds: 3.7e9 * YEAR,   displayMode: "fraction" as const },
+    { label: "Complex life portion",   seconds: 650e6 * YEAR,   displayMode: "fraction" as const },
+    { label: "Galactic year portion",  seconds: 230e6 * YEAR,   displayMode: "fraction" as const },
+    { label: "Fire controlled portion",seconds: 1.5e6 * YEAR,   displayMode: "fraction" as const },
+    { label: "Homo sapiens portion",   seconds: 300_000 * YEAR, displayMode: "fraction" as const },
+    { label: "Written history portion",seconds: 5200 * YEAR,    displayMode: "fraction" as const },
   ],
 };
