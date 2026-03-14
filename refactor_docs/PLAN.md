@@ -19,8 +19,8 @@ Age Milestones diventa una piattaforma di visualizzazione temporale multi-dimens
 | Fase 1 | Eventi storici nella timeline       | ✅ **COMPLETATA** |
 | Fase 2 | Scala lineare / logaritmica         | ✅ **COMPLETATA** |
 | Fase 3 | Timescales MVP                      | ✅ **COMPLETATA** |
-| Fase 4 | Esploratore geologico/cosmologico   | ⬜ Pianificata    |
-| Fase 5 | Modalità 3D (sperimentale)          | ⬜ Rimandato      |
+| Fase 4 | Esploratore geologico/cosmologico   | ✅ **COMPLETATA** |
+| Fase 5 | Modalità 3D (sperimentale)          | ✅ **COMPLETATA** |
 
 ---
 
@@ -309,8 +309,8 @@ Fase 0  ✅ (COMPLETATA — 13/03/2026)
   └─ Fase 1 (Timeline decomposition) ✅
        └─ Fase 2 (Scala log/lin) ✅
             └─ Fase 3 (Timescales MVP) ✅
-                 └─ Fase 4 (Esploratore geo) ← PROSSIMA
-                      └─ Fase 5 (3D) ← solo dopo validazione utente
+                 └─ Fase 4 (Esploratore geo) ✅ (COMPLETATA — 14/03/2026)
+                      └─ Fase 5 (3D) ✅ (COMPLETATA — 14/03/2026)
 ```
 
 ---
@@ -355,13 +355,13 @@ Fase 0  ✅ (COMPLETATA — 13/03/2026)
 
 ## Metriche di successo
 
-| Metrica                              | Target         | Attuale  |
-|--------------------------------------|----------------|----------|
-| TypeScript strict errors             | 0              | ✅ 0     |
-| Lighthouse Performance (mobile)      | ≥ 85           | ?        |
-| Bundle size (gzip, senza 3D)         | < 200 KB       | ?        |
-| Test coverage (utils + hooks)        | ≥ 60%          | ~5%      |
-| Pagine stub nel routing              | 0              | 2        |
+| Metrica                              | Target         | Attuale              |
+|--------------------------------------|----------------|----------------------|
+| TypeScript strict errors             | 0              | ✅ 0                 |
+| Lighthouse Performance (mobile)      | ≥ 85           | ?                    |
+| Bundle size (gzip, senza 3D)         | < 200 KB       | ✅ ~79 KB (main JS)  |
+| Test coverage (utils + hooks)        | ≥ 60%          | ~5%                  |
+| Pagine stub nel routing              | 0              | ✅ 0                 |
 
 ---
 

@@ -425,44 +425,518 @@
 }
 
 /* -----------------------------------------------------------
-   Explorer placeholder (Phase 4)
+   Explorer — root wrapper
 ----------------------------------------------------------- */
-.ts-explorer {
+.ts-explorer-root {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
   width: 100%;
 }
 
-.ts-explorer__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: clamp(14px, 2vw, 22px);
+/* ── Sub-tab bar (Geological / Cosmic) ─────────────────────── */
+.ts-explorer__subtabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
-.ts-explorer__era-card {
-  padding: clamp(16px, 2.5vw, 22px);
+.ts-explorer__subtab {
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(129, 140, 248, 0.3);
+  background: rgba(15, 23, 42, 0.45);
+  color: var(--text-muted);
+  font-size: .85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.ts-explorer__subtab:hover {
+  border-color: rgba(129, 140, 248, 0.55);
+  color: var(--text-light);
+}
+
+.ts-explorer__subtab--active {
+  background: rgba(79, 70, 229, 0.3);
+  border-color: rgba(129, 140, 248, 0.65);
+  color: var(--indigo-100);
+}
+
+/* ── Geological explorer wrapper ──────────────────────────── */
+.ts-explorer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Breadcrumb ───────────────────────────────────────────── */
+.ts-explorer__breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  font-size: .82rem;
+}
+
+.ts-explorer__breadcrumb-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ts-explorer__breadcrumb-link {
+  background: none;
+  border: none;
+  color: var(--indigo-100);
+  cursor: pointer;
+  font-size: .82rem;
+  padding: 2px 4px;
+  border-radius: 6px;
+  transition: background .12s ease;
+}
+
+.ts-explorer__breadcrumb-link:hover {
+  background: rgba(129, 140, 248, 0.15);
+}
+
+.ts-explorer__breadcrumb-sep {
+  color: var(--text-muted);
+  font-size: .78rem;
+}
+
+.ts-explorer__breadcrumb-current {
+  color: var(--text-muted);
+  font-size: .82rem;
+}
+
+/* ── Cards grid ───────────────────────────────────────────── */
+.ts-explorer__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: clamp(12px, 2vw, 18px);
+}
+
+/* -----------------------------------------------------------
+   EraCard
+----------------------------------------------------------- */
+.ts-era-card {
+  padding: clamp(14px, 2.5vw, 20px);
   border-radius: 20px;
   background: rgba(15, 23, 42, 0.55);
-  border: 1px solid rgba(129, 140, 248, 0.25);
+  border: 2px solid rgba(129, 140, 248, 0.2);
   display: flex;
   flex-direction: column;
   gap: 10px;
-  cursor: pointer;
-  transition: transform .15s ease, border-color .2s ease, box-shadow .2s ease;
+  transition: border-color .18s ease, box-shadow .18s ease, transform .15s ease;
 }
 
-.ts-explorer__era-card:hover {
+.ts-era-card:hover {
+  border-color: color-mix(in srgb, var(--era-color, #818cf8) 50%, transparent);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.4);
   transform: translateY(-2px);
-  border-color: rgba(129, 140, 248, 0.55);
-  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.45);
 }
 
-.ts-explorer__era-name     { font-size: 1rem; font-weight: 600; color: var(--text-light); }
-.ts-explorer__era-duration { font-size: .82rem; color: var(--text-muted); }
+.ts-era-card--selected {
+  border-color: var(--era-color, #818cf8);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--era-color, #818cf8) 30%, transparent);
+}
 
-.ts-explorer__era-bar {
-  height: 4px;
+/* ── Card header ── */
+.ts-era-card__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ts-era-card__swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--era-color, #818cf8);
+  flex-shrink: 0;
+}
+
+.ts-era-card__rank {
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.ts-era-card__name {
+  font-size: .95rem;
+  font-weight: 600;
+  color: var(--text-light);
+  line-height: 1.3;
+}
+
+/* ── Proportional log bar ── */
+.ts-era-card__bar-track {
+  height: 5px;
+  background: rgba(30, 41, 59, 0.7);
   border-radius: 999px;
+  overflow: hidden;
+}
+
+.ts-era-card__bar-fill {
+  height: 100%;
+  background: var(--era-color, #818cf8);
+  border-radius: 999px;
+  min-width: 3px;
+  opacity: .8;
+  transition: width .35s ease;
+}
+
+/* ── Meta row ── */
+.ts-era-card__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.ts-era-card__range {
+  font-size: .72rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.ts-era-card__duration {
+  font-size: .72rem;
+  color: var(--indigo-100);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ── Action buttons ── */
+.ts-era-card__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ts-era-card__btn-select,
+.ts-era-card__btn-explore {
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(129, 140, 248, 0.35);
+  background: rgba(15, 23, 42, 0.5);
+  color: var(--text-muted);
+  font-size: .75rem;
+  cursor: pointer;
+  transition: background .12s ease, border-color .12s ease, color .12s ease;
+}
+
+.ts-era-card__btn-select:hover,
+.ts-era-card__btn-explore:hover {
+  background: rgba(79, 70, 229, 0.25);
+  border-color: rgba(129, 140, 248, 0.65);
+  color: var(--text-light);
+}
+
+.ts-era-card__btn-select--active {
+  background: rgba(79, 70, 229, 0.3);
+  border-color: rgba(129, 140, 248, 0.6);
+  color: var(--indigo-100);
+}
+
+.ts-era-card__btn-explore {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--indigo-100);
+  border-color: color-mix(in srgb, var(--era-color, #818cf8) 60%, transparent);
+}
+
+.ts-era-card__btn-explore-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+/* -----------------------------------------------------------
+   Detail panel
+----------------------------------------------------------- */
+.ts-explorer__detail {
+  padding: clamp(16px, 3vw, 24px);
+  border-radius: 22px;
+  background: rgba(10, 15, 30, 0.7);
+  border: 1px solid rgba(129, 140, 248, 0.3);
+  backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: ts-detail-slide-in .2s ease;
+}
+
+@keyframes ts-detail-slide-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.ts-explorer__detail-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.ts-explorer__detail-swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.ts-explorer__detail-title-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ts-explorer__detail-rank {
+  font-size: .65rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.ts-explorer__detail-name {
+  margin: 0;
+  font-size: clamp(1.05rem, 2vw, 1.3rem);
+  font-weight: 700;
+  color: var(--text-light);
+  line-height: 1.25;
+}
+
+.ts-explorer__detail-close {
+  background: none;
+  border: 1px solid rgba(129, 140, 248, 0.25);
+  color: var(--text-muted);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background .12s, color .12s;
+}
+
+.ts-explorer__detail-close:hover {
+  background: rgba(79, 70, 229, 0.2);
+  color: var(--text-light);
+}
+
+/* ── Time range ── */
+.ts-explorer__detail-range {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.ts-explorer__detail-range-label {
+  font-size: .68rem;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.ts-explorer__detail-range-value {
+  font-size: .88rem;
+  color: var(--text-light);
+  font-variant-numeric: tabular-nums;
+}
+
+.ts-explorer__detail-duration {
+  margin-left: auto;
+  font-size: .88rem;
+  font-weight: 700;
+  color: var(--indigo-100);
+}
+
+/* ── Description ── */
+.ts-explorer__detail-desc {
+  margin: 0;
+  font-size: .88rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+/* ── Key events ── */
+.ts-explorer__detail-events-title {
+  margin: 0 0 8px;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.ts-explorer__detail-events-list {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  max-height: 220px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(129, 140, 248, 0.35) transparent;
+}
+
+.ts-explorer__detail-event-item {
+  font-size: .82rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.ts-explorer__detail-event-item::marker {
+  color: var(--indigo-100);
+}
+
+/* ── Explore button in panel ── */
+.ts-explorer__detail-explore-btn {
+  align-self: flex-start;
+  padding: 8px 20px;
+  border-radius: 999px;
+  border: 1px solid rgba(129, 140, 248, 0.45);
+  background: rgba(79, 70, 229, 0.2);
+  color: var(--indigo-100);
+  font-size: .85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+
+.ts-explorer__detail-explore-btn:hover {
+  background: rgba(79, 70, 229, 0.35);
+  border-color: rgba(129, 140, 248, 0.7);
+}
+
+/* -----------------------------------------------------------
+   Cosmic Timeline
+----------------------------------------------------------- */
+.ts-cosmic {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.ts-cosmic__legend {
+  margin: 0 0 4px;
+  font-size: .78rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.ts-cosmic__list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* ── Individual milestone item ── */
+.ts-cosmic__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: background .12s ease, border-color .12s ease;
+}
+
+.ts-cosmic__item:hover {
+  background: rgba(30, 41, 59, 0.45);
+}
+
+.ts-cosmic__item--selected {
+  background: rgba(15, 23, 42, 0.65);
+  border-color: rgba(129, 140, 248, 0.3);
+}
+
+.ts-cosmic__icon {
+  font-size: 1.25rem;
+  line-height: 1;
+  flex-shrink: 0;
+  padding-top: 2px;
+  user-select: none;
+}
+
+.ts-cosmic__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ts-cosmic__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ts-cosmic__name {
+  font-size: .92rem;
+  font-weight: 600;
+  color: var(--text-light);
+  line-height: 1.3;
+}
+
+.ts-cosmic__time {
+  font-size: .75rem;
+  color: var(--indigo-100);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Position bar ── */
+.ts-cosmic__bar-track {
+  height: 4px;
+  background: rgba(30, 41, 59, 0.7);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.ts-cosmic__bar-fill {
+  height: 100%;
   background: linear-gradient(90deg, var(--indigo-600), var(--indigo-300));
-  opacity: .75;
+  border-radius: 999px;
+  min-width: 3px;
+  opacity: .8;
+  transition: width .35s ease;
+}
+
+/* ── Expanded description ── */
+.ts-cosmic__desc {
+  margin: 0;
+  font-size: .82rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+  animation: ts-detail-slide-in .18s ease;
 }
 
 /* -----------------------------------------------------------
@@ -484,6 +958,10 @@
   .ts-comparator__ratio-sentence { max-width: none; }
 
   .ts-overview__container { height: 600px; }
+
+  .ts-explorer__grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 480px) {

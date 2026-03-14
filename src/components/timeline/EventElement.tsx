@@ -70,7 +70,7 @@ export function EventElement({ event, leftPercent, variant, range, now }: EventE
   const labelClasses = ["timeline__label", `timeline__label--${accent}`];
 
   const markerStyle: CSSProperties = {
-    ["--marker-color" as string]: accentColors[accent],
+    ["--marker-color" as string]: event.color ?? accentColors[accent],
   };
 
   return (

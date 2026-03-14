@@ -1,0 +1,220 @@
+/* =============================================================
+   timeline3d.css — 3D timeline mode (Phase 5)
+   Only loaded when the user activates the 3D toggle.
+   All classes follow the .timeline-3d__* BEM namespace.
+============================================================= */
+
+/* -----------------------------------------------------------
+   Container
+----------------------------------------------------------- */
+.timeline-3d {
+  width: 100%;
+  height: 520px;
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+  background: #090c1a;
+}
+
+/* -----------------------------------------------------------
+   Overlay header (Back to 2D button + hint text)
+----------------------------------------------------------- */
+.timeline-3d__header {
+  position: absolute;
+  top: 12px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Allow clicks on children */
+.timeline-3d__header > * {
+  pointer-events: all;
+}
+
+.timeline-3d__hint {
+  font-size: .72rem;
+  color: rgba(165, 180, 252, 0.45);
+  letter-spacing: .06em;
+  user-select: none;
+}
+
+.timeline-3d__exit-btn {
+  padding: 5px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(129, 140, 248, 0.4);
+  background: rgba(9, 12, 26, 0.75);
+  color: var(--indigo-100);
+  font-size: .78rem;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: background .15s ease, border-color .15s ease;
+}
+
+.timeline-3d__exit-btn:hover {
+  background: rgba(79, 70, 229, 0.35);
+  border-color: rgba(129, 140, 248, 0.75);
+}
+
+/* -----------------------------------------------------------
+   Section header: subtitle + toggle button row
+----------------------------------------------------------- */
+.timeline-3d__toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.timeline-3d__toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 15px;
+  border-radius: 999px;
+  border: 1px solid rgba(129, 140, 248, 0.35);
+  background: rgba(15, 23, 42, 0.5);
+  color: var(--text-muted);
+  font-size: .8rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.timeline-3d__toggle-btn:hover:not(:disabled) {
+  background: rgba(79, 70, 229, 0.25);
+  border-color: rgba(129, 140, 248, 0.65);
+  color: var(--indigo-100);
+}
+
+.timeline-3d__toggle-btn--active {
+  background: rgba(79, 70, 229, 0.3);
+  border-color: rgba(129, 140, 248, 0.65);
+  color: var(--indigo-100);
+}
+
+.timeline-3d__toggle-btn:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+
+/* -----------------------------------------------------------
+   HTML overlays rendered via @react-three/drei Html component
+   (These elements live inside the WebGL canvas' DOM portal)
+----------------------------------------------------------- */
+.timeline-3d__label {
+  background: rgba(9, 12, 26, 0.9);
+  border: 1px solid rgba(129, 140, 248, 0.38);
+  border-radius: 12px;
+  padding: 7px 12px;
+  min-width: 100px;
+  max-width: 210px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  box-shadow: 0 8px 24px rgba(2, 6, 23, 0.7);
+}
+
+.timeline-3d__label-text {
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--text-light);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: system-ui, sans-serif;
+}
+
+.timeline-3d__label-sub {
+  font-size: .7rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: system-ui, sans-serif;
+}
+
+.timeline-3d__tick {
+  font-size: .66rem;
+  color: rgba(148, 163, 184, 0.65);
+  white-space: nowrap;
+  pointer-events: none;
+  font-family: system-ui, sans-serif;
+  user-select: none;
+}
+
+/* -----------------------------------------------------------
+   Loading state (shown while the three-vendor chunk downloads)
+----------------------------------------------------------- */
+.timeline-3d--loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: rgba(9, 12, 26, 0.65);
+}
+
+.timeline-3d__spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(129, 140, 248, 0.2);
+  border-top-color: rgba(129, 140, 248, 0.85);
+  border-radius: 50%;
+  animation: timeline3d-spin 0.85s linear infinite;
+}
+
+@keyframes timeline3d-spin {
+  to { transform: rotate(360deg); }
+}
+
+.timeline-3d__loading-text {
+  margin: 0;
+  font-size: .85rem;
+  color: var(--text-muted);
+}
+
+/* -----------------------------------------------------------
+   WebGL not available fallback
+----------------------------------------------------------- */
+.timeline-3d--no-webgl {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.timeline-3d__no-webgl-msg {
+  margin: 0;
+  padding: 28px;
+  font-size: .88rem;
+  color: var(--text-muted);
+  text-align: center;
+  max-width: 360px;
+  line-height: 1.6;
+}
+
+/* -----------------------------------------------------------
+   Responsive
+----------------------------------------------------------- */
+@media (max-width: 720px) {
+  .timeline-3d {
+    height: 380px;
+  }
+
+  .timeline-3d__hint {
+    display: none; /* hide hint on small screens to save space */
+  }
+}
+
+@media (max-width: 480px) {
+  .timeline-3d {
+    height: 320px;
+  }
+}
+

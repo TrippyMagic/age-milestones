@@ -7,6 +7,7 @@ import { usePreferences } from "../context/PreferencesContext";
 import { useTimescalePhenomena } from "../hooks/useTimescalePhenomena";
 import { TimescaleOverview } from "../components/timescales/TimescaleOverview";
 import { PhenomenaComparator } from "../components/timescales/PhenomenaComparator";
+import { GeoCosmicExplorer } from "../components/timescales/GeoCosmicExplorer";
 import type { PhenomenonCategory } from "../types/phenomena";
 import { PHENOMENON_CATEGORY_META } from "../types/phenomena";
 import type { TimescalesTab } from "../context/PreferencesContext";
@@ -15,7 +16,7 @@ const ALL_CATS: PhenomenonCategory[] = [
   "quantum", "biological", "human", "geological", "cosmic",
 ];
 
-const TAB_LABELS: Record<TimescalesTab | "explorer", string> = {
+const TAB_LABELS: Record<TimescalesTab, string> = {
   overview:   "Overview",
   comparator: "Compare",
   explorer:   "Explorer",
@@ -58,7 +59,7 @@ export default function Timescales() {
           </div>
 
           <div className="tabs timescales-tabs" role="tablist" aria-label="Timescales sections">
-            {(["overview", "comparator"] as TimescalesTab[]).map(t => (
+            {(["overview", "comparator", "explorer"] as TimescalesTab[]).map(t => (
               <button
                 key={t}
                 type="button"
@@ -70,22 +71,16 @@ export default function Timescales() {
                 {TAB_LABELS[t]}
               </button>
             ))}
-            <button
-              type="button"
-              className="tab tab--disabled"
-              disabled
-              title="Coming in Phase 4 — Geological & Cosmological Explorer"
-              aria-disabled="true"
-            >
-              {TAB_LABELS.explorer}
-              <span className="tab__badge">Soon</span>
-            </button>
           </div>
         </section>
 
         {/* ── Overview tab ── */}
         {timescalesTab === "overview" && (
-          <section className="card ts-section-card">
+          <section
+            className="card ts-section-card"
+            role="tabpanel"
+            aria-label="Overview panel"
+          >
             {/* Category filters */}
             <div
               className="timeline__category-filters"
@@ -124,13 +119,28 @@ export default function Timescales() {
 
         {/* ── Comparator tab ── */}
         {timescalesTab === "comparator" && (
-          <section className="card ts-section-card">
+          <section
+            className="card ts-section-card"
+            role="tabpanel"
+            aria-label="Comparator panel"
+          >
             {error && (
               <p className="ts-overview__empty">
                 Failed to load phenomena: {error}
               </p>
             )}
             <PhenomenaComparator phenomena={phenomena} status={status} />
+          </section>
+        )}
+
+        {/* ── Explorer tab ── */}
+        {timescalesTab === "explorer" && (
+          <section
+            className="card ts-section-card"
+            role="tabpanel"
+            aria-label="Explorer panel"
+          >
+            <GeoCosmicExplorer />
           </section>
         )}
       </main>

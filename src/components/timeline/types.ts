@@ -30,6 +30,8 @@ export type TimelineEvent = {
   placement?: "above" | "below";
   markerShape?: MarkerShape;
   accent?: Accent;
+  /** Optional direct color override for the marker dot (e.g. from event category). */
+  color?: string;
 };
 
 // ── Component props ───────────────────────────────────────────

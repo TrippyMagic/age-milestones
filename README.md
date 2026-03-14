@@ -4,7 +4,15 @@
 
 ## Project Purpose
 
-Age Milestones is a small React + Vite application that helps visualize life from unusual perspectives. Enter a birthdate and the site shows countless way to measure how far you've come and when you’ll reach any funky and specific milestone you may choose.
+Age Milestones is a React 19 + Vite application that helps you visualise your life from unusual perspectives. Enter a birth date and explore your lifetime through dozens of lenses — from classic years and heartbeats, to cosmic timescales, geological eons, and an interactive historical timeline that places your life alongside 48 world events from 1905 to today.
+
+### Features
+
+- **6 perspective tabs** — Classic, Biological, Everyday, Nerdy, Cosmic, Eons
+- **Interactive 2D timeline** — pan, zoom (Ctrl+scroll), linear/logarithmic scale, per-category event filters
+- **Optional 3D timeline** — WebGL-powered (Three.js, lazy-loaded)
+- **Timescales page** — log-scale overview from Planck time to heat death, phenomenon comparator, geological/cosmic explorer
+- **Scale overlay** — "But how much is it?" popup with real-world equivalences
 
 ## Development
 
@@ -19,7 +27,7 @@ The app will be available at the local Vite dev server address.
 
 ## Build and Preview
 
-To create a production build and preview it locally run:
+To create a production build and preview it locally:
 
 ```bash
 npm run build

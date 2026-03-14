@@ -1,0 +1,590 @@
+{
+  "geological": [
+    {
+      "id": "hadean",
+      "name": "Hadean Eon",
+      "rank": "eon",
+      "startMya": 4600,
+      "endMya": 4000,
+      "color": "#b8b8b8",
+      "description": "The earliest eon of Earth's history, spanning from planetary formation to the first stable continental crust. Named after Hades, the Greek underworld, reflecting its hellish conditions — no intact rock record survives from most of this period.",
+      "keyEvents": [
+        "Formation of Earth by accretion of planetesimals (~4600 Ma)",
+        "Giant impact hypothesis: Theia collision forms the Moon (~4500 Ma)",
+        "Formation of first oceans from steam condensation (~4400 Ma)",
+        "Oldest known mineral: Jack Hills zircon, Australia (~4404 Ma)",
+        "Late Heavy Bombardment: intense meteorite flux (~4100–3800 Ma)"
+      ]
+    },
+    {
+      "id": "archean",
+      "name": "Archean Eon",
+      "rank": "eon",
+      "startMya": 4000,
+      "endMya": 2500,
+      "color": "#f0a0a0",
+      "description": "The Archean saw the formation of the first stable continental cratons and the emergence of life. The atmosphere was largely anoxic, rich in methane and carbon dioxide. Stromatolites — layered structures built by microbial mats — provide the oldest undisputed evidence of life.",
+      "keyEvents": [
+        "Oldest known rocks: Acasta Gneiss, Canada (~3960 Ma)",
+        "Earliest chemical evidence of life in Isua rocks (~3700 Ma)",
+        "First confirmed stromatolites: Pilbara, Australia (~3480 Ma)",
+        "Formation of major cratons: Kaapvaal, Pilbara, Superior",
+        "Anoxic oceans and atmosphere throughout entire eon"
+      ],
+      "children": [
+        {
+          "id": "eoarchean",
+          "name": "Eoarchean Era",
+          "rank": "era",
+          "startMya": 4000,
+          "endMya": 3600,
+          "color": "#f5c0c0",
+          "description": "The earliest recognised era of Earth. Characterised by intense meteorite bombardment, magma ocean solidification, and the first emergence of oceanic and proto-continental crust.",
+          "keyEvents": [
+            "Oldest known rocks: Acasta Gneiss, Canada (~3960 Ma)",
+            "Nuvvuagittuq Belt — possible microfossils (disputed, ~3770 Ma)",
+            "Continued Late Heavy Bombardment into early Eoarchean",
+            "First stable oceanic crust appears"
+          ]
+        },
+        {
+          "id": "paleoarchean",
+          "name": "Paleoarchean Era",
+          "rank": "era",
+          "startMya": 3600,
+          "endMya": 3200,
+          "color": "#f0a0a0",
+          "description": "Oldest confirmed microbial life. Stromatolites from the Pilbara Craton (Australia) and Kaapvaal Craton (South Africa) provide the most compelling early evidence of biotic activity.",
+          "keyEvents": [
+            "Oldest confirmed microfossils (~3480 Ma): Apex Chert, Pilbara",
+            "First stromatolite reefs in shallow marine environments",
+            "Widespread hydrothermal vent ecosystems",
+            "Formation of Kaapvaal and Pilbara cratons"
+          ]
+        },
+        {
+          "id": "mesoarchean",
+          "name": "Mesoarchean Era",
+          "rank": "era",
+          "startMya": 3200,
+          "endMya": 2800,
+          "color": "#eb8080",
+          "description": "Growth of stable continental crust accelerated. More extensive stromatolite reefs developed. The first supercontinents may have begun forming through accretion of cratons.",
+          "keyEvents": [
+            "Formation of proto-supercontinent Vaalbara (~3100 Ma)",
+            "Expansion of continental crust via accretion",
+            "Widespread microbial mats in tidal and shallow-sea environments",
+            "Onset of banded iron formation deposition"
+          ]
+        },
+        {
+          "id": "neoarchean",
+          "name": "Neoarchean Era",
+          "rank": "era",
+          "startMya": 2800,
+          "endMya": 2500,
+          "color": "#e66060",
+          "description": "The final Archean era saw stabilisation of the first true continents and possibly the earliest forms of plate tectonics. Cyanobacteria were evolving and beginning to produce oxygen.",
+          "keyEvents": [
+            "Kenorland supercontinent assembly",
+            "Early cyanobacterial oxygen production begins",
+            "Transition to modern-style plate tectonics (debated)",
+            "Widespread greenstone belt formation"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "proterozoic",
+      "name": "Proterozoic Eon",
+      "rank": "eon",
+      "startMya": 2500,
+      "endMya": 541,
+      "color": "#f77f61",
+      "description": "The Proterozoic ('earlier life') is the longest eon, spanning nearly 2 billion years. It witnessed the Great Oxidation Event, the first eukaryotes, 'Snowball Earth' glaciations, and the assembly of the first widely recognised supercontinents.",
+      "keyEvents": [
+        "Great Oxidation Event: atmospheric O₂ rises dramatically (~2400 Ma)",
+        "First eukaryotes with cell nuclei (~2100 Ma)",
+        "Rodinia supercontinent assembles (~1100 Ma)",
+        "Sturtian Snowball Earth glaciation (~720 Ma)",
+        "Marinoan Snowball Earth glaciation (~635 Ma)",
+        "Ediacaran biota: first large multicellular organisms (~575 Ma)"
+      ],
+      "children": [
+        {
+          "id": "paleoproterozoic",
+          "name": "Paleoproterozoic Era",
+          "rank": "era",
+          "startMya": 2500,
+          "endMya": 1600,
+          "color": "#fc9e73",
+          "description": "The Great Oxidation Event dramatically changed Earth's atmosphere and oceans, causing the 'Oxygen Catastrophe' — a mass extinction of anaerobic organisms. The first eukaryotes with cell nuclei appeared.",
+          "keyEvents": [
+            "Great Oxidation Event (~2400 Ma): O₂ rises from <0.001% to ~1%",
+            "Huronian glaciation (~2400–2100 Ma)",
+            "First eukaryotic cells with nuclei (~2100 Ma)",
+            "Banded iron formations reach peak deposition",
+            "First red-bed sediments (evidence of oxidising atmosphere)"
+          ]
+        },
+        {
+          "id": "mesoproterozoic",
+          "name": "Mesoproterozoic Era",
+          "rank": "era",
+          "startMya": 1600,
+          "endMya": 1000,
+          "color": "#f7b563",
+          "description": "A relatively stable period with low evolutionary innovation, sometimes called the 'Boring Billion'. The supercontinent Rodinia assembled, and the first sexually reproducing eukaryotes appeared.",
+          "keyEvents": [
+            "Assembly of supercontinent Rodinia (~1100 Ma)",
+            "First sexual reproduction in eukaryotes",
+            "Earliest red and green algae",
+            "Stable climate and marine chemistry for ~1 billion years"
+          ]
+        },
+        {
+          "id": "neoproterozoic",
+          "name": "Neoproterozoic Era",
+          "rank": "era",
+          "startMya": 1000,
+          "endMya": 541,
+          "color": "#fe9a6c",
+          "description": "Dramatic climate events (Snowball Earth), breakup of Rodinia, and the explosion of complex multicellular life (Ediacaran biota) marked this era — setting the stage for the Cambrian Explosion.",
+          "keyEvents": [
+            "Breakup of Rodinia supercontinent (~750 Ma)",
+            "Sturtian Snowball Earth: global glaciation (~720 Ma)",
+            "Marinoan Snowball Earth: second global glaciation (~635 Ma)",
+            "Ediacaran biota: first large multicellular organisms (~575 Ma)",
+            "First animals with hard shells appear (~550 Ma)"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phanerozoic",
+      "name": "Phanerozoic Eon",
+      "rank": "eon",
+      "startMya": 541,
+      "endMya": 0,
+      "color": "#8bbfd4",
+      "description": "The 'visible life' eon. Spanning just 541 million years but containing all familiar animal life — from trilobites to dinosaurs to humans. Defined by the Cambrian Explosion and punctuated by five major mass extinctions.",
+      "keyEvents": [
+        "Cambrian Explosion: rapid diversification of animal body plans (~538 Ma)",
+        "First land plants (~470 Ma)",
+        "First terrestrial vertebrates: Tiktaalik (~375 Ma)",
+        "End-Permian extinction: ~90–96% of species lost (~252 Ma)",
+        "Dinosaurs dominate for 165 million years",
+        "Chicxulub impact: end of non-avian dinosaurs (~66 Ma)",
+        "First Homo sapiens (~0.3 Ma)"
+      ],
+      "children": [
+        {
+          "id": "paleozoic",
+          "name": "Paleozoic Era",
+          "rank": "era",
+          "startMya": 541,
+          "endMya": 251.9,
+          "color": "#99c0b5",
+          "description": "The 'ancient life' era saw the explosion of marine animal diversity, colonisation of land by plants and animals, and formation of vast coal forests. Ended with the End-Permian extinction, the largest in Earth's history.",
+          "keyEvents": [
+            "Cambrian Explosion (~538 Ma)",
+            "First land plants: bryophyte-like (~470 Ma)",
+            "First jawed vertebrates (~430 Ma)",
+            "First amphibians: Tiktaalik (~375 Ma)",
+            "Assembly of Pangaea (~300 Ma)",
+            "End-Permian extinction (~252 Ma): ~90% of species lost"
+          ],
+          "children": [
+            {
+              "id": "cambrian",
+              "name": "Cambrian Period",
+              "rank": "period",
+              "startMya": 538.8,
+              "endMya": 485.4,
+              "color": "#7ec5b6",
+              "description": "The Cambrian Explosion produced most modern animal body plans in a geologically rapid radiation over ~20 million years. Trilobites dominated the seas. The Burgess Shale provides an extraordinary window into this world.",
+              "keyEvents": [
+                "Rapid diversification of all major animal phyla (~538 Ma)",
+                "Burgess Shale exceptional fossil fauna (~508 Ma)",
+                "Trilobites diversify into hundreds of species",
+                "Archaeocyatha (first reef builders) appear and go extinct",
+                "First predators with eyes: Anomalocaris"
+              ]
+            },
+            {
+              "id": "ordovician",
+              "name": "Ordovician Period",
+              "rank": "period",
+              "startMya": 485.4,
+              "endMya": 443.8,
+              "color": "#009270",
+              "description": "A great diversification of marine life (Great Ordovician Biodiversification Event). Ended with the second largest mass extinction in Earth's history, triggered by Gondwana glaciation.",
+              "keyEvents": [
+                "Great Ordovician Biodiversification Event",
+                "First vertebrates: jawless fish (Agnatha)",
+                "First coral reefs appear",
+                "Gondwana drifts over the South Pole → glaciation",
+                "End-Ordovician extinction (~445 Ma): ~85% of species lost"
+              ]
+            },
+            {
+              "id": "silurian",
+              "name": "Silurian Period",
+              "rank": "period",
+              "startMya": 443.8,
+              "endMya": 419.2,
+              "color": "#b3e1a3",
+              "description": "Life recovered and expanded after the Ordovician extinction. First vascular plants colonised the land and the first jawed vertebrates appeared in the seas.",
+              "keyEvents": [
+                "First vascular plants on land: Cooksonia",
+                "First jawed vertebrates (gnathostomes)",
+                "Coral reefs expanded globally",
+                "Stable warm climate throughout most of the period",
+                "First terrestrial arthropods (scorpions, millipedes)"
+              ]
+            },
+            {
+              "id": "devonian",
+              "name": "Devonian Period",
+              "rank": "period",
+              "startMya": 419.2,
+              "endMya": 358.9,
+              "color": "#cb8c37",
+              "description": "The 'Age of Fishes'. First forests transformed the atmosphere; first amphibians emerged from the sea. Ended with the Devonian mass extinction.",
+              "keyEvents": [
+                "First forests: Archaeopteris trees (~380 Ma)",
+                "First amphibians: Tiktaalik (~375 Ma)",
+                "First seed plants",
+                "Sharks diversify; armoured fish (placoderms) dominate early",
+                "Late Devonian extinction (~372 Ma): ~75% of species lost"
+              ]
+            },
+            {
+              "id": "carboniferous",
+              "name": "Carboniferous Period",
+              "rank": "period",
+              "startMya": 358.9,
+              "endMya": 298.9,
+              "color": "#67a9b5",
+              "description": "Vast coal swamp forests dominated equatorial regions, producing the coal deposits burned today. First reptiles, giant insects, and winged insects evolved in oxygen-rich air.",
+              "keyEvents": [
+                "Vast coal swamp forests (Lepidodendron, Sigillaria)",
+                "First amniotic eggs → first true reptiles",
+                "Giant arthropods: Arthropleura (2m millipede), Meganeura (70cm dragonfly)",
+                "First winged insects",
+                "Carboniferous Rainforest Collapse (~307 Ma)"
+              ]
+            },
+            {
+              "id": "permian",
+              "name": "Permian Period",
+              "rank": "period",
+              "startMya": 298.9,
+              "endMya": 251.9,
+              "color": "#f04030",
+              "description": "The Permian saw the complete assembly of Pangaea and the rise of synapsids — the group that eventually gave rise to mammals. Ended with the most devastating extinction in Earth's history.",
+              "keyEvents": [
+                "Assembly of Pangaea supercontinent",
+                "Rise of synapsids (Dimetrodon, Dicynodon)",
+                "Permian interior deserts and arid red-bed deposits",
+                "Siberian Traps massive volcanism begins (~252 Ma)",
+                "End-Permian extinction (~252 Ma): ~90–96% of species lost"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "mesozoic",
+          "name": "Mesozoic Era",
+          "rank": "era",
+          "startMya": 251.9,
+          "endMya": 66,
+          "color": "#67c5a5",
+          "description": "The 'Age of Reptiles' — dinosaurs, marine reptiles, and pterosaurs dominated. First flowering plants, first birds, and first mammals appeared. Ended with the Chicxulub asteroid impact.",
+          "keyEvents": [
+            "Recovery from End-Permian extinction",
+            "Dinosaurs diversify and dominate (~230 Ma)",
+            "First mammals (~225 Ma)",
+            "Breakup of Pangaea into Laurasia and Gondwana",
+            "First flowering plants (angiosperms, ~130 Ma)",
+            "First birds: Archaeopteryx (~150 Ma)",
+            "Chicxulub impact (~66 Ma): 75% of species lost"
+          ],
+          "children": [
+            {
+              "id": "triassic",
+              "name": "Triassic Period",
+              "rank": "period",
+              "startMya": 251.9,
+              "endMya": 201.4,
+              "color": "#8c4f97",
+              "description": "Life rebuilt after the End-Permian extinction. Dinosaurs, crocodilians, pterosaurs, and mammals all arose during the Triassic. Pangaea began to rift.",
+              "keyEvents": [
+                "Recovery from largest mass extinction on record",
+                "First dinosaurs (~230 Ma): Eoraptor, Herrerasaurus",
+                "First mammals (~225 Ma): small, nocturnal",
+                "First pterosaurs (~228 Ma)",
+                "Onset of Pangaea rifting",
+                "Triassic–Jurassic extinction (~201 Ma)"
+              ]
+            },
+            {
+              "id": "jurassic",
+              "name": "Jurassic Period",
+              "rank": "period",
+              "startMya": 201.4,
+              "endMya": 145,
+              "color": "#34b2d4",
+              "description": "Peak dinosaur diversity. Pangaea broke apart, warm humid conditions prevailed globally, and the first birds evolved from theropod dinosaurs.",
+              "keyEvents": [
+                "Pangaea breaks into Laurasia and Gondwana",
+                "Sauropods reach maximum sizes: Brachiosaurus, Diplodocus",
+                "Archaeopteryx: evolutionary link between dinosaurs and birds (~150 Ma)",
+                "Marine reptiles diversify: Ichthyosaurs, Plesiosaurs",
+                "Warm, high sea levels; no polar ice caps"
+              ]
+            },
+            {
+              "id": "cretaceous",
+              "name": "Cretaceous Period",
+              "rank": "period",
+              "startMya": 145,
+              "endMya": 66,
+              "color": "#89d54c",
+              "description": "The longest Mesozoic period. Flowering plants diversified explosively, fundamentally transforming terrestrial ecosystems. Ended with the Chicxulub asteroid impact.",
+              "keyEvents": [
+                "Explosive diversification of flowering plants (angiosperms)",
+                "India separates from Gondwana and begins northward drift",
+                "Tyrannosaurus rex (~68 Ma)",
+                "Triceratops, Velociraptor, Pachycephalosaurus",
+                "Chicxulub asteroid impact (~66 Ma): 10–15 km body strikes Yucatán",
+                "75–80% of species lost including all non-avian dinosaurs"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "cenozoic",
+          "name": "Cenozoic Era",
+          "rank": "era",
+          "startMya": 66,
+          "endMya": 0,
+          "color": "#f2f91d",
+          "description": "The 'Age of Mammals'. After the dinosaurs' extinction, mammals diversified explosively. Continents drifted to current positions, Antarctica froze, grasslands spread, and Homo sapiens emerged.",
+          "keyEvents": [
+            "Explosive mammalian radiation after dinosaur extinction",
+            "India–Asia collision: Himalayas begin to rise (~50 Ma)",
+            "Antarctica glaciation begins (~34 Ma)",
+            "Grasslands spread globally (~23 Ma)",
+            "Hominids diverge from chimpanzees (~7 Ma)",
+            "First Homo sapiens (~0.3 Ma)",
+            "Human civilisation (~0.01 Ma)"
+          ],
+          "children": [
+            {
+              "id": "paleogene",
+              "name": "Paleogene Period",
+              "rank": "period",
+              "startMya": 66,
+              "endMya": 23.03,
+              "color": "#fd9a52",
+              "description": "Mammals diversified rapidly filling niches left by dinosaurs. Global temperatures were initially much warmer (Paleocene–Eocene Thermal Maximum). First primates, whales, and large herbivores appeared.",
+              "keyEvents": [
+                "Mammals diversify rapidly: >10 new orders within 10 Myr",
+                "Paleocene–Eocene Thermal Maximum: +5–8°C globally (~56 Ma)",
+                "First primates (~55 Ma)",
+                "First whales (Pakicetus, ~50 Ma)",
+                "India–Asia collision: Himalayas begin (~50 Ma)",
+                "Antarctic glaciation begins (~34 Ma)"
+              ]
+            },
+            {
+              "id": "neogene",
+              "name": "Neogene Period",
+              "rank": "period",
+              "startMya": 23.03,
+              "endMya": 2.58,
+              "color": "#ffd700",
+              "description": "Global cooling and grassland expansion drove major faunal changes. Hominids diverged from other apes. The Mediterranean Sea dried up completely (Messinian Salinity Crisis).",
+              "keyEvents": [
+                "Grassland biomes spread across every continent",
+                "Great Apes diversify (~15 Ma): Gigantopithecus, Sivapithecus",
+                "Messinian Salinity Crisis: Mediterranean dries up (~5.9–5.3 Ma)",
+                "Hominids diverge from chimpanzees (~7 Ma)",
+                "Australopithecus afarensis — 'Lucy' (~3.9–3.0 Ma)"
+              ]
+            },
+            {
+              "id": "quaternary",
+              "name": "Quaternary Period",
+              "rank": "period",
+              "startMya": 2.58,
+              "endMya": 0,
+              "color": "#f7f718",
+              "description": "Characterised by repeated glacial cycles (ice ages) and the evolution and global spread of Homo sapiens. The present interglacial (Holocene) has seen the rise of all human civilisations.",
+              "keyEvents": [
+                "Pleistocene ice ages begin: 2.6 Ma — glacial cycles every ~100 kyr",
+                "Homo erectus leaves Africa (~1.8 Ma)",
+                "Denisovans and Neanderthals diverge (~0.7 Ma)",
+                "Homo sapiens evolves in Africa (~300,000 yr ago)",
+                "Out-of-Africa migration (~70,000–50,000 yr ago)",
+                "Last glacial maximum (~20,000 yr ago): ice sheets cover 30% of land",
+                "Holocene begins: all human civilisations arise (~11,700 yr ago)"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "cosmic": [
+    {
+      "id": "big-bang",
+      "name": "Big Bang",
+      "timeAgoMya": 13800,
+      "description": "The origin of space, time, and all matter-energy. In the first microseconds, quarks and gluons filled a superhot plasma. Within 3 minutes, protons and neutrons fused into the first atomic nuclei (Big Bang Nucleosynthesis).",
+      "icon": "💥"
+    },
+    {
+      "id": "cmb",
+      "name": "Cosmic Microwave Background",
+      "timeAgoMya": 13800,
+      "description": "380,000 years after the Big Bang, the universe cooled enough (~3000 K) for electrons and protons to combine into neutral hydrogen. The universe became transparent to light, releasing the CMB radiation still detectable today.",
+      "icon": "🌡️"
+    },
+    {
+      "id": "cosmic-dark-ages",
+      "name": "Cosmic Dark Ages",
+      "timeAgoMya": 13790,
+      "description": "Between the CMB and first stars (~200–400 Myr), the universe was opaque to visible light. Only neutral hydrogen and helium filled the cosmos, slowly clumping under gravity.",
+      "icon": "🌑"
+    },
+    {
+      "id": "first-stars",
+      "name": "First Stars (Population III)",
+      "timeAgoMya": 13600,
+      "description": "Massive stars (100–1000 M☉) composed almost entirely of hydrogen and helium. They forged the first heavy elements in their cores and seeded the universe with metals when they exploded as supernovae.",
+      "icon": "⭐"
+    },
+    {
+      "id": "reionization",
+      "name": "Epoch of Reionization",
+      "timeAgoMya": 13500,
+      "description": "Radiation from the first stars and quasars reionised the surrounding hydrogen gas, making the universe transparent again to ultraviolet light. Ends the Cosmic Dark Ages.",
+      "icon": "✨"
+    },
+    {
+      "id": "first-galaxies",
+      "name": "First Galaxies",
+      "timeAgoMya": 13400,
+      "description": "The first protogalaxies assembled under gravity from merging dark matter halos and gas clouds. The James Webb Space Telescope has observed galaxies from just 300 Myr after the Big Bang.",
+      "icon": "🌌"
+    },
+    {
+      "id": "milky-way",
+      "name": "Milky Way Forms",
+      "timeAgoMya": 13200,
+      "description": "Our galaxy began assembling from merging protogalactic clouds and satellite galaxies. The oldest stars in the Milky Way date to ~13.2 billion years ago — almost as old as the universe itself.",
+      "icon": "🌠"
+    },
+    {
+      "id": "solar-system",
+      "name": "Solar System Forms",
+      "timeAgoMya": 4600,
+      "description": "A dense region in a molecular cloud collapses under gravity, forming the proto-Sun and a rotating protoplanetary disk of gas and dust. Within a few million years, planets accrete from this disk.",
+      "icon": "☀️"
+    },
+    {
+      "id": "earth-forms",
+      "name": "Earth & Moon Form",
+      "timeAgoMya": 4540,
+      "description": "Earth grows by accretion of planetesimals. A Mars-sized body (Theia) collides with proto-Earth in a giant impact, ejecting material that coalesces into the Moon. Earth's iron core segregates.",
+      "icon": "🌍"
+    },
+    {
+      "id": "first-life",
+      "name": "First Life on Earth",
+      "timeAgoMya": 3800,
+      "description": "Chemical isotope evidence of biological carbon fixation in the Isua Greenstone Belt, Greenland (~3.7 Ga). Microbial life likely thrived near hydrothermal vents in the early anoxic oceans.",
+      "icon": "🦠"
+    },
+    {
+      "id": "great-oxidation",
+      "name": "Great Oxidation Event",
+      "timeAgoMya": 2400,
+      "description": "Cyanobacteria evolved oxygenic photosynthesis. Atmospheric O₂ rose from <0.001% to ~1–2%, poisoning most anaerobic life ('Oxygen Catastrophe') but enabling aerobic metabolism — the foundation for all complex life.",
+      "icon": "🌬️"
+    },
+    {
+      "id": "first-eukaryotes",
+      "name": "First Eukaryotes",
+      "timeAgoMya": 2100,
+      "description": "Cells with a membrane-bound nucleus and organelles evolve, likely via endosymbiosis: an archaeal host cell engulfs a proteobacterium that became the mitochondrion.",
+      "icon": "🔬"
+    },
+    {
+      "id": "snowball-earth",
+      "name": "Snowball Earth",
+      "timeAgoMya": 720,
+      "description": "Global glaciation events (Sturtian ~720 Ma and Marinoan ~635 Ma) covered Earth in ice from poles to equator. The thaw may have triggered an explosion of complex life.",
+      "icon": "❄️"
+    },
+    {
+      "id": "multicellular",
+      "name": "First Complex Multicellular Life",
+      "timeAgoMya": 600,
+      "description": "Ediacaran biota (~575 Ma): the first large, complex, multicellular organisms appear — soft-bodied, enigmatic creatures with no modern analogues, possibly representing early animal phyla.",
+      "icon": "🧫"
+    },
+    {
+      "id": "cambrian-explosion",
+      "name": "Cambrian Explosion",
+      "timeAgoMya": 538,
+      "description": "Rapid diversification of most animal body plans in the fossil record over ~20 million years. Eyes, shells, limbs, and active predation all appear suddenly. The 'Big Bang of biology'.",
+      "icon": "🐚"
+    },
+    {
+      "id": "land-plants",
+      "name": "First Land Plants",
+      "timeAgoMya": 470,
+      "description": "Bryophyte-like plants colonise land, fundamentally altering the carbon cycle, soil formation, and the chemistry of rivers. Paved the way for terrestrial animal life.",
+      "icon": "🌿"
+    },
+    {
+      "id": "permian-extinction",
+      "name": "End-Permian Extinction",
+      "timeAgoMya": 252,
+      "description": "The most severe mass extinction in Earth's history wiped out ~90–96% of all species. Likely caused by the Siberian Traps super-volcanism triggering runaway climate change.",
+      "icon": "🌋"
+    },
+    {
+      "id": "chicxulub",
+      "name": "Chicxulub Impact",
+      "timeAgoMya": 66,
+      "description": "A 10–15 km asteroid struck the Yucatán Peninsula at ~20 km/s, releasing energy equivalent to ~1 billion Hiroshima bombs. The resulting impact winter ended 75% of species, including all non-avian dinosaurs.",
+      "icon": "☄️"
+    },
+    {
+      "id": "homo-sapiens",
+      "name": "Homo sapiens",
+      "timeAgoMya": 0.3,
+      "description": "Anatomically modern humans evolve in Africa, likely in multiple populations. Brain volume reaches ~1400 cm³. Symbolic art, language, and long-distance trade appear by ~100,000 yr ago.",
+      "icon": "👤"
+    },
+    {
+      "id": "civilization",
+      "name": "Human Civilisation",
+      "timeAgoMya": 0.01,
+      "description": "The Neolithic revolution (~10,000 BCE): agriculture, permanent settlements, and the first cities. Writing, metallurgy, and organised states follow — compressing geological timescales into human history.",
+      "icon": "🏛️"
+    },
+    {
+      "id": "now",
+      "name": "Today",
+      "timeAgoMya": 0,
+      "description": "You are here. Earth has been a living world for 3.8 billion years. The universe is 46× older than Earth. Homo sapiens have existed for 0.007% of Earth's history.",
+      "icon": "📍"
+    }
+  ]
+}
+

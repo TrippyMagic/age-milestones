@@ -41,6 +41,11 @@ export function TimelineControls({ onZoomIn, onZoomOut, onReset }: TimelineContr
         ↺
       </button>
 
+      {/* Ctrl+scroll hint */}
+      <span className="timeline__ctrl-scroll-hint" aria-hidden="true">
+        Ctrl+scroll
+      </span>
+
       {/* Scale mode switcher */}
       <span className="timeline__scale-divider" aria-hidden="true" />
       <button

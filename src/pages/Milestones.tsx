@@ -16,6 +16,8 @@ import { useBirthWizard } from "../hooks/useBirthWizard";
 import { useHistoricalEvents } from "../hooks/useHistoricalEvents";
 import { usePreferences } from "../context/PreferencesContext";
 import { CATEGORY_META, type EventCategory } from "../types/events";
+import { Timeline3DWrapper } from "../components/3d/Timeline3DWrapper";
+import { WEB_GL_SUPPORTED } from "../utils/webgl";
 
 const FUTURE_WINDOW_YEARS = 40;
 const LOOKBACK_YEARS = 20;
@@ -89,7 +91,7 @@ export default function Milestones() {
   const [tab, setTab] = useState<keyof typeof TAB_ROWS>("Classic");
   const [focusValue, setFocusValue] = useState(() => dayjs().valueOf());
   const { events: historicalEvents } = useHistoricalEvents();
-  const { activeCategories, toggleCategory } = usePreferences();
+  const { activeCategories, toggleCategory, show3D, setShow3D } = usePreferences();
 
   const allTabs = useMemo(() => Object.keys(TAB_ROWS) as Array<keyof typeof TAB_ROWS>, []);
   const safeTab = allTabs.includes(tab) ? tab : "Classic";
@@ -132,6 +134,7 @@ export default function Milestones() {
         subLabel: e.description,
         placement: e.placement ?? "above",
         accent: "muted" as const,
+        color: CATEGORY_META[e.category].color,
       }));
 
     return [...personal, ...historical];
@@ -198,39 +201,76 @@ export default function Milestones() {
 
         {timeline && (
           <section className="card timeline-card">
-            <span className="subtitle">Explore your timeline and its upcoming milestones</span>
-
-            {/* ── Historical event category filters ── */}
-            <div className="timeline__category-filters" role="group" aria-label="Event categories">
-              {CATEGORIES.map(cat => {
-                const meta  = CATEGORY_META[cat];
-                const active = activeCategories.has(cat);
-                return (
-                  <button
-                    key={cat}
-                    type="button"
-                    className={`timeline__category-filter${active ? " timeline__category-filter--active" : ""}`}
-                    onClick={() => toggleCategory(cat)}
-                    aria-pressed={active}
-                  >
-                    <span
-                      className="timeline__category-filter__dot"
-                      style={{ background: meta.color }}
-                      aria-hidden="true"
-                    />
-                    {meta.label}
-                  </button>
-                );
-              })}
+            {/* ── Section header + 3D toggle ── */}
+            <div className="timeline-3d__toggle-row">
+              <span className="subtitle">
+                Explore your timeline and its upcoming milestones
+              </span>
+              <button
+                type="button"
+                className={`timeline-3d__toggle-btn${show3D ? " timeline-3d__toggle-btn--active" : ""}`}
+                onClick={() => setShow3D(!show3D)}
+                disabled={!WEB_GL_SUPPORTED}
+                title={
+                  !WEB_GL_SUPPORTED
+                    ? "WebGL is not supported in this browser"
+                    : show3D
+                    ? "Switch back to 2D"
+                    : "Switch to 3D view"
+                }
+              >
+                <span aria-hidden="true">🌐</span>
+                {show3D ? "2D" : "3D"}
+              </button>
             </div>
 
-            <Timeline
-              range={timeline.range}
-              value={focusValue}
-              onChange={setFocusValue}
-              events={allEvents}
-              renderValue={renderFocus}
-            />
+            {/* ── Historical event category filters (only in 2D mode) ── */}
+            {!show3D && (
+              <div className="timeline__filter-section">
+                <span className="timeline__filter-section__label">Filter events</span>
+                <div className="timeline__category-filters" role="group" aria-label="Event categories">
+                  {CATEGORIES.map(cat => {
+                    const meta   = CATEGORY_META[cat];
+                    const active = activeCategories.has(cat);
+                    return (
+                      <button
+                        key={cat}
+                        type="button"
+                        className={`timeline__category-filter${active ? " timeline__category-filter--active" : ""}`}
+                        onClick={() => toggleCategory(cat)}
+                        aria-pressed={active}
+                        style={active ? { background: `${meta.color}33`, borderColor: meta.color } : undefined}
+                      >
+                        <span
+                          className="timeline__category-filter__dot"
+                          style={{ background: meta.color }}
+                          aria-hidden="true"
+                        />
+                        {meta.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ── Timeline (2D or 3D) ── */}
+            {show3D ? (
+              <Timeline3DWrapper
+                events={allEvents}
+                range={timeline.range}
+                focusValue={focusValue}
+                onExitTo2D={() => setShow3D(false)}
+              />
+            ) : (
+              <Timeline
+                range={timeline.range}
+                value={focusValue}
+                onChange={setFocusValue}
+                events={allEvents}
+                renderValue={renderFocus}
+              />
+            )}
           </section>
         )}
       </main>

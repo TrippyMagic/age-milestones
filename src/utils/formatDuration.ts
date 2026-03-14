@@ -34,6 +34,30 @@ export const formatDuration = (s: number): string => {
 };
 
 /**
+ * Format a geological time value in millions of years ago (Mya).
+ * Examples: 4600 → "4.60 Ga",  252 → "252 Ma",  0.3 → "300 ka",  0 → "Present"
+ */
+export const formatMya = (mya: number): string => {
+  if (mya === 0) return "Present";
+  if (mya >= 1000) return `${(mya / 1000).toPrecision(3)} Ga`;
+  if (mya >= 1)   return `${mya.toPrecision(3)} Ma`;
+  if (mya > 0)    return `${(mya * 1000).toPrecision(3)} ka`;
+  return "Present";
+};
+
+/**
+ * Format a geological duration (startMya − endMya) as a human-readable string.
+ * Examples:  600 Mya → "600 Myr",  2.58 Mya → "2.58 Myr"
+ */
+export const formatMyaDuration = (startMya: number, endMya: number): string => {
+  const dur = startMya - endMya;
+  if (dur <= 0) return "—";
+  if (dur >= 1000) return `${(dur / 1000).toPrecision(3)} Gyr`;
+  if (dur >= 1)   return `${dur.toPrecision(3)} Myr`;
+  return `${(dur * 1000).toPrecision(3)} kyr`;
+};
+
+/**
  * Format a ratio between two durations for human reading.
  * Pass the larger value as `big` and smaller as `small`.
  */
