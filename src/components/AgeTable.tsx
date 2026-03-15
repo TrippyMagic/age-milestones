@@ -84,21 +84,23 @@ export default function AgeTable({ rows, renderNumber }: AgeTableProps) {
   if (!birthDate) return null;
 
   return (
-    <table className="age-table">
-      <tbody>
-        {vals.map(r => (
-          <tr key={r.label}>
-            <td>{r.label}</td>
-            <td className={`age-val ${r.updated ? "updated" : ""}`}>
-              {r.displayMode === "fraction"
-                ? r.value
-                : renderNumber
-                ? renderNumber(r.raw, r.label)
-                : r.value}
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <div className="age-table__wrap">
+      <table className="age-table">
+        <tbody>
+          {vals.map(r => (
+            <tr key={r.label}>
+              <td>{r.label}</td>
+              <td className={`age-val ${r.updated ? "updated" : ""}`}>
+                {r.displayMode === "fraction"
+                  ? r.value
+                  : renderNumber
+                  ? renderNumber(r.raw, r.label)
+                  : r.value}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

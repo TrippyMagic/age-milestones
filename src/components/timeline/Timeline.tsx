@@ -17,8 +17,10 @@ import {
   type MouseEvent as ReactMouseEvent,
 } from "react";
 
+import { AnimatePresence } from "framer-motion";
 import { useElementSize } from "../../hooks/useElementSize";
 import { usePreferences } from "../../context/PreferencesContext";
+import { usePinchZoom }   from "../../hooks/usePinchZoom";
 import {
   viewportToRange,
   applyZoom,
@@ -178,9 +180,28 @@ export default function Timeline({
   // ── Pan handlers ──────────────────────────────────────────
   const panStartRef  = useRef<{ clientX: number; centerAtStart: number; spanAtStart: number } | null>(null);
   const isPanningRef = useRef(false);
+  /** Shared with usePinchZoom — true while a 2-finger pinch is in progress */
+  const isPinchingRef = useRef(false);
+
+  // ── Pinch-to-zoom ─────────────────────────────────────────
+  const { showPinchHint } = usePinchZoom({
+    axisNodeRef,
+    viewportRef,
+    scaleModeRef,
+    setViewport,
+    isPinchingRef,
+    /** Abort any ongoing single-finger pan when a second finger lands */
+    onPinchStart: () => {
+      panStartRef.current  = null;
+      isPanningRef.current = false;
+      setIsPanning(false);
+    },
+  });
 
   const handleAxisPointerDown = useCallback((evt: ReactPointerEvent<HTMLDivElement>) => {
     if ((evt.target as HTMLElement).closest("button")) return;
+    if (isPinchingRef.current)    return; // yield to active pinch
+    if (panStartRef.current !== null) return; // already tracking a pointer
     evt.preventDefault();
     evt.currentTarget.setPointerCapture(evt.pointerId);
     const vp = viewportRef.current;
@@ -189,6 +210,7 @@ export default function Timeline({
   }, []);
 
   const handleAxisPointerMove = useCallback((evt: ReactPointerEvent<HTMLDivElement>) => {
+    if (isPinchingRef.current) return; // pinch owns the gesture
     if (!panStartRef.current) return;
     const dx = evt.clientX - panStartRef.current.clientX;
     if (!isPanningRef.current && Math.abs(dx) > PAN_THRESHOLD_PX) {
@@ -397,19 +419,29 @@ export default function Timeline({
             onZoomOut={handleZoomOut}
             onReset={handleReset}
           />
+
+          {/* Pinch-to-zoom hint — appears 3 s on first touch, then fades */}
+          {showPinchHint && (
+            <div className="timeline__pinch-hint" aria-live="polite" aria-atomic="true">
+              Pinch to zoom
+            </div>
+          )}
         </div>
 
         {/* Expandable sub-timeline for grouped events */}
-        {activeGroup && axisSize.width > 0 && (
-          <SubTimeline
-            axisWidth={axisSize.width}
-            group={activeGroup}
-            range={viewRange}
-            onClose={handleCloseSubTimeline}
-            now={now}
-            groupElement={activeGroupNode}
-          />
-        )}
+        <AnimatePresence>
+          {activeGroup && axisSize.width > 0 && (
+            <SubTimeline
+              key={activeGroup.id}
+              axisWidth={axisSize.width}
+              group={activeGroup}
+              range={viewRange}
+              onClose={handleCloseSubTimeline}
+              now={now}
+              groupElement={activeGroupNode}
+            />
+          )}
+        </AnimatePresence>
       </div>
 
       {valueNode && (

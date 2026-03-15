@@ -1,14 +1,17 @@
 /**
  * src/components/timeline/SubTimeline.tsx
  * Expandable sub-timeline shown when the user clicks a grouped event bubble.
+ * Phase E: Framer Motion animation, ✕ close button, responsive min-width, mobile bottom-sheet.
  */
 import {
+  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
   useState,
   type CSSProperties,
 } from "react";
+import { motion } from "framer-motion";
 import { useOutsideClick } from "../../hooks/useOutsideClick";
 import {
   valueToRatio,
@@ -87,6 +90,16 @@ export function SubTimeline({
   const containerRef = useRef<HTMLDivElement>(null);
   useOutsideClick(containerRef, onClose);
 
+  // ── Mobile detection (bottom-sheet vs. inline) ─────────────
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== "undefined" ? window.innerWidth < 720 : false,
+  );
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 720);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+
   const [connectorGap, setConnectorGap] = useState(SUB_TIMELINE_CONNECTOR_HEIGHT);
 
   useLayoutEffect(() => {
@@ -139,32 +152,58 @@ export function SubTimeline({
     [group.events, subRange],
   );
 
+  // ── Responsive min-width (E-04) ────────────────────────────
+  const responsiveMinWidth = Math.min(SUB_TIMELINE_MIN_WIDTH, axisWidth * 0.9);
+
   const baseWidth    = Math.max(axisWidth * (group.endRatio - group.startRatio), 0);
-  const desiredWidth = Math.max(baseWidth + SUB_TIMELINE_BUFFER_PX * 2, SUB_TIMELINE_MIN_WIDTH);
+  const desiredWidth = Math.max(baseWidth + SUB_TIMELINE_BUFFER_PX * 2, responsiveMinWidth);
   const width        = Math.min(axisWidth, desiredWidth);
   const center       = axisWidth * group.ratio;
   const left         = clamp(center - width / 2, 0, Math.max(axisWidth - width, 0));
-  const groupCenterPx       = axisWidth * group.ratio;
+  const groupCenterPx        = axisWidth * group.ratio;
   const startConnectorTarget = left;
   const endConnectorTarget   = left + width;
   const connectorsHeight     = Math.max(connectorGap, 1);
 
   const subTimelineStyle: CSSProperties = {
     ["--timeline-sub-gap" as string]: `${connectorsHeight}px`,
-  };
-  const axisWrapperStyle: CSSProperties = {
-    width: `${width}px`,
-    left:  `${left}px`,
+    transformOrigin: "top center",
   };
 
+  // On mobile the axis wrapper fills the sheet; on desktop it is positioned inline.
+  const axisWrapperStyle: CSSProperties = isMobile
+    ? {}
+    : { width: `${width}px`, left: `${left}px` };
+
+  // ── Framer Motion variants (E-01) ──────────────────────────
+  const motionProps = isMobile
+    ? {
+        initial:    { opacity: 0, y: "100%" },
+        animate:    { opacity: 1, y: 0 },
+        exit:       { opacity: 0, y: "100%" },
+        transition: { duration: 0.28, ease: [0.32, 0.72, 0, 1] as [number, number, number, number] },
+      }
+    : {
+        initial:    { opacity: 0, scaleY: 0.8 },
+        animate:    { opacity: 1, scaleY: 1 },
+        exit:       { opacity: 0, scaleY: 0.8 },
+        transition: { duration: 0.22, ease: [0.4, 0, 0.2, 1] as [number, number, number, number] },
+      };
+
   return (
-    <div className="timeline__subtimeline" style={subTimelineStyle}>
+    <motion.div
+      className="timeline__subtimeline"
+      style={subTimelineStyle}
+      {...motionProps}
+    >
+      {/* SVG connectors — desktop only (hidden via CSS on mobile) */}
       <svg
         className="timeline__subtimeline-connectors"
         width={axisWidth}
         height={connectorsHeight}
         viewBox={`0 0 ${axisWidth} ${connectorsHeight}`}
         preserveAspectRatio="none"
+        aria-hidden="true"
       >
         <line x1={groupCenterPx} y1={0} x2={startConnectorTarget} y2={connectorsHeight} />
         <line x1={groupCenterPx} y1={0} x2={endConnectorTarget}   y2={connectorsHeight} />
@@ -175,6 +214,16 @@ export function SubTimeline({
         className="timeline__subtimeline-axis-wrapper"
         style={axisWrapperStyle}
       >
+        {/* ✕ Close button (E-02) */}
+        <button
+          type="button"
+          className="timeline__subtimeline-close"
+          onClick={onClose}
+          aria-label="Close expanded events"
+        >
+          ✕
+        </button>
+
         <div className="timeline__subtimeline-axis">
           <div className="timeline__line" />
           {subTicks.map(tick => (
@@ -199,7 +248,7 @@ export function SubTimeline({
           ))}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 

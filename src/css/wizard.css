@@ -49,7 +49,7 @@
   width: 100%;
 }
 
-@media (min-width: 560px) {
+@media (min-width: 480px) {
   .landing__buttons {
     flex-direction: row;
     justify-content: center;
@@ -70,7 +70,7 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  z-index: 20;
+  z-index: var(--z-wizard);
   background: rgba(6, 11, 25, 0.75);
   backdrop-filter: blur(4px);
 }
@@ -78,17 +78,32 @@
 /* -----------------------------------------------------------
    Wizard panel
 ----------------------------------------------------------- */
+
+/* Share card-base backdrop + border foundation (panel overrides
+   background with its own gradient and radius with 32px)       */
+.card-base,
+.birth-wizard__panel {
+  border: 1px solid rgba(129, 140, 248, 0.45);
+  backdrop-filter: blur(18px);
+  box-shadow: var(--shadow-popup);
+}
+
 .birth-wizard__panel {
   width: min(760px, 94vw);
   background: linear-gradient(145deg, rgba(15, 24, 44, 0.95), rgba(28, 41, 72, 0.92));
-  border-radius: 32px;
-  padding: clamp(28px, 4vw, 36px);
-  box-shadow: 0 34px 72px rgba(6, 11, 25, 0.65);
-  border: 1px solid rgba(129, 140, 248, 0.45);
+  border-radius: var(--radius-lg);   /* 20px mobile base */
+  padding: 24px 20px;                /* mobile base */
   display: flex;
   flex-direction: column;
   gap: clamp(20px, 3vw, 28px);
-  backdrop-filter: blur(18px);
+}
+
+@media (min-width: 480px) {
+  .birth-wizard__panel { padding: clamp(28px, 4vw, 36px); }
+}
+
+@media (min-width: 720px) {
+  .birth-wizard__panel { border-radius: 32px; }
 }
 
 .birth-wizard__header {
@@ -122,10 +137,13 @@
 
 .birth-wizard__grid {
   display: grid;
-  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.2fr);
+  grid-template-columns: 1fr;     /* mobile base */
   gap: clamp(20px, 3vw, 28px);
   align-items: stretch;
 }
+
+.birth-wizard__aside   { order: 2; display: none; }  /* hidden < 480px */
+.birth-wizard__content { order: 1; }
 
 .birth-wizard__aside {
   display: flex;
@@ -218,8 +236,12 @@
 .birth-wizard__summary-list {
   margin: 0;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;     /* mobile base */
   gap: 12px;
+}
+
+@media (min-width: 480px) {
+  .birth-wizard__summary-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 .birth-wizard__summary-item {
@@ -289,13 +311,17 @@
 
 .birth-wizard__actions button {
   flex: 1;
-  min-width: 150px;
+  min-width: 130px;               /* mobile base */
   padding: 14px 22px;
   border-radius: 999px;
   border: none;
   font-weight: 600;
   cursor: pointer;
   transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
+}
+
+@media (min-width: 480px) {
+  .birth-wizard__actions button { min-width: 150px; }
 }
 
 .birth-wizard__actions button:disabled {
@@ -342,33 +368,138 @@
 }
 
 /* -----------------------------------------------------------
-   Responsive
+   Responsive — mobile base, desktop via min-width
 ----------------------------------------------------------- */
-@media (max-width: 720px) {
+
+/* ≥ 480px — show sidebar, restore summary 2-col */
+@media (min-width: 480px) {
+  .birth-wizard__aside { display: flex; }
+}
+
+/* ≥ 720px — restore 2-column wizard layout */
+@media (min-width: 720px) {
   .birth-wizard__grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.2fr);
   }
 
-  .birth-wizard__aside {
-    order: 2;
-  }
-
-  .birth-wizard__content {
-    order: 1;
-  }
+  .birth-wizard__aside   { order: initial; }
+  .birth-wizard__content { order: initial; }
+  .birth-wizard__panel   { border-radius: 32px; }
 }
 
-@media (max-width: 560px) {
-  .birth-wizard__panel {
-    padding: 24px 20px;
-  }
-
-  .birth-wizard__summary-list {
-    grid-template-columns: 1fr;
-  }
-
-  .birth-wizard__actions button {
-    min-width: 130px;
-  }
+/* -----------------------------------------------------------
+   Quick-entry mode (Phase C)
+----------------------------------------------------------- */
+.birth-wizard__quick {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(16px, 2.5vw, 22px);
 }
+
+.birth-wizard__quick-label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.birth-wizard__quick .birth-wizard__field input[type="date"],
+.birth-wizard__quick .birth-wizard__field input[type="time"] {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 1.3rem;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(129, 140, 248, 0.4);
+  background: rgba(6, 11, 25, 0.55);
+  color: var(--text-light);
+  text-align: left;
+  box-shadow: inset 0 0 0 1px rgba(79, 70, 229, 0.25);
+  color-scheme: dark;
+}
+
+.birth-wizard__quick-optional {
+  font-size: .75rem;
+  color: var(--text-muted);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* -----------------------------------------------------------
+   Mode-toggle link button (Phase C)
+----------------------------------------------------------- */
+.birth-wizard__mode-toggle {
+  align-self: center;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: color .15s ease, background .15s ease;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 3px;
+}
+
+.birth-wizard__mode-toggle:hover {
+  color: var(--indigo-100);
+  background: rgba(129, 140, 248, 0.08);
+}
+
+/* -----------------------------------------------------------
+   Inline validation error (Phase C)
+----------------------------------------------------------- */
+.birth-wizard__error {
+  display: block;
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #fca5a5;
+  font-size: var(--text-sm);
+  line-height: 1.4;
+}
+
+/* Highlight invalid input with a red ring */
+input[aria-invalid="true"] {
+  border-color: rgba(239, 68, 68, 0.7) !important;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2), inset 0 0 0 1px rgba(239, 68, 68, 0.3);
+}
+
+/* -----------------------------------------------------------
+   Clickable summary items (Phase C)
+----------------------------------------------------------- */
+.birth-wizard__summary-item--clickable {
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  padding: 4px 6px;
+  margin: -4px -6px;
+  transition: background .15s ease, color .15s ease;
+}
+
+.birth-wizard__summary-item--clickable:hover {
+  background: rgba(129, 140, 248, 0.12);
+}
+
+.birth-wizard__summary-item--clickable:focus-visible {
+  outline: 2px solid rgba(129, 140, 248, 0.55);
+  outline-offset: 2px;
+}
+
+.birth-wizard__summary-item--active {
+  background: rgba(79, 70, 229, 0.18);
+}
+
+.birth-wizard__summary-item--active dt {
+  color: var(--indigo-100);
+}
+
 

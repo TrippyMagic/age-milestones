@@ -19,10 +19,29 @@ export function useBirthWizard() {
 
   useEffect(() => {
     if (!isOpen || typeof document === "undefined") return;
-    const { overflow } = document.body.style;
-    document.body.style.overflow = "hidden";
+
+    // iOS scroll-lock fix (F-04):
+    // Simply setting overflow:hidden on <body> causes a layout jump on iOS Safari
+    // because the page scrolls to top. The fix: freeze the body in place using
+    // position:fixed + negative top equal to the current scrollY, then restore on close.
+    const scrollY = window.scrollY;
+    const body = document.body;
+    const prevOverflow  = body.style.overflow;
+    const prevPosition  = body.style.position;
+    const prevTop       = body.style.top;
+    const prevWidth     = body.style.width;
+
+    body.style.overflow  = "hidden";
+    body.style.position  = "fixed";
+    body.style.top       = `-${scrollY}px`;
+    body.style.width     = "100%";
+
     return () => {
-      document.body.style.overflow = overflow;
+      body.style.overflow  = prevOverflow;
+      body.style.position  = prevPosition;
+      body.style.top       = prevTop;
+      body.style.width     = prevWidth;
+      window.scrollTo(0, scrollY);
     };
   }, [isOpen]);
 

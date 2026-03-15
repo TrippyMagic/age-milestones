@@ -15,7 +15,7 @@
   box-shadow: 0 26px 48px rgba(15, 23, 42, 0.45);
   backdrop-filter: blur(18px);
   position: relative;
-  z-index: 1800;
+  z-index: var(--z-navbar);
 }
 
 .app-navbar__brand {
@@ -144,7 +144,7 @@
   pointer-events: none;
   transform: translateY(-10px);
   transition: opacity .2s ease, transform .2s ease;
-  z-index: 1200;
+  z-index: var(--z-navbar-dropdown);
 }
 
 .app-navbar__dropdown--open {
@@ -189,45 +189,37 @@
 .footer a:hover { text-decoration: underline; }
 
 /* -----------------------------------------------------------
-   Responsive
+   Responsive — mobile-first compact navbar
 ----------------------------------------------------------- */
-@media (max-width: 640px) {
-  .app-navbar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-  }
 
-  .app-navbar__actions {
-    justify-content: space-between;
-    width: 100%;
-    gap: 10px;
-  }
+/* ── Mobile: hide "Edit birth date" inline, hide "Menu" text ── */
+.app-navbar__edit        { display: none; }   /* moved to dropdown on mobile */
+.app-navbar__menu-label  { display: none; }   /* icon-only hamburger on mobile */
 
-  .app-navbar__edit {
-    flex: 1;
-    text-align: center;
-    padding: 10px 14px;
-  }
-
-  .app-navbar__menu {
-    justify-content: flex-end;
-  }
+/* ── Edit-in-dropdown button (visible only on mobile) ─────── */
+.app-navbar__edit-dropdown {
+  width: 100%;
+  text-align: center;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(129, 140, 248, 0.6);
+  background: linear-gradient(120deg, rgba(79, 70, 229, 0.85), rgba(129, 140, 248, 0.8));
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 12px 28px rgba(79, 70, 229, 0.35);
+  transition: filter .15s ease, transform .15s ease;
 }
 
-@media (max-width: 420px) {
-  .app-navbar__actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
+.app-navbar__edit-dropdown:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
 
-  .app-navbar__menu {
-    width: 100%;
-  }
-
-  .app-navbar__menu-toggle {
-    width: 100%;
-    justify-content: center;
-  }
+/* ── ≥ 720px: restore inline edit button, show "Menu" label ── */
+@media (min-width: 720px) {
+  .app-navbar__edit       { display: inline-flex; }
+  .app-navbar__menu-label { display: inline; }
+  .app-navbar__edit-dropdown { display: none; } /* hidden in dropdown on desktop */
 }
 

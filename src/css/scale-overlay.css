@@ -6,7 +6,7 @@
 .scale-overlay__backdrop {
   position: fixed;
   inset: 0;
-  z-index: 2400;
+  z-index: var(--z-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -62,9 +62,25 @@
 
 .scale-overlay__content {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  grid-template-columns: 1fr;     /* mobile base — stacked */
   gap: clamp(20px, 4vw, 32px);
   padding: clamp(24px, 4vw, 36px);
+}
+
+/* -----------------------------------------------------------
+   Responsive
+----------------------------------------------------------- */
+/* ≥ 720px — restore 2-column layout */
+@media (min-width: 720px) {
+  .scale-overlay__content {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  }
+
+  .count-scene__grid {
+    grid-template-columns: repeat(auto-fill, 20px);
+    gap: 8px;
+    justify-content: center;
+  }
 }
 
 .scale-overlay__visual {
@@ -170,17 +186,5 @@
   color: var(--text-light);
 }
 
-/* -----------------------------------------------------------
-   Responsive
------------------------------------------------------------ */
-@media (max-width: 900px) {
-  .scale-overlay__content {
-    grid-template-columns: 1fr;
-  }
 
-  .count-scene__grid {
-    grid-template-columns: repeat(auto-fill, minmax(18px, 1fr));
-    gap: 10px;
-  }
-}
 

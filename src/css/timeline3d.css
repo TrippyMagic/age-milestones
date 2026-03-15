@@ -9,11 +9,13 @@
 ----------------------------------------------------------- */
 .timeline-3d {
   width: 100%;
-  height: 520px;
+  height: 320px;                  /* mobile base */
   border-radius: 20px;
   overflow: hidden;
   position: relative;
   background: #090c1a;
+  touch-action: none;             /* prevent native zoom/scroll on 3D canvas */
+  isolation: isolate;             /* create stacking context — prevents OrbitControls events leaking (F-02) */
 }
 
 /* -----------------------------------------------------------
@@ -27,7 +29,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  z-index: 10;
+  z-index: var(--z-controls);
   pointer-events: none;
 }
 
@@ -200,21 +202,18 @@
 }
 
 /* -----------------------------------------------------------
-   Responsive
+   Responsive — mobile base, restored via min-width
 ----------------------------------------------------------- */
-@media (max-width: 720px) {
-  .timeline-3d {
-    height: 380px;
-  }
 
-  .timeline-3d__hint {
-    display: none; /* hide hint on small screens to save space */
-  }
+/* .timeline-3d__hint: hidden on mobile to save space */
+.timeline-3d__hint { display: none; }
+
+@media (min-width: 480px) {
+  .timeline-3d { height: 380px; }
 }
 
-@media (max-width: 480px) {
-  .timeline-3d {
-    height: 320px;
-  }
+@media (min-width: 720px) {
+  .timeline-3d        { height: 520px; }
+  .timeline-3d__hint  { display: block; }
 }
 

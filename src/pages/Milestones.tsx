@@ -92,6 +92,10 @@ export default function Milestones() {
   const [focusValue, setFocusValue] = useState(() => dayjs().valueOf());
   const { events: historicalEvents } = useHistoricalEvents();
   const { activeCategories, toggleCategory, show3D, setShow3D } = usePreferences();
+  /** Perspectives panel: open by default on desktop, collapsed on mobile */
+  const [perspOpen, setPerspOpen] = useState(
+    () => typeof window !== "undefined" ? window.innerWidth >= 720 : true
+  );
 
   const allTabs = useMemo(() => Object.keys(TAB_ROWS) as Array<keyof typeof TAB_ROWS>, []);
   const safeTab = allTabs.includes(tab) ? tab : "Classic";
@@ -170,34 +174,53 @@ export default function Milestones() {
     <>
       <Navbar onEditBirthDate={openWizard} />
       <main className="page milestones-page">
-        <section className="perspective-card">
-          <div className="tabs perspective-card__tabs" role="tablist" aria-label="Perspectives">
-            {allTabs.map(t => (
-              <button
-                key={t}
-                type="button"
-                className={`tab ${t === safeTab ? "tab--active" : ""}`}
-                onClick={() => setTab(t)}
-                aria-pressed={t === safeTab}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-          <div className="perspective-card__body">
-            <h2 className="perspective-card__title">
-              Your age in{" "}
-              <span className="perspective-card__title-accent">{perspectiveLabel}</span>{" "}
-              perspective
-            </h2>
-            <p className="perspective-card__subtitle">
-              Switch the lens to reveal how your lifetime translates across different units.
-            </p>
-            <div className="perspective-card__table">
-              <AgeTable rows={rows} renderNumber={renderNumber} />
-            </div>
-          </div>
-        </section>
+
+        {/* ── Collapsible perspectives panel ── */}
+        <div className="perspectives-panel">
+          {/* Toggle shown only on mobile (CSS hides on ≥720px) */}
+          <button
+            type="button"
+            className="perspectives-panel__toggle"
+            onClick={() => setPerspOpen(v => !v)}
+            aria-expanded={perspOpen}
+          >
+            <span>Age Perspectives</span>
+            <span className="perspectives-panel__chevron" aria-hidden="true">
+              {perspOpen ? "▲" : "▼"}
+            </span>
+          </button>
+
+          {perspOpen && (
+            <section className="perspective-card">
+              <div className="tabs perspective-card__tabs" role="tablist" aria-label="Perspectives">
+                {allTabs.map(t => (
+                  <button
+                    key={t}
+                    type="button"
+                    className={`tab ${t === safeTab ? "tab--active" : ""}`}
+                    onClick={() => setTab(t)}
+                    aria-pressed={t === safeTab}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+              <div className="perspective-card__body">
+                <h2 className="perspective-card__title">
+                  Your age in{" "}
+                  <span className="perspective-card__title-accent">{perspectiveLabel}</span>{" "}
+                  perspective
+                </h2>
+                <p className="perspective-card__subtitle">
+                  Switch the lens to reveal how your lifetime translates across different units.
+                </p>
+                <div className="perspective-card__table">
+                  <AgeTable rows={rows} renderNumber={renderNumber} />
+                </div>
+              </div>
+            </section>
+          )}
+        </div>
 
         {timeline && (
           <section className="card timeline-card">

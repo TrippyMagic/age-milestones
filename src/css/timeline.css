@@ -30,6 +30,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  touch-action: pan-y; /* allow vertical scroll; pan/pinch handled in JS */
 }
 
 .timeline__stack {
@@ -92,53 +93,36 @@
 /* ── Main axis ─────────────────────────────────────────────── */
 .timeline__axis {
   position: relative;
-  height: 240px;
+  height: 200px;                  /* mobile base — desktop restores to 240px */
   --timeline-line-top: 56%;
   --timeline-stripe-height: 16px;
   cursor: grab;
   user-select: none;
+  touch-action: none;             /* block native scroll/zoom on the axis canvas */
 }
 
 .timeline__axis--panning {
   cursor: grabbing;
+  will-change: transform; /* hint GPU compositing during pan (F-05) */
 }
 
 .timeline__line {
-  position: absolute;
-  top: calc(var(--timeline-line-top) - var(--timeline-stripe-height) / 2);
-  left: 0;
-  right: 0;
-  height: var(--timeline-stripe-height);
-  border-radius: 999px;
-  background: linear-gradient(90deg, rgba(79, 70, 229, 0.3), rgba(160, 112, 255, 0.5));
-  box-shadow: inset 0 0 0 1px rgba(165, 180, 252, 0.25), 0 12px 32px rgba(79, 70, 229, 0.35);
-  z-index: 0;
+  /* ...existing properties... */
+  z-index: var(--z-timeline-line);
 }
 
 /* ── Group range highlight ─────────────────────────────────── */
 .timeline__group-range {
-  position: absolute;
-  top: calc(var(--timeline-line-top) - var(--timeline-stripe-height) / 2);
-  height: var(--timeline-stripe-height);
-  min-width: 4px;
-  background: rgba(165, 180, 252, 0.38);
-  border: 1px solid rgba(165, 180, 252, 0.6);
-  border-radius: 999px;
-  z-index: 1;
+  /* ...existing properties... */
+  z-index: var(--z-timeline-ticks);
   pointer-events: none;
   transition: opacity 0.2s ease;
 }
 
 /* ── Hover tooltip ─────────────────────────────────────────── */
 .timeline__hover-tooltip {
-  position: absolute;
-  top: calc(var(--timeline-line-top) - var(--timeline-stripe-height) / 2);
-  transform: translateX(-50%);
-  pointer-events: none;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  /* ...existing properties... */
+  z-index: var(--z-hover-tooltip);
 }
 
 .timeline__hover-line {
@@ -183,7 +167,7 @@
   right: 12px;
   display: flex;
   gap: 4px;
-  z-index: 10;
+  z-index: var(--z-controls);
   pointer-events: auto;
 }
 
@@ -335,7 +319,7 @@
 .timeline__event {
   transform: translate(-50%, -50%);
   pointer-events: auto;
-  z-index: 3;
+  z-index: var(--z-events);
   --timeline-marker-size: 18px;
   cursor: pointer;
 }
@@ -378,7 +362,7 @@
   background: none;
   cursor: pointer;
   pointer-events: auto;
-  z-index: 4;
+  z-index: var(--z-focus-groups);
   touch-action: manipulation;
 }
 
@@ -420,7 +404,7 @@
   align-items: center;
   gap: 0;
   pointer-events: none;
-  z-index: 4;
+  z-index: var(--z-focus-groups);
   touch-action: none;
   transform: translate(-50%, 0);
 }
@@ -451,8 +435,8 @@
 .timeline__label {
   position: absolute;
   left: 50%;
-  min-width: 180px;
-  max-width: 240px;
+  min-width: 160px;
+  max-width: min(240px, calc(100vw - var(--space-xl)));
   padding: 10px 14px;
   border-radius: 16px;
   background: rgba(15, 23, 42, 0.92);
@@ -464,7 +448,7 @@
   pointer-events: none;
   backdrop-filter: blur(8px);
   text-align: left;
-  z-index: 5;
+  z-index: var(--z-label-tooltip);
 }
 
 .timeline__event--below .timeline__label {
@@ -570,28 +554,87 @@
 }
 
 /* ── Sub-timeline ──────────────────────────────────────────── */
+
+/* Mobile base: bottom-sheet fixed to the bottom of the screen (E-05) */
 .timeline__subtimeline {
-  position: relative;
-  margin-top: 0;
-  padding-top: 0;
-  padding-bottom: 20px;
-  min-height: 220px;
-  --timeline-sub-gap: 72px;
-}
-
-.timeline__subtimeline-connectors {
-  position: absolute;
-  top: calc(-1 * var(--timeline-sub-gap));
+  position: fixed;
+  bottom: 0;
   left: 0;
-  width: 100%;
-  height: var(--timeline-sub-gap);
-  pointer-events: none;
+  right: 0;
+  max-height: 60vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  z-index: var(--z-subtimeline-mob);    /* above content, below navbar & wizard */
+  border-radius: 20px 20px 0 0;
+  padding: 0 0 20px 0;
+  min-height: 0;
+  --timeline-sub-gap: 72px;
+  background: rgba(10, 15, 30, 0.97);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 2px solid rgba(129, 140, 248, 0.4);
+  box-shadow: 0 -8px 40px rgba(2, 6, 23, 0.6);
 }
 
-.timeline__subtimeline-connectors line {
-  stroke: rgba(165, 180, 252, 0.65);
-  stroke-width: 2;
-  stroke-dasharray: 5 4;
+/* Drag-handle indicator on mobile */
+.timeline__subtimeline::before {
+  content: "";
+  display: block;
+  width: 40px;
+  height: 4px;
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 999px;
+  margin: 12px auto 6px;
+  flex-shrink: 0;
+}
+
+/* Desktop: restore inline positioning (E-03, z-index: 6) */
+@media (min-width: 720px) {
+  .timeline__subtimeline {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    right: auto;
+    max-height: none;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: auto;
+    z-index: var(--z-subtimeline);       /* above labels (5), below wizard (20) */
+    border-radius: 0;
+    padding-bottom: 20px;
+    min-height: 220px;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-top: none;
+    box-shadow: none;
+  }
+
+  .timeline__subtimeline::before {
+    display: none;
+  }
+}
+
+/* SVG connectors: hidden on mobile (bottom-sheet has no anchor), shown on desktop (E-06) */
+.timeline__subtimeline-connectors {
+  display: none;
+}
+
+@media (min-width: 720px) {
+  .timeline__subtimeline-connectors {
+    display: block;
+    position: absolute;
+    top: calc(-1 * var(--timeline-sub-gap));
+    left: 0;
+    width: 100%;
+    height: var(--timeline-sub-gap);
+    pointer-events: none;
+  }
+
+  .timeline__subtimeline-connectors line {
+    stroke: rgba(165, 180, 252, 0.65);
+    stroke-width: 2;
+    stroke-dasharray: 5 4;
+  }
 }
 
 .timeline__subtimeline-axis-wrapper {
@@ -609,6 +652,57 @@
   box-shadow: 0 8px 24px rgba(2, 6, 23, 0.35);
 }
 
+/* Mobile: axis-wrapper fills the entire sheet */
+@media (max-width: 719px) {
+  .timeline__subtimeline-axis-wrapper {
+    position: relative;
+    width: auto !important;
+    left: auto !important;
+    height: auto;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    padding: 0 var(--space-md) var(--space-md);
+  }
+}
+
+/* ── Sub-timeline close button (E-02) ──────────────────────── */
+.timeline__subtimeline-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: var(--z-controls);
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid rgba(129, 140, 248, 0.4);
+  background: rgba(15, 23, 42, 0.75);
+  color: var(--text-muted);
+  font-size: .85rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+  transition: background .15s ease, color .15s ease, transform .12s ease;
+}
+
+.timeline__subtimeline-close:hover {
+  background: rgba(79, 70, 229, 0.5);
+  color: var(--text-light);
+  transform: scale(1.06);
+}
+
+.timeline__subtimeline-close:focus-visible {
+  outline: 2px solid var(--indigo-100);
+  outline-offset: 2px;
+}
+
 .timeline__subtimeline-axis {
   position: relative;
   height: 150px;
@@ -617,7 +711,7 @@
 }
 
 .timeline__subtimeline-axis .timeline__event {
-  z-index: 2;
+  z-index: var(--z-hover-tooltip); /* sub-events share hover-tooltip level */
 }
 
 .timeline__subtimeline-tick {
@@ -650,13 +744,40 @@
   backdrop-filter: blur(6px);
 }
 
-/* ── Category filter section card ──────────────────────────── */
+/* ── Pinch-to-zoom hint (Phase D) ──────────────────────────── */
+.timeline__pinch-hint {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(15, 23, 42, 0.84);
+  border: var(--border-subtle);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: var(--z-pinch-hint);
+  animation: pinch-hint-fade 3s ease forwards;
+}
+
+@keyframes pinch-hint-fade {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(6px); }
+  12%  { opacity: 1; transform: translateX(-50%) translateY(0);   }
+  75%  { opacity: 1; transform: translateX(-50%) translateY(0);   }
+  100% { opacity: 0; transform: translateX(-50%) translateY(0);   }
+}
+
+/* ── Responsive — mobile base, desktop restored via min-width ── */
+
+/* Filter section: compact on mobile (base definition) */
 .timeline__filter-section {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  padding: 10px 16px;
+  gap: var(--space-sm);
+  padding: var(--space-sm) 12px;
   border-radius: 14px;
   background: rgba(15, 23, 42, 0.55);
   border: 1px solid rgba(129, 140, 248, 0.2);
@@ -672,13 +793,14 @@
   color: var(--text-muted);
   flex-shrink: 0;
   margin-right: 4px;
+  display: none;                   /* hidden on mobile */
 }
 
 /* ── Category filter chips ─────────────────────────────────── */
 .timeline__category-filters {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--space-sm);
   align-items: center;
 }
 
@@ -686,12 +808,12 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 12px;
+  padding: 4px 10px;               /* mobile base */
   border-radius: 999px;
   border: 1px solid rgba(129, 140, 248, 0.35);
   background: rgba(17, 24, 39, 0.55);
   color: var(--text-muted);
-  font-size: .78rem;
+  font-size: var(--text-xs);       /* mobile base */
   font-weight: 500;
   letter-spacing: .04em;
   cursor: pointer;
@@ -715,27 +837,24 @@
   flex-shrink: 0;
 }
 
-/* ── Responsive ────────────────────────────────────────────── */
-@media (max-width: 720px) {
-  .timeline-card { margin-top: 28px; }
-  .timeline__axis { height: 220px; }
-  .timeline__label { max-width: 180px; }
-  .timeline__value-primary { font-size: 1.3rem; }
-  /* Ctrl+scroll is irrelevant on touch devices */
-  .timeline__ctrl-scroll-hint { display: none; }
+/* Ctrl+scroll hint: hidden on touch / mobile (already defined above; just pin display) */
+.timeline__ctrl-scroll-hint { display: none; }
+
+/* Value display: compact on mobile (overrides the 1.6rem base) */
+.timeline__value-primary { font-size: 1.3rem; }
+
+/* ≥ 480px — tablet: show filter label, restore filter sizing */
+@media (min-width: 480px) {
+  .timeline__filter-section          { padding: 10px var(--space-md); gap: 10px; }
+  .timeline__filter-section__label   { display: inline; }
+  .timeline__category-filter         { font-size: .78rem; padding: 5px 12px; }
 }
 
-@media (max-width: 480px) {
-  .timeline__filter-section {
-    padding: 8px 12px;
-    gap: 8px;
-  }
-  .timeline__filter-section__label { display: none; }
-  .timeline__category-filter {
-    font-size: .72rem;
-    padding: 4px 10px;
-  }
-  .timeline__axis { height: 200px; }
+/* ≥ 720px — desktop: full axis height, show scroll hint */
+@media (min-width: 720px) {
+  .timeline-card                    { margin-top: 24px; }
+  .timeline__axis                   { height: 240px; }
+  .timeline__label                  { max-width: 240px; }
+  .timeline__value-primary          { font-size: var(--text-2xl); }
+  .timeline__ctrl-scroll-hint       { display: inline; }
 }
-
-

@@ -67,6 +67,7 @@ export function Navbar({ onEditBirthDate }: NavbarProps) {
       </Link>
 
       <div className="app-navbar__actions">
+        {/* Inline edit button — visible only on desktop (CSS hides it on mobile) */}
         {onEditBirthDate && (
           <button
             type="button"
@@ -97,6 +98,16 @@ export function Navbar({ onEditBirthDate }: NavbarProps) {
             }`}
             aria-hidden={!open}
           >
+            {/* Edit button in dropdown — visible only on mobile (CSS hides it on desktop) */}
+            {onEditBirthDate && (
+              <button
+                type="button"
+                className="app-navbar__edit-dropdown"
+                onClick={() => { onEditBirthDate(); setOpen(false); }}
+              >
+                Edit birth date
+              </button>
+            )}
             {NAV_ITEMS.map(item => (
               <Link
                 key={item.to}

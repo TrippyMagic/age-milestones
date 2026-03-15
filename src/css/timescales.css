@@ -101,7 +101,7 @@
   box-shadow: 0 20px 40px rgba(2, 6, 23, 0.6);
   backdrop-filter: blur(10px);
   pointer-events: none;
-  z-index: 20;
+  z-index: var(--z-wizard); /* local popup — same stacking level as wizard backdrop */
   display: flex;
   flex-direction: column;
   gap: 5px;
@@ -382,7 +382,7 @@
   border: 1px solid rgba(129, 140, 248, 0.35);
   box-shadow: 0 24px 48px rgba(2, 6, 23, 0.65);
   backdrop-filter: blur(14px);
-  z-index: 100;
+  z-index: var(--z-phenomena-dd);
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -522,10 +522,18 @@
 /* -----------------------------------------------------------
    EraCard
 ----------------------------------------------------------- */
+
+/* Share card-base glassmorphism — ts-era-card keeps its own
+   2px border and no backdrop blur (intentional for grid density) */
+.card-base,
+.ts-era-card {
+  background: rgba(15, 23, 42, 0.55);
+}
+
 .ts-era-card {
   padding: clamp(14px, 2.5vw, 20px);
-  border-radius: 20px;
-  background: rgba(15, 23, 42, 0.55);
+  border-radius: var(--radius-lg);   /* 20px */
+  /* background inherited from multi-selector above */
   border: 2px solid rgba(129, 140, 248, 0.2);
   display: flex;
   flex-direction: column;
@@ -940,30 +948,55 @@
 }
 
 /* -----------------------------------------------------------
-   Responsive
+   Responsive — mobile base, desktop via min-width
 ----------------------------------------------------------- */
-@media (max-width: 720px) {
+
+/* ts-comparator: 1-column mobile base */
+.ts-comparator {
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.ts-comparator__vs-col {
+  padding-top: 0;
+  flex-direction: row;
+  justify-content: center;
+  gap: 12px;
+}
+
+.ts-comparator__ratio-sentence { max-width: none; }
+
+/* ts-overview: shortest on mobile */
+.ts-overview__container { height: 520px; }
+
+/* ts-explorer: single column on mobile */
+.ts-explorer__grid { grid-template-columns: 1fr; }
+
+/* ≥ 480px — taller overview */
+@media (min-width: 480px) {
+  .ts-overview__container { height: 600px; }
+}
+
+/* ≥ 720px — restore full desktop layouts */
+@media (min-width: 720px) {
   .ts-comparator {
-    grid-template-columns: 1fr;
-    gap: 16px;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 20px;
   }
 
   .ts-comparator__vs-col {
-    padding-top: 0;
-    flex-direction: row;
-    justify-content: center;
-    gap: 12px;
+    padding-top: 44px;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 16px;
   }
 
-  .ts-comparator__ratio-sentence { max-width: none; }
+  .ts-comparator__ratio-sentence { max-width: 130px; }
 
-  .ts-overview__container { height: 600px; }
+  .ts-overview__container { height: 720px; }
 
   .ts-explorer__grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   }
 }
 
-@media (max-width: 480px) {
-  .ts-overview__container { height: 520px; }
-}

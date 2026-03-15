@@ -6,17 +6,36 @@
 /* -----------------------------------------------------------
    Cards
 ----------------------------------------------------------- */
+
+/* Shared glassmorphism foundation — inheritable base class.
+   Individual card variants override radius / padding / shadow
+   where their design requires it.                            */
+.card-base,
+.perspective-card,
+.section-card {
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(129, 140, 248, 0.3);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(18px);
+  border-radius: var(--radius-xl);
+}
+
 .card {
-  width: min(var(--card-max-width), 100%);
+  width: 100%;                          /* mobile base */
   margin: 0 auto;
   background: #1d3252;
-  border-radius: 16px;
-  padding: clamp(24px, 3vw, 36px);
+  border-radius: var(--radius-md);
+  padding: 20px var(--space-md);        /* mobile base */
   box-shadow: 0 12px 28px rgba(0, 0, 0, .35);
   display: flex;
   flex-direction: column;
   gap: clamp(16px, 3vw, 24px);
   box-sizing: border-box;
+}
+
+/* Restore desktop card sizing */
+@media (min-width: 480px) {
+  .card { width: min(var(--card-max-width), 100%); padding: clamp(24px, 3vw, 36px); }
 }
 
 .inline-card {
@@ -221,9 +240,23 @@
 /* -----------------------------------------------------------
    Age table
 ----------------------------------------------------------- */
-.age-table {
+.age-table__wrap {
   width: min(540px, 100%);
+  overflow-x: auto;
+  overflow-y: auto;               /* F-03: vertical scroll on narrow screens */
+  -webkit-overflow-scrolling: touch;
   margin: 0 auto;
+  max-height: 55vh;               /* F-03: cap height on mobile so table doesn't overflow page */
+}
+
+@media (min-width: 720px) {
+  .age-table__wrap {
+    max-height: none;             /* restore on desktop — table always fully visible */
+  }
+}
+
+.age-table {
+  width: 100%;
   border-collapse: collapse;
   font-variant-numeric: tabular-nums;
   overflow: hidden;
@@ -251,7 +284,10 @@
   font-weight: 600;
   position: relative;
   transition: color .3s ease;
-  word-break: break-word;
+  white-space: nowrap;             /* prevent wrapping on small screens */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
 }
 
 .age-table .age-val::after {
@@ -268,7 +304,47 @@
 .age-table .age-val.updated::after { opacity: 1; }
 
 /* -----------------------------------------------------------
-   Perspective card
+   Perspectives panel — collapsible on mobile
+----------------------------------------------------------- */
+.perspectives-panel {
+  width: 100%;
+}
+
+/* Toggle button: visible on mobile, hidden on desktop */
+.perspectives-panel__toggle {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px clamp(16px, 3vw, 24px);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(129, 140, 248, 0.35);
+  background: rgba(15, 23, 42, 0.55);
+  color: var(--text-light);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  cursor: pointer;
+  backdrop-filter: blur(18px);
+  box-shadow: var(--shadow-card);
+  transition: background .15s ease;
+}
+
+.perspectives-panel__toggle:hover {
+  background: rgba(30, 41, 59, 0.65);
+}
+
+.perspectives-panel__chevron {
+  font-size: .85rem;
+  opacity: .7;
+}
+
+/* On desktop: hide toggle, always show content */
+@media (min-width: 720px) {
+  .perspectives-panel__toggle { display: none; }
+}
+
+/* -----------------------------------------------------------
+   Perspective card (mobile: 20px radius, desktop: 32px)
 ----------------------------------------------------------- */
 .perspective-card {
   width: 100%;
@@ -276,11 +352,13 @@
   flex-direction: column;
   gap: clamp(20px, 3vw, 30px);
   padding: clamp(24px, 4vw, 36px);
-  border-radius: 32px;
-  background: rgba(15, 23, 42, 0.55);
-  border: 1px solid rgba(129, 140, 248, 0.35);
-  box-shadow: 0 34px 68px rgba(15, 23, 42, 0.45);
-  backdrop-filter: blur(20px);
+  border-radius: var(--radius-lg);     /* 20px mobile base — desktop restores to 32px */
+  /* background / border / shadow / backdrop from .card-base */
+}
+
+/* Restore roomier desktop radius */
+@media (min-width: 720px) {
+  .perspective-card { border-radius: 32px; }
 }
 
 .perspective-card__body {
@@ -330,14 +408,10 @@
 
 .section-card {
   padding: clamp(20px, 3vw, 28px);
-  border-radius: 28px;
-  background: rgba(15, 23, 42, 0.55);
-  border: 1px solid rgba(129, 140, 248, 0.3);
-  box-shadow: 0 28px 58px rgba(15, 23, 42, 0.45);
+  /* border-radius / background / border / shadow / backdrop from .card-base */
   display: flex;
   flex-direction: column;
   gap: 16px;
-  backdrop-filter: blur(18px);
 }
 
 .section-card--mock { align-items: center; justify-content: center; min-height: 180px; }
@@ -411,14 +485,4 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* -----------------------------------------------------------
-   Responsive
------------------------------------------------------------ */
-@media (max-width: 720px) {
-  .perspective-card { padding: 24px; border-radius: 26px; }
-}
-
-@media (max-width: 480px) {
-  .card { width: 100%; padding: 20px 16px; }
-}
 

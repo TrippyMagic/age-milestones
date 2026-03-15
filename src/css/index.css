@@ -18,6 +18,7 @@
    0. CSS custom properties
 ----------------------------------------------------------- */
 :root {
+  /* ── Colour palette ──────────────────────────────────── */
   --indigo-100: #a5b4fc;
   --indigo-300: #a070ff;
   --indigo-600: #4f46e5;
@@ -28,6 +29,71 @@
   --text-muted: #9ca3af;
   --layout-max-width: 1100px;
   --card-max-width: 720px;
+
+  /* ── Spacing scale ───────────────────────────────────── */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+
+  /* ── Typography scale ────────────────────────────────── */
+  --text-xs:   0.72rem;
+  --text-sm:   0.82rem;
+  --text-base: 1rem;
+  --text-lg:   1.1rem;
+  --text-xl:   1.25rem;
+  --text-2xl:  1.6rem;
+
+  /* ── Borders ─────────────────────────────────────────── */
+  --border-subtle: 1px solid rgba(129, 140, 248, 0.25);
+  --border-accent:  1px solid rgba(129, 140, 248, 0.45);
+
+  /* ── Shadows ─────────────────────────────────────────── */
+  --shadow-card:  0 28px 58px rgba(15, 23, 42, 0.45);
+  --shadow-popup: 0 34px 72px rgba(6,  11, 25,  0.65);
+
+  /* ── Radii ───────────────────────────────────────────── */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+
+  /* ── Z-index scale (F-01) ────────────────────────────── */
+  /* Canonical stacking map — consume via var(--z-*) in all files.
+     Never use bare z-index integers outside this table.
+     ┌──────────────────────────────────────────────────────┐
+     │  0   timeline__line (stripe baseline)                │
+     │  1   ticks, group-range highlight                    │
+     │  2   hover tooltip, sub-timeline events              │
+     │  3   timeline events (.timeline__event)              │
+     │  4   focus cursor, group bubbles                     │
+     │  5   label tooltips (.timeline__label)               │
+     │  6   sub-timeline inline (desktop, position:relative)│
+     │  8   pinch-to-zoom hint                              │
+     │ 10   controls (zoom btns, close btn, 3D header)      │
+     │ 20   wizard backdrop, local popups                   │
+     │ 50   sub-timeline bottom-sheet (mobile, pos:fixed)   │
+     │100   PhenomenaSearch dropdown                        │
+     │1200  navbar dropdown                                 │
+     │1800  app navbar                                      │
+     │2400  scale overlay                                   │
+     └──────────────────────────────────────────────────────┘ */
+  --z-timeline-line:     0;
+  --z-timeline-ticks:    1;
+  --z-hover-tooltip:     2;
+  --z-events:            3;
+  --z-focus-groups:      4;
+  --z-label-tooltip:     5;
+  --z-subtimeline:       6;
+  --z-pinch-hint:        8;
+  --z-controls:         10;
+  --z-wizard:           20;
+  --z-subtimeline-mob:  50;
+  --z-phenomena-dd:    100;
+  --z-navbar-dropdown: 1200;
+  --z-navbar:          1800;
+  --z-overlay:         2400;
 }
 
 /* -----------------------------------------------------------
@@ -40,7 +106,7 @@ body {
   min-height: 100vh;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
+  align-items: stretch;           /* mobile base */
   padding: clamp(16px, 4vw, 48px);
   box-sizing: border-box;
 
@@ -48,16 +114,16 @@ body {
   background-color: #0d1128;
   background-image: var(--bg-url);
   background-repeat: no-repeat;
-  background-position: center;
+  background-position: center top; /* mobile base */
   background-size: cover;
-  background-attachment: fixed;
+  background-attachment: scroll;   /* mobile base — fixed causes jank on iOS */
 }
 
 #root {
   width: min(var(--layout-max-width), 100%);
   display: flex;
   flex-direction: column;
-  gap: clamp(24px, 5vh, 48px);
+  gap: var(--space-xl);           /* 32px — mobile base */
 }
 
 body::before {
@@ -69,16 +135,16 @@ body::before {
   z-index: -1;
 }
 
-@media (max-width: 768px) {
+/* Restore desktop enhancements */
+@media (min-width: 720px) {
   body {
-    align-items: stretch;
-    background-attachment: scroll;
-    background-position: center top;
+    align-items: flex-start;
+    background-attachment: fixed;
+    background-position: center;
   }
 
   #root {
-    width: 100%;
-    gap: 32px;
+    gap: clamp(24px, 5vh, 48px);
   }
 }
 
@@ -91,9 +157,16 @@ body::before {
   flex-direction: column;
   align-items: center;
   width: 100%;
-  padding: clamp(24px, 4vw, 48px);
-  gap: clamp(24px, 5vh, 36px);
+  padding: 20px var(--space-md);   /* mobile base */
+  gap: 20px;                       /* mobile base */
   box-sizing: border-box;
+}
+
+/* Restore spacious desktop layout */
+@media (min-width: 480px) {
+  .page    { padding: clamp(24px, 4vw, 48px); gap: clamp(24px, 5vh, 36px); }
+  .wrapper { margin-top: 40px; }
+  .footer  { font-size: .85rem; }
 }
 
 .milestones-page {
@@ -107,7 +180,7 @@ body::before {
   display: flex;
   flex-direction: column;
   gap: 24px;
-  margin-top: 40px;
+  margin-top: 24px;               /* mobile base */
 }
 
 .divider {
@@ -124,11 +197,6 @@ body::before {
   );
 }
 
-@media (max-width: 480px) {
-  .page    { padding: 20px 16px; gap: 20px; }
-  .wrapper { margin-top: 24px; }
-  .footer  { padding-bottom: 16px; font-size: 0.8rem; }
-}
 
 /* -----------------------------------------------------------
    3. Typography
@@ -199,3 +267,31 @@ body::before {
 .cursor-help         { cursor: help; }
 .underline           { text-decoration: underline; }
 .decoration-dotted   { text-decoration-style: dotted; }
+
+/* -----------------------------------------------------------
+   6. Reduced motion — respect user system preference
+----------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  /* Timeline scale-switch transitions */
+  .timeline__axis--transitioning * {
+    transition: none !important;
+  }
+
+  /* Dot-grid pop animation */
+  .count-scene__dot {
+    animation: none !important;
+    opacity: 1;
+  }
+
+  /* Comparator bar width animation */
+  .ts-comparator__bar-fill {
+    transition: none !important;
+  }
+
+  /* Pinch hint — skip fade animation, show immediately */
+  .timeline__pinch-hint {
+    animation: none !important;
+    opacity: 1;
+  }
+}
+
