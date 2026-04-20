@@ -30,9 +30,28 @@ export const formatEstimate = (n: number): string => {
 export const formatRange = (low: number, high: number): string =>
   `${formatEstimate(low).slice(1)} – ${formatEstimate(high).slice(1)}`;
 
-export const formatBig = (n: number) => {
-    return n >= 1e15 ? n.toExponential(2).replace("+", "") : n.toLocaleString();
+/**
+ * Compact abbreviated format for deterministic values (no ~ prefix).
+ * 2,847,293,847 → "2.8B"   |   342 → "342"   |   0.47 → "0.47"
+ */
+export const formatCompact = (n: number): string => {
+  if (!Number.isFinite(n)) return "—";
+  if (n === 0) return "0";
+  const abs = Math.abs(n);
+  const sign = n < 0 ? "-" : "";
+  if (abs >= 1e12)  return `${sign}${(abs / 1e12).toFixed(1)} Trillions`;
+  if (abs >= 1e9)   return `${sign}${(abs / 1e9).toFixed(1)} Billions`;
+  if (abs >= 1e6)   return `${sign}${(abs / 1e6).toFixed(1)} Millions`;
+  if (abs >= 1e4)   return `${sign}${(abs / 1e3).toFixed(1)}K`;
+  if (abs >= 1000)  return `${sign}${(abs / 1e3).toFixed(1)}K`;
+  if (abs >= 100)   return `${sign}${Math.round(abs)}`;
+  if (abs >= 10)    return `${sign}${abs.toFixed(1)}`;
+  if (abs >= 1)     return `${sign}${abs.toFixed(2)}`;
+  return formatDisplay(n);
 };
+
+export const formatBig = (n: number): string =>
+  n >= 1e15 ? n.toExponential(2).replace("+", "") : n.toLocaleString();
 
 const formatStandard = (n: number, digits: number) => {
     return n.toFixed(digits).toLocaleString();

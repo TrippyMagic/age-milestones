@@ -186,5 +186,26 @@
   color: var(--text-light);
 }
 
+.scale-overlay__range-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(129, 140, 248, 0.15);
+}
 
+.scale-overlay__range-label {
+  font-size: .68rem;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: rgba(165, 180, 252, 0.6);
+  white-space: nowrap;
+}
 
+.scale-overlay__range-value {
+  font-size: .92rem;
+  font-weight: 600;
+  color: var(--indigo-200, #c7d2fe);
+  font-variant-numeric: tabular-nums;
+}

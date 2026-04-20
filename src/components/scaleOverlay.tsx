@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 
 import { buildEquivalents, pickStep } from "../utils/scaleConstants";
-import { formatBig } from "../utils/format";
+import { formatBig, formatEstimate, formatRange } from "../utils/format";
 
 export type ScaleKind =
   | "count"
@@ -27,18 +27,20 @@ type ScaleOverlayProps = {
   value: number;
   unit?: string;
   kind: ScaleKind;
+  isEstimate?: boolean;
+  rangeFactor?: { low: number; high: number };
 };
 
 const MAX_DOTS = 360;
-const mediumFormatter = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 });
 const smallFormatter = new Intl.NumberFormat(undefined, { maximumFractionDigits: 3 });
 
 const formatCount = (value: number) => {
   if (!Number.isFinite(value)) return "—";
   const abs = Math.abs(value);
-  if (abs >= 1_000_000) return formatBig(value);
-  if (abs >= 1_000) return Math.round(value).toLocaleString();
-  if (abs >= 1) return mediumFormatter.format(value);
+  // Always show integers for values >= 1 so the animation counter
+  // doesn't show shifting decimal digits when incrementing whole counts.
+  if (abs >= 1_000_000) return formatBig(Math.round(value));
+  if (abs >= 1)         return Math.round(value).toLocaleString();
   return smallFormatter.format(value);
 };
 
@@ -112,7 +114,7 @@ export const ButHowMuch = ({ value, unit, kind = "count", children }: ButHowMuch
   );
 };
 
-const ScaleOverlay = ({ open, onClose, value, unit, kind }: ScaleOverlayProps) => {
+export const ScaleOverlay = ({ open, onClose, value, unit, kind, isEstimate = false, rangeFactor }: ScaleOverlayProps) => {
   const shouldRender = kind === "count";
   const animatedValue = useAnimatedNumber(value, open);
   const equivalents = useMemo(
@@ -133,6 +135,9 @@ const ScaleOverlay = ({ open, onClose, value, unit, kind }: ScaleOverlayProps) =
 
   const handleClose = () => onClose();
   const unitLabel = unit;
+  const rangeLabel = isEstimate && rangeFactor
+    ? formatRange(value * rangeFactor.low, value * rangeFactor.high)
+    : null;
 
   return createPortal(
     <AnimatePresence>
@@ -166,18 +171,20 @@ const ScaleOverlay = ({ open, onClose, value, unit, kind }: ScaleOverlayProps) =
               <CountScene value={value} unit={unitLabel} active={open} />
               <div className="scale-overlay__details">
                 <div>
-                  <div className="scale-overlay__counter-label">Approximate count</div>
+                  <div className="scale-overlay__counter-label">
+                    {isEstimate ? "Estimated count" : "Exact value"}
+                  </div>
                   <div>
                     <span className="scale-overlay__counter-value">{formatCount(animatedValue)}</span>
                     {unitLabel && <span className="scale-overlay__counter-unit">{unitLabel}</span>}
                   </div>
-                </div>
-                <div>
-                  <div className="scale-overlay__hints">Exact value</div>
-                  <div className="scale-overlay__exact-row">
-                    <span className="scale-overlay__approx">{formatCount(value)}</span>
-                    {unitLabel && <span className="scale-overlay__counter-unit">{unitLabel}</span>}
-                  </div>
+                  {rangeLabel && (
+                    <div className="scale-overlay__range-row">
+                      <span className="scale-overlay__range-label">Estimated range</span>
+                      <span className="scale-overlay__range-value">{rangeLabel}</span>
+                      {unitLabel && <span className="scale-overlay__counter-unit">{unitLabel}</span>}
+                    </div>
+                  )}
                 </div>
                 {equivalents.length > 0 && (
                   <div>

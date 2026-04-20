@@ -8,9 +8,6 @@ import Footer from "../components/common/Footer";
 import { Navbar } from "../components/common/Headers";
 import { useMilestone } from "../hooks/useMilestone";
 import { TAB_ROWS } from "../utils/perspectivesConstants";
-import { formatDisplay } from "../utils/format";
-import { HowMuchHint } from "../components/common/scaleHint.tsx";
-import { inferKindUnit } from "../utils/scaleConstants.ts";
 import { useHistoricalEvents } from "../hooks/useHistoricalEvents";
 import { usePreferences } from "../context/PreferencesContext";
 import { CATEGORY_META, type EventCategory } from "../types/events";
@@ -167,16 +164,6 @@ export default function Milestones() {
     );
   }, []);
 
-  const renderNumber = useCallback((value: number, label: string) => {
-    const { kind, unit, disableOverlay } = inferKindUnit(label);
-    return (
-      <span className="inline-flex items-center">
-        <span>{formatDisplay(value)}</span>
-        <HowMuchHint value={value} unit={unit} kind={kind} disabled={disableOverlay} />
-      </span>
-    );
-  }, []);
-
   /** Micro-onboarding: progressive disclosure for perspectives */
   const [unlockedTabs, setUnlockedTabs] = useState<Set<string>>(() => {
     try {
@@ -275,7 +262,7 @@ export default function Milestones() {
                   Switch the lens to reveal how your lifetime translates across different units.
                 </p>
                 <div className="perspective-card__table">
-                  <AgeTable rows={rows} renderNumber={renderNumber} />
+                  <AgeTable rows={rows} />
                 </div>
               </div>
             </section>

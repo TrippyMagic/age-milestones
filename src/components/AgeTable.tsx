@@ -1,8 +1,10 @@
-import { useEffect, useState, useRef, useMemo, type ReactNode } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useBirthDate } from "../context/BirthDateContext";
 import { useUserProfile } from "../context/UserProfileContext";
-import { formatDisplay, formatFraction, formatEstimate, formatRange } from "../utils/format";
+import { formatDisplay, formatFraction, formatEstimate, formatRange, formatCompact } from "../utils/format";
 import { refineRange } from "../utils/refineMetrics";
+import { inferKindUnit } from "../utils/scaleConstants";
+import { ScaleOverlay } from "./scaleOverlay";
 import dayjs from "dayjs";
 
 export type MetricType = "deterministic" | "estimate";
@@ -12,8 +14,8 @@ export type UnitRow = {
   seconds: number;
   type?: MetricType;
   rangeFactor?: {
-    low: number;   // multiplier for low bound (e.g. 0.7 = -30%)
-    high: number;  // multiplier for high bound (e.g. 1.4 = +40%)
+    low: number;
+    high: number;
   };
   personalizable?: boolean;
   displayMode?: "fraction";
@@ -21,41 +23,41 @@ export type UnitRow = {
 
 type AgeTableProps = {
   rows: UnitRow[];
-  renderNumber?: (value: number, label: string) => ReactNode;
 };
 
 type ValRow = UnitRow & {
-  value: string;
+  value: string;       // compact display: formatCompact (det) or formatEstimate (est)
+  exactValue: string;  // full display: formatDisplay (det only)
   raw: number;
   updated: boolean;
   isEstimate: boolean;
-  rangeLabel?: string;   // tooltip: "2.2M – 3.7M"
+  rangeLabel?: string;
 };
 
-export default function AgeTable({ rows, renderNumber }: AgeTableProps) {
+export default function AgeTable({ rows }: AgeTableProps) {
   const { birthDate, birthTime } = useBirthDate();
   const { profile } = useUserProfile();
   const [showRanges, setShowRanges] = useState(false);
+  const [showExact, setShowExact] = useState(false);
+  const [overlayRow, setOverlayRow] = useState<string | null>(null);
 
-  // Check if current tab has any estimate rows with range data
-  const hasEstimates = useMemo(() => rows.some(r => r.type === "estimate" && r.rangeFactor), [rows]);
+  // Minimum raw value to offer the "how much is it?" overlay (matches scaleHint logic)
+  const MIN_OVERLAY_VALUE = 1000;
 
-  // Pre-compute refined rows (profile-aware base + range)
+  const hasEstimates     = useMemo(() => rows.some(r => r.type === "estimate" && r.rangeFactor), [rows]);
+  const hasDeterministic = useMemo(() => rows.some(r => r.type !== "estimate" && r.displayMode !== "fraction"), [rows]);
+
   const refinedRows = useMemo(
     () => rows.map(r => {
       if (r.type !== "estimate") return r;
       const refined = refineRange(r, profile);
-      return {
-        ...r,
-        seconds: refined.base,
-        rangeFactor: { low: refined.low, high: refined.high },
-      };
+      return { ...r, seconds: refined.base, rangeFactor: { low: refined.low, high: refined.high } };
     }),
     [rows, profile],
   );
 
   const [vals, setVals] = useState<ValRow[]>(() =>
-    refinedRows.map(r => ({ ...r, value: "--", raw: NaN, updated: false, isEstimate: r.type === "estimate" }))
+    refinedRows.map(r => ({ ...r, value: "--", exactValue: "--", raw: NaN, updated: false, isEstimate: r.type === "estimate" }))
   );
   const glowResetId = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -64,56 +66,53 @@ export default function AgeTable({ rows, renderNumber }: AgeTableProps) {
     const base = dayjs(`${dayjs(birthDate).format("YYYY-MM-DD")}T${birthTime}`);
 
     const tick = () => {
-      // Skip recalculation when the tab is not visible
       if (document.hidden) return;
-
       const now = dayjs();
       const nowSeconds = now.unix();
       const birthSeconds = base.unix();
 
       setVals(prev =>
         refinedRows.map((r, idx) => {
-          let display: string;
-          let raw: number;
           const isEstimate = r.type === "estimate";
+          let display: string;
+          let exactValue = "";
+          let raw: number;
           let rangeLabel: string | undefined;
 
           if (r.label === "Dog years") {
             const humanYears = now.diff(base, "year", true);
-            const dogYears =
-              humanYears <= 15
-                ? humanYears / 15
-                : humanYears <= 24
-                ? 1 + (humanYears - 15) / 9
-                : 2 + (humanYears - 24) / 5;
-            raw = dogYears;
+            const dY =
+              humanYears <= 15 ? humanYears / 15
+              : humanYears <= 24 ? 1 + (humanYears - 15) / 9
+              : 2 + (humanYears - 24) / 5;
+            raw = dY;
             if (isEstimate && r.rangeFactor) {
-              display = formatEstimate(dogYears);
-              rangeLabel = formatRange(dogYears * r.rangeFactor.low, dogYears * r.rangeFactor.high);
+              display = formatEstimate(dY);
+              rangeLabel = formatRange(dY * r.rangeFactor.low, dY * r.rangeFactor.high);
             } else {
-              display = dogYears.toFixed(4);
+              display = formatCompact(dY);
+              exactValue = dY.toFixed(4);
             }
           } else {
             raw = (nowSeconds - birthSeconds) / r.seconds;
-            if (isEstimate) {
+            if (r.displayMode === "fraction") {
+              display = formatFraction(raw);
+              exactValue = "";
+            } else if (isEstimate) {
               display = formatEstimate(raw);
-              if (r.rangeFactor) {
-                rangeLabel = formatRange(raw * r.rangeFactor.low, raw * r.rangeFactor.high);
-              }
+              if (r.rangeFactor) rangeLabel = formatRange(raw * r.rangeFactor.low, raw * r.rangeFactor.high);
             } else {
-              display = r.displayMode === "fraction" ? formatFraction(raw) : formatDisplay(raw);
+              display = formatCompact(raw);
+              exactValue = formatDisplay(raw);
             }
           }
 
           const oldVal = prev[idx]?.value ?? "--";
-          return {
-            ...r,
-            value: display,
-            raw,
-            updated: display !== oldVal,
-            isEstimate,
-            rangeLabel,
-          };
+          const oldExact = prev[idx]?.exactValue ?? "";
+          // For deterministic rows, track exactValue changes (every second) so the
+          // glow animation fires in exact mode. Estimate rows track display changes.
+          const updated = isEstimate ? display !== oldVal : (exactValue !== oldExact || display !== oldVal);
+          return { ...r, value: display, exactValue, raw, updated, isEstimate, rangeLabel };
         })
       );
 
@@ -126,11 +125,8 @@ export default function AgeTable({ rows, renderNumber }: AgeTableProps) {
 
     tick();
     const id = setInterval(tick, 1000);
-
-    // Resume ticking immediately when tab becomes visible again
     const onVisChange = () => { if (!document.hidden) tick(); };
     document.addEventListener("visibilitychange", onVisChange);
-
     return () => {
       clearInterval(id);
       document.removeEventListener("visibilitychange", onVisChange);
@@ -142,46 +138,86 @@ export default function AgeTable({ rows, renderNumber }: AgeTableProps) {
 
   return (
     <div className="age-table__wrap">
-      {hasEstimates && (
+      {(hasEstimates || hasDeterministic) && (
         <div className="age-table__toolbar">
-          <button
-            type="button"
-            className={`age-table__range-toggle${showRanges ? " age-table__range-toggle--active" : ""}`}
-            onClick={() => setShowRanges(v => !v)}
-            title={showRanges ? "Hide estimate ranges" : "Show estimate ranges"}
-          >
-            {showRanges ? "≈ Hide ranges" : "≈ Show ranges"}
-          </button>
+          {hasDeterministic && (
+            <button
+              type="button"
+              className={`age-table__range-toggle${showExact ? " age-table__range-toggle--active" : ""}`}
+              onClick={() => setShowExact(v => !v)}
+              title={showExact ? "Switch to compact display" : "Show exact values"}
+            >
+              {showExact ? "# Compact" : "# Show exact"}
+            </button>
+          )}
+          {hasEstimates && (
+            <button
+              type="button"
+              className={`age-table__range-toggle${showRanges ? " age-table__range-toggle--active" : ""}`}
+              onClick={() => setShowRanges(v => !v)}
+              title={showRanges ? "Hide estimate ranges" : "Show estimate ranges"}
+            >
+              {showRanges ? "≈ Hide ranges" : "≈ Show ranges"}
+            </button>
+          )}
         </div>
       )}
       <table className="age-table">
         <tbody>
-          {vals.map(r => (
-            <tr key={r.label}>
-              <td>
-                {r.label}
-                {r.isEstimate && <span className="age-table__estimate-badge" aria-hidden="true"> ≈</span>}
-              </td>
-              <td
-                className={`age-val ${r.updated ? "updated" : ""} ${r.isEstimate ? "age-val--estimate" : ""}`}
+          {vals.map(r => {
+            const { kind, unit, disableOverlay } = inferKindUnit(r.label);
+            // Row opens overlay if: count kind, not disabled, in range, and not an estimate in range-mode
+            const canOverlay =
+              kind === "count" &&
+              !disableOverlay &&
+              Number.isFinite(r.raw) &&
+              r.raw > MIN_OVERLAY_VALUE &&
+              !(r.isEstimate && showRanges);
+
+            return (
+              <tr
+                key={r.label}
+                className={canOverlay ? "age-table__row--clickable" : undefined}
+                onClick={canOverlay ? () => setOverlayRow(r.label) : undefined}
+                title={canOverlay ? "But how much is it?" : undefined}
               >
-                {r.displayMode === "fraction" ? (
-                  r.value
-                ) : r.isEstimate ? (
-                  <>
+                <td>
+                  {r.label}
+                  {r.isEstimate && <span className="age-table__estimate-badge" aria-hidden="true"> ≈</span>}
+                  {canOverlay && <span className="age-table__overlay-hint" aria-hidden="true"> ?</span>}
+                </td>
+                <td className={`age-val ${r.updated ? "updated" : ""} ${r.isEstimate ? "age-val--estimate" : ""}`}>
+                  {r.displayMode === "fraction" ? (
+                    r.value
+                  ) : r.isEstimate ? (
                     <span>{showRanges && r.rangeLabel ? r.rangeLabel : r.value}</span>
-                    {renderNumber ? renderNumber(r.raw, r.label) : null}
-                  </>
-                ) : renderNumber ? (
-                  renderNumber(r.raw, r.label)
-                ) : (
-                  r.value
-                )}
-              </td>
-            </tr>
-          ))}
+                  ) : (
+                    <span>{showExact ? r.exactValue : r.value}</span>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
+
+      {/* Single portalled overlay — rendered for the currently open row */}
+      {overlayRow !== null && (() => {
+        const r = vals.find(v => v.label === overlayRow);
+        if (!r) return null;
+        const { kind, unit } = inferKindUnit(r.label);
+        return (
+          <ScaleOverlay
+            open={true}
+            onClose={() => setOverlayRow(null)}
+            value={r.raw}
+            unit={unit}
+            kind={kind}
+            isEstimate={r.isEstimate}
+            rangeFactor={r.rangeFactor}
+          />
+        );
+      })()}
     </div>
   );
 }
