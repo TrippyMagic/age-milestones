@@ -4,7 +4,7 @@ export const SLIDER  = PRESETS;
 export type Unit = typeof TIME_UNITS[number];
 
 export const landingIntro = `
-Age Milestones offers a fresh way to <em>interpret</em> time not just count it.<br/><br/>
+Kronoscope offers a fresh way to <em>interpret</em> time not just count it.<br/><br/>
 
 We usually digest time in small, familiar bites: hours, days, birthdays. Stretch those slices across a full-length timeline and the raw numbers become hard to grasp, even a little unsettling.<br/><br/>
 

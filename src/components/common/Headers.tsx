@@ -8,7 +8,7 @@ type TitleProps = {
 export function Title({ variant = "page" }: TitleProps) {
   const Element: keyof JSX.IntrinsicElements = variant === "page" ? "h1" : "span";
   const className = variant === "page" ? "title" : "title title--navbar";
-  return <Element className={className}>AGE MILESTONES</Element>;
+  return <Element className={className}>KRONOSCOPE</Element>;
 }
 
 const NAV_ITEMS = [

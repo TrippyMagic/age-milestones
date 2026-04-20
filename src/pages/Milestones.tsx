@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 
@@ -82,6 +82,17 @@ const buildTimelineData = (birthDate: Date, birthTime: string): TimelineData | n
     events,
     focus: clamp(now.valueOf(), start.valueOf(), end.valueOf()),
   };
+};
+
+const LS_UNLOCKED = "pref_unlockedPerspectives";
+const ALWAYS_UNLOCKED = "Classic";
+
+const TAB_TEASERS: Record<string, string> = {
+  Biological: "Heartbeats, breaths, and the rhythms your body keeps without asking.",
+  Everyday:   "Steps, showers, laughs — the small acts that fill a lifetime.",
+  Nerdy:      "Keystrokes, unlocks, blocks mined — your digital footprint in numbers.",
+  Cosmic:     "Lunar cycles, Martian years — your life measured against the cosmos.",
+  Eons:       "How much of the universe's lifetime have you witnessed?",
 };
 
 export default function Milestones() {
@@ -168,6 +179,37 @@ export default function Milestones() {
     );
   }, []);
 
+  /** Micro-onboarding: progressive disclosure for perspectives */
+  const [unlockedTabs, setUnlockedTabs] = useState<Set<string>>(() => {
+    try {
+      const raw = localStorage.getItem(LS_UNLOCKED);
+      if (raw) return new Set<string>([ALWAYS_UNLOCKED, ...JSON.parse(raw)]);
+    } catch { /* noop */ }
+    return new Set<string>([ALWAYS_UNLOCKED]);
+  });
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const unlockTab = useCallback((t: string) => {
+    setUnlockedTabs(prev => {
+      const next = new Set(prev);
+      next.add(t);
+      try { localStorage.setItem(LS_UNLOCKED, JSON.stringify([...next].filter(k => k !== ALWAYS_UNLOCKED))); } catch { /* noop */ }
+      return next;
+    });
+    const teaser = TAB_TEASERS[t];
+    if (teaser) {
+      setToastMsg(`${t} unlocked — ${teaser}`);
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+      toastTimer.current = setTimeout(() => setToastMsg(null), 3500);
+    }
+  }, []);
+
+  const handleTabClick = useCallback((t: keyof typeof TAB_ROWS) => {
+    if (!unlockedTabs.has(t)) unlockTab(t);
+    setTab(t);
+  }, [unlockedTabs, unlockTab]);
+
   const perspectiveLabel = safeTab.toLowerCase();
 
   return (
@@ -193,18 +235,31 @@ export default function Milestones() {
           {perspOpen && (
             <section className="perspective-card">
               <div className="tabs perspective-card__tabs" role="tablist" aria-label="Perspectives">
-                {allTabs.map(t => (
-                  <button
-                    key={t}
-                    type="button"
-                    className={`tab ${t === safeTab ? "tab--active" : ""}`}
-                    onClick={() => setTab(t)}
-                    aria-pressed={t === safeTab}
-                  >
-                    {t}
-                  </button>
-                ))}
+                {allTabs.map(t => {
+                  const isLocked = !unlockedTabs.has(t);
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      className={`tab ${t === safeTab ? "tab--active" : ""} ${isLocked ? "tab--locked" : ""}`}
+                      onClick={() => handleTabClick(t)}
+                      aria-pressed={t === safeTab}
+                      title={isLocked ? "Click to unlock this perspective" : undefined}
+                    >
+                      {isLocked && <span className="tab__lock" aria-hidden="true">🔒</span>}
+                      {t}
+                    </button>
+                  );
+                })}
               </div>
+              
+              {/* Micro-onboarding toast */}
+              {toastMsg && (
+                <div className="perspective-card__toast" role="status" aria-live="polite">
+                  {toastMsg}
+                </div>
+              )}
+
               <div className="perspective-card__body">
                 <h2 className="perspective-card__title">
                   Your age in{" "}

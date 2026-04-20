@@ -1,10 +1,10 @@
-# Age Milestones
+# Kronoscope
 
 [Live Demo](https://age-milestones-live.vercel.app/)
 
 ## Project Purpose
 
-Age Milestones is a React 19 + Vite application that helps you visualise your life from unusual perspectives. Enter a birth date and explore your lifetime through dozens of lenses — from classic years and heartbeats, to cosmic timescales, geological eons, and an interactive historical timeline that places your life alongside 48 world events from 1905 to today.
+Kronoscope is a React 19 + Vite application that helps you visualise your life from unusual perspectives. Enter a birth date and explore your lifetime through dozens of lenses — from classic years and heartbeats, to cosmic timescales, geological eons, and an interactive historical timeline that places your life alongside 48 world events from 1905 to today.
 
 ### Features
 
