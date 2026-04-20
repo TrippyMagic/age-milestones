@@ -5,6 +5,8 @@ import { Analytics } from "@vercel/analytics/react";
 import "./css/index.css";
 import { BirthDateProvider } from "./context/BirthDateContext";
 import { PreferencesProvider } from "./context/PreferencesContext";
+import { UserProfileProvider } from "./context/UserProfileContext";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import Landing from "./pages/Landing";
 import Milestones from "./pages/Milestones";
 import Timescales from "./pages/Timescales";
@@ -14,19 +16,23 @@ import About from "./pages/About";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <BirthDateProvider>
-      <PreferencesProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/milestones" element={<Milestones />} />
-            <Route path="/timescales" element={<Timescales />} />
-            <Route path="/personalize" element={<Personalize />} />
-            <Route path="/about" element={<About />} />
-          </Routes>
-        </BrowserRouter>
-        <Analytics />
-      </PreferencesProvider>
-    </BirthDateProvider>
+    <ErrorBoundary>
+      <BirthDateProvider>
+        <PreferencesProvider>
+          <UserProfileProvider>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Landing />} />
+                <Route path="/milestones" element={<Milestones />} />
+                <Route path="/timescales" element={<Timescales />} />
+                <Route path="/personalize" element={<Personalize />} />
+                <Route path="/about" element={<About />} />
+              </Routes>
+            </BrowserRouter>
+            <Analytics />
+          </UserProfileProvider>
+        </PreferencesProvider>
+      </BirthDateProvider>
+    </ErrorBoundary>
   </StrictMode>
 );

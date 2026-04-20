@@ -1,17 +1,14 @@
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { landingIntro } from "../components/unused/constants.ts";
 import Footer from "../components/common/Footer.tsx";
-import BirthDateWizard from "../components/BirthDateWizard";
+import BirthDatePicker from "../components/BirthDatePicker";
 import { Title } from "../components/common/Headers.tsx";
-import { useBirthWizard } from "../hooks/useBirthWizard";
+import { useBirthDate } from "../context/BirthDateContext";
 
 export default function Landing() {
   const nav = useNavigate();
-  const { birthDate, birthTime, isOpen: wizardOpen, openWizard, closeWizard, completeWizard } =
-    useBirthWizard();
-  const [firstParagraph = ""] = landingIntro.trim().split("<br/><br/>");
+  const { birthDate, birthTime } = useBirthDate();
 
   const storedSummary = useMemo(() => {
     if (!birthDate) return null;
@@ -24,54 +21,45 @@ export default function Landing() {
     return `${formatted} • ${hour.padStart(2, "0")}:00`;
   }, [birthDate, birthTime]);
 
-  const handleComplete = useCallback(
-    (date: Date, time: string) => {
-      completeWizard(date, time);
-      nav("/milestones");
-    },
-    [completeWizard, nav],
-  );
-
   return (
     <>
-      <div className={`landing__content ${wizardOpen ? "landing__content--blurred" : ""}`}>
+      <div className="landing__content">
         <main className="page">
           <Title />
           <section className="card">
-            <div
-              className="intro"
-              dangerouslySetInnerHTML={{
-                __html: firstParagraph,
-              }}
-            />
+            <p className="intro">
+              Kronoscope offers a fresh way to <em>interpret</em> time — not just count it.
+              It turns abstract counts into concrete waypoints, showing how far you've travelled
+              and how vast the road ahead can be.
+            </p>
             <hr className="divider" />
+
             <div className="landing__cta">
-              <p className="muted">Set up your date of birth here</p>
-              {storedSummary && <p className="landing__summary">Last selection: {storedSummary}</p>}
+              <p className="muted">Enter your date of birth to begin</p>
+              <BirthDatePicker />
+              {storedSummary && (
+                <p className="landing__summary">Current: {storedSummary}</p>
+              )}
               <div className="landing__buttons">
-                <button className="button" onClick={openWizard}>
-                  Dive in!
+                <button
+                  className="button"
+                  disabled={!birthDate}
+                  onClick={() => nav("/milestones")}
+                >
+                  Explore
                 </button>
-                {storedSummary && (
-                  <button className="button button--ghost" onClick={() => nav("/milestones")}>
-                    Use saved details
-                  </button>
-                )}
+                <button
+                  className="button button--ghost"
+                  onClick={() => nav("/personalize")}
+                >
+                  Personalize
+                </button>
               </div>
             </div>
           </section>
         </main>
         <Footer />
       </div>
-
-      {wizardOpen && (
-        <BirthDateWizard
-          initialDate={birthDate}
-          initialTime={birthTime}
-          onCancel={closeWizard}
-          onComplete={handleComplete}
-        />
-      )}
     </>
   );
 }

@@ -76,13 +76,13 @@ Il progetto "Age Milestones" viene rinominato **Kronoscope** e trasformato da ca
 3. ✅ **CSS per onboarding**: `.tab--locked` (opacity 0.5, border dashed), `.tab__lock`, `.perspective-card__toast` (gradient indigo, animazione `toastIn`).
 
 **Da revisionare:**
-- [ ] Verificare UX del toast su mobile (dimensioni, leggibilità, durata 3.5s appropriata?)
-- [ ] Verificare che il rebranding sia completo (nessun "Age Milestones" residuo nel codice)
-- [ ] Valutare se aggiungere un micro-hint iniziale ("Tap a locked tab to discover new perspectives") nella card body quando solo Classic è sbloccata
+- [x] Verificare UX del toast su mobile (dimensioni, leggibilità, durata 3.5s appropriata?) — OK
+- [x] Verificare che il rebranding sia completo (nessun "Age Milestones" residuo nel codice) — ✅ Confermato, nessun residuo in src/
+- [x] Valutare se aggiungere un micro-hint iniziale ("Tap a locked tab to discover new perspectives") nella card body quando solo Classic è sbloccata — ✅ Implementato
 
 ---
 
-### Fase 1 — Stabilizzazione (stimata: 1-2 giorni)
+### ✅ Fase 1 — Stabilizzazione (Completata: 2026-04-20)
 
 **Obiettivo:** Fix bug noti, migliorare reattività e performance base.
 
@@ -117,7 +117,7 @@ Il progetto "Age Milestones" viene rinominato **Kronoscope** e trasformato da ca
 
 ---
 
-### Fase 2 — Data Model: Metriche con Range (stimata: 2-3 giorni)
+### ✅ Fase 2 — Data Model: Metriche con Range (Completata: 2026-04-20)
 
 **Obiettivo:** Distinguere metriche deterministiche da stime, mostrare range al posto di valori esatti per le stime.
 
@@ -168,7 +168,7 @@ type MetricRow = {
 
 ---
 
-### Fase 3 — Personalizzazione Utente (stimata: 3-4 giorni)
+### ✅ Fase 3 — Personalizzazione Utente (Completata: 2026-04-20)
 
 **Obiettivo:** Permettere all'utente di inserire parametri opzionali che raffinano i range delle metriche stimate.
 
@@ -214,16 +214,18 @@ Persistenza: `localStorage` key `"user_profile"`.
 
 ---
 
-### Fase 4 — About Page Revamp (stimata: 0.5 giorni)
+### ✅ Fase 4 — About Page Revamp + DOB Simplification + UX Polish (Completata: 2026-04-20)
 
-**File:** [`src/pages/About.tsx`](../../src/pages/About.tsx)
-**Cosa:** Sostituire `dangerouslySetInnerHTML` con contenuto JSX strutturato. Sezioni:
-1. **"What is Kronoscope?"** — sandbox esplorativa del tempo
-2. **"Why these numbers aren't precise"** — spiegazione range vs. valori esatti
-3. **"Multi-perspective philosophy"** — perché 6 prospettive
-4. **"The nature of time perception"** — distorsione percettiva, Heraclitus
-5. **"Open sandbox"** — invito all'esplorazione non lineare
-**Perché:** La pagina About deve riflettere la nuova identità Kronoscope e la filosofia del progetto.
+**File:** [`src/pages/About.tsx`](../../src/pages/About.tsx), [`src/pages/Landing.tsx`](../../src/pages/Landing.tsx), [`src/pages/Personalize.tsx`](../../src/pages/Personalize.tsx), [`src/pages/Milestones.tsx`](../../src/pages/Milestones.tsx), [`src/pages/Timescales.tsx`](../../src/pages/Timescales.tsx), [`src/components/AgeTable.tsx`](../../src/components/AgeTable.tsx), [`src/components/ErrorBoundary.tsx`](../../src/components/ErrorBoundary.tsx)
+
+**Cosa implementato:**
+1. **About page revamp** — Sostituito `dangerouslySetInnerHTML` con 5 sezioni JSX strutturate: "What is Kronoscope?", "Why these numbers aren't precise", "Six perspectives", "The nature of time perception", "Open sandbox".
+2. **DOB selector semplificato** — Rimosso il wizard modale complesso. Sostituito con `BirthDatePicker.tsx` inline: due input nativi (date + time) senza steps, senza modal.
+3. **Landing page** — Date picker inline nella card, testo intro in JSX.
+4. **Personalize page** — Sezione "Birth date" in cima con `BirthDatePicker`, profilo utente, e pulsanti **Reset to defaults** + **Save & Explore** (abilitato solo se DOB impostata, naviga a `/milestones`).
+5. **AgeTable — Toggle "Show ranges"** — Pulsante `≈ Show ranges` sopra la tabella (visibile solo per tab con stime). Quando attivo, mostra `low – high` invece di `~valore` per le righe stimate. Pulsante `?` (HowMuchHint) mostrato anche per le righe stimate.
+6. **ErrorBoundary globale** — `ErrorBoundary.tsx` avvolge l'intera app in `main.tsx`. Previene la schermata bianca (solo background) in caso di errori runtime — mostra fallback UI con messaggio d'errore e link "Go home".
+7. **Timescales blank page — root cause fix** — Bug in `PhenomenaComparator.tsx` righe 90-91: `slotA!.label` veniva valutato anche quando `slotA === null` (se l'utente selezionava solo il fenomeno B), causando `TypeError: can't access property "label", slotA is null` che smontava l'intera app. Fix: sostituito `slotA!.label` con `slotA?.label ?? ""` in entrambe le variabili `longerLabel`/`shorterLabel`. L'`ErrorBoundary` rimane come safety net per errori simili futuri.
 
 ---
 
@@ -335,11 +337,11 @@ Il progetto è stato rinominato **Kronoscope** (Fase 0). Il nome evoca:
 
 | Fase | Stato | Dipendenze |
 |---|---|---|
-| Fase 0 — Rebranding + Micro-onboarding | ✅ Completata (da revisionare) | Nessuna |
-| Fase 1 — Stabilizzazione | 🔲 Da fare | Nessuna |
-| Fase 2 — Data Model: Metriche con Range | 🔲 Da fare | Fase 1 |
-| Fase 3 — Personalizzazione Utente | 🔲 Da fare | Fase 2 |
-| Fase 4 — About Page Revamp | 🔲 Da fare | Fase 0 |
+| Fase 0 — Rebranding + Micro-onboarding | ✅ Completata + revisionata | Nessuna |
+| Fase 1 — Stabilizzazione | ✅ Completata | Nessuna |
+| Fase 2 — Data Model: Metriche con Range | ✅ Completata | Fase 1 |
+| Fase 3 — Personalizzazione Utente | ✅ Completata | Fase 2 |
+| Fase 4 — About Page Revamp + DOB Simplification | ✅ Completata | Fase 0 |
 | Fase 5 — Timeline Evolution (Time Map) | 🔲 Da fare | Fase 1, Fase 2 |
 | Fase 6 — 3D Strategy | 🔲 Da fare | Nessuna |
 

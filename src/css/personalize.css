@@ -1,0 +1,171 @@
+/* =============================================================
+   Personalize page + DOB picker
+============================================================= */
+
+.personalize-page {
+  max-width: 560px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(20px, 3vw, 32px);
+}
+
+.personalize__title {
+  margin: 0;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-weight: 700;
+  letter-spacing: .06em;
+  color: var(--text-light);
+  text-align: center;
+}
+
+.personalize__intro {
+  margin: 0;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: .95rem;
+  line-height: 1.55;
+  max-width: 48ch;
+  align-self: center;
+}
+
+/* ── Section ───────────────────────────────────────────────── */
+.personalize__section {
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(129, 140, 248, 0.3);
+  border-radius: var(--radius-xl, 24px);
+  padding: clamp(20px, 3vw, 28px);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  backdrop-filter: blur(18px);
+}
+
+.personalize__section-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--indigo-100);
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+/* ── Field ─────────────────────────────────────────────────── */
+.personalize__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.personalize__label {
+  font-size: .95rem;
+  font-weight: 600;
+  color: var(--text-light);
+}
+
+.personalize__hint {
+  font-size: .8rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.personalize__input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.personalize__input {
+  width: 110px;
+  text-align: center;
+}
+
+.personalize__select {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.personalize__unit {
+  font-size: .85rem;
+  color: var(--text-muted);
+}
+
+/* ── Actions ───────────────────────────────────────────────── */
+.personalize__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+}
+
+.personalize__actions .button {
+  margin-top: 0;
+  flex: 1;
+  min-width: 140px;
+}
+
+/* -----------------------------------------------------------
+   DOB inline picker
+----------------------------------------------------------- */
+.dob-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.dob-picker__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 140px;
+}
+
+.dob-picker__label {
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.dob-picker__optional {
+  font-size: .75rem;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  opacity: .7;
+}
+
+.dob-picker__input {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 1.1rem;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(129, 140, 248, 0.4);
+  background: rgba(6, 11, 25, 0.55);
+  color: var(--text-light);
+  color-scheme: dark;
+  box-shadow: inset 0 0 0 1px rgba(79, 70, 229, 0.2);
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.dob-picker__input:focus {
+  outline: none;
+  border-color: var(--indigo-300);
+  box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.2), inset 0 0 0 1px rgba(79, 70, 229, 0.3);
+}
+
+/* -----------------------------------------------------------
+   About page
+----------------------------------------------------------- */
+.about-page {
+  max-width: 680px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(18px, 3vw, 28px);
+}
+

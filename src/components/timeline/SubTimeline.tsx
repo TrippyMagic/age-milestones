@@ -13,6 +13,7 @@ import {
 } from "react";
 import { motion } from "framer-motion";
 import { useOutsideClick } from "../../hooks/useOutsideClick";
+import { useMediaQuery } from "../../hooks/useMediaQuery";
 import {
   valueToRatio,
   toPercent,
@@ -88,17 +89,18 @@ export function SubTimeline({
   groupElement,
 }: SubTimelineProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  useOutsideClick(containerRef, onClose);
+
+  // Dead zone: delay outside-click activation by 300ms to prevent
+  // accidental closures from the same tap that opened the panel.
+  const [outsideClickReady, setOutsideClickReady] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setOutsideClickReady(true), 300);
+    return () => clearTimeout(timer);
+  }, []);
+  useOutsideClick(containerRef, outsideClickReady ? onClose : () => {});
 
   // ── Mobile detection (bottom-sheet vs. inline) ─────────────
-  const [isMobile, setIsMobile] = useState(
-    () => typeof window !== "undefined" ? window.innerWidth < 720 : false,
-  );
-  useEffect(() => {
-    const handler = () => setIsMobile(window.innerWidth < 720);
-    window.addEventListener("resize", handler);
-    return () => window.removeEventListener("resize", handler);
-  }, []);
+  const isMobile = useMediaQuery("(max-width:719px)");
 
   const [connectorGap, setConnectorGap] = useState(SUB_TIMELINE_CONNECTOR_HEIGHT);
 

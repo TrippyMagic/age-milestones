@@ -87,8 +87,8 @@ export function PhenomenaComparator({ phenomena, status }: ComparatorProps) {
   const smallDur  = slotA && slotB ? Math.min(slotA.durationSeconds, slotB.durationSeconds) : null;
   const ratioStr  = bigDur && smallDur ? formatRatioValue(bigDur, smallDur) : null;
 
-  const longerLabel  = aLonger ? slotA!.label : slotB?.label ?? "";
-  const shorterLabel = aLonger ? slotB?.label ?? "" : slotA!.label;
+  const longerLabel  = aLonger ? (slotA?.label ?? "") : (slotB?.label ?? "");
+  const shorterLabel = aLonger ? (slotB?.label ?? "") : (slotA?.label ?? "");
 
   const isLoading = status === "loading";
 

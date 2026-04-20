@@ -4,6 +4,32 @@ export const formatNice = (n: number) => {
     return n.toLocaleString();
 };
 
+/**
+ * Format an estimate with aggressive rounding and ~ prefix.
+ * 2,847,293 → "~2.8M"   |   342 → "~340"   |   0.47 → "~0.5"
+ */
+export const formatEstimate = (n: number): string => {
+  if (!Number.isFinite(n) || n === 0) return "~0";
+  const abs = Math.abs(n);
+  const sign = n < 0 ? "-" : "";
+
+  if (abs >= 1e12)      return `~${sign}${(abs / 1e12).toFixed(1)}T`;
+  if (abs >= 1e9)       return `~${sign}${(abs / 1e9).toFixed(1)}B`;
+  if (abs >= 1e6)       return `~${sign}${(abs / 1e6).toFixed(1)}M`;
+  if (abs >= 1e4)       return `~${sign}${(abs / 1e3).toFixed(1)}K`;
+  if (abs >= 1000)      return `~${sign}${(abs / 1e3).toFixed(1)}K`;
+  if (abs >= 100)       return `~${sign}${Math.round(abs / 10) * 10}`;
+  if (abs >= 10)        return `~${sign}${Math.round(abs)}`;
+  if (abs >= 1)         return `~${sign}${abs.toFixed(1)}`;
+  return `~${sign}${abs.toPrecision(2)}`;
+};
+
+/**
+ * Format a range for tooltip display: "2.2M – 3.7M"
+ */
+export const formatRange = (low: number, high: number): string =>
+  `${formatEstimate(low).slice(1)} – ${formatEstimate(high).slice(1)}`;
+
 export const formatBig = (n: number) => {
     return n >= 1e15 ? n.toExponential(2).replace("+", "") : n.toLocaleString();
 };

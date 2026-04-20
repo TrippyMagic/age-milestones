@@ -1,8 +1,6 @@
 import { useState } from "react";
-import BirthDateWizard from "../components/BirthDateWizard";
 import Footer from "../components/common/Footer";
 import { Navbar } from "../components/common/Headers";
-import { useBirthWizard } from "../hooks/useBirthWizard";
 import { usePreferences } from "../context/PreferencesContext";
 import { useTimescalePhenomena } from "../hooks/useTimescalePhenomena";
 import { TimescaleOverview } from "../components/timescales/TimescaleOverview";
@@ -23,8 +21,6 @@ const TAB_LABELS: Record<TimescalesTab, string> = {
 };
 
 export default function Timescales() {
-  const { birthDate, birthTime, isOpen, openWizard, closeWizard, completeWizard } =
-    useBirthWizard();
   const { timescalesTab, setTimescalesTab } = usePreferences();
   const { phenomena, status, error }        = useTimescalePhenomena();
 
@@ -42,7 +38,7 @@ export default function Timescales() {
 
   return (
     <>
-      <Navbar onEditBirthDate={openWizard} />
+      <Navbar />
 
       <main className="page timescales-page">
         {/* ── Header card with tabs ── */}
@@ -146,15 +142,6 @@ export default function Timescales() {
       </main>
 
       <Footer />
-
-      {isOpen && (
-        <BirthDateWizard
-          initialDate={birthDate}
-          initialTime={birthTime}
-          onCancel={closeWizard}
-          onComplete={completeWizard}
-        />
-      )}
     </>
   );
 }

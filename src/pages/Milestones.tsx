@@ -11,13 +11,12 @@ import { TAB_ROWS } from "../utils/perspectivesConstants";
 import { formatDisplay } from "../utils/format";
 import { HowMuchHint } from "../components/common/scaleHint.tsx";
 import { inferKindUnit } from "../utils/scaleConstants.ts";
-import BirthDateWizard from "../components/BirthDateWizard";
-import { useBirthWizard } from "../hooks/useBirthWizard";
 import { useHistoricalEvents } from "../hooks/useHistoricalEvents";
 import { usePreferences } from "../context/PreferencesContext";
 import { CATEGORY_META, type EventCategory } from "../types/events";
 import { Timeline3DWrapper } from "../components/3d/Timeline3DWrapper";
 import { WEB_GL_SUPPORTED } from "../utils/webgl";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 
 const FUTURE_WINDOW_YEARS = 40;
 const LOOKBACK_YEARS = 20;
@@ -98,20 +97,19 @@ const TAB_TEASERS: Record<string, string> = {
 export default function Milestones() {
   const { state } = useMilestone();
   const { birthDate, birthTime } = state;
-  const { isOpen: wizardOpen, openWizard, closeWizard, completeWizard } = useBirthWizard();
+  const nav = useNavigate();
   const [tab, setTab] = useState<keyof typeof TAB_ROWS>("Classic");
   const [focusValue, setFocusValue] = useState(() => dayjs().valueOf());
   const { events: historicalEvents } = useHistoricalEvents();
   const { activeCategories, toggleCategory, show3D, setShow3D } = usePreferences();
-  /** Perspectives panel: open by default on desktop, collapsed on mobile */
-  const [perspOpen, setPerspOpen] = useState(
-    () => typeof window !== "undefined" ? window.innerWidth >= 720 : true
-  );
+  /** Perspectives panel: always open on desktop, toggle on mobile */
+  const isDesktop = useMediaQuery("(min-width:720px)");
+  const [perspMobileOpen, setPerspMobileOpen] = useState(false);
+  const perspOpen = isDesktop || perspMobileOpen;
 
   const allTabs = useMemo(() => Object.keys(TAB_ROWS) as Array<keyof typeof TAB_ROWS>, []);
   const safeTab = allTabs.includes(tab) ? tab : "Classic";
   const rows = TAB_ROWS[safeTab];
-  const nav = useNavigate();
 
   useEffect(() => {
     if (!birthDate) nav("/");
@@ -214,7 +212,7 @@ export default function Milestones() {
 
   return (
     <>
-      <Navbar onEditBirthDate={openWizard} />
+      <Navbar onEditBirthDate={() => nav("/personalize")} />
       <main className="page milestones-page">
 
         {/* ── Collapsible perspectives panel ── */}
@@ -223,7 +221,7 @@ export default function Milestones() {
           <button
             type="button"
             className="perspectives-panel__toggle"
-            onClick={() => setPerspOpen(v => !v)}
+            onClick={() => setPerspMobileOpen(v => !v)}
             aria-expanded={perspOpen}
           >
             <span>Age Perspectives</span>
@@ -258,6 +256,13 @@ export default function Milestones() {
                 <div className="perspective-card__toast" role="status" aria-live="polite">
                   {toastMsg}
                 </div>
+              )}
+
+              {/* Micro-hint when only Classic is unlocked */}
+              {unlockedTabs.size === 1 && unlockedTabs.has(ALWAYS_UNLOCKED) && !toastMsg && (
+                <p className="perspective-card__hint">
+                  Tap a locked tab to discover new perspectives
+                </p>
               )}
 
               <div className="perspective-card__body">
@@ -354,15 +359,6 @@ export default function Milestones() {
       </main>
 
       <Footer />
-
-      {wizardOpen && (
-        <BirthDateWizard
-          initialDate={birthDate}
-          initialTime={birthTime}
-          onCancel={closeWizard}
-          onComplete={completeWizard}
-        />
-      )}
     </>
   );
 }
