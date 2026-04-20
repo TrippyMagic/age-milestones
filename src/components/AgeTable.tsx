@@ -165,7 +165,7 @@ export default function AgeTable({ rows }: AgeTableProps) {
       <table className="age-table">
         <tbody>
           {vals.map(r => {
-            const { kind, unit, disableOverlay } = inferKindUnit(r.label);
+            const { kind, disableOverlay } = inferKindUnit(r.label);
             // Row opens overlay if: count kind, not disabled, in range, and not an estimate in range-mode
             const canOverlay =
               kind === "count" &&

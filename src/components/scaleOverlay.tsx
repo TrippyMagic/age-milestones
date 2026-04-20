@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 
 import { buildEquivalents, pickStep } from "../utils/scaleConstants";
-import { formatBig, formatEstimate, formatRange } from "../utils/format";
+import { formatBig, formatRange } from "../utils/format";
 
 export type ScaleKind =
   | "count"
