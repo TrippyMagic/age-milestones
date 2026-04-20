@@ -14,6 +14,7 @@ import { CATEGORY_META, type EventCategory } from "../types/events";
 import { Timeline3DWrapper } from "../components/3d/Timeline3DWrapper";
 import { WEB_GL_SUPPORTED } from "../utils/webgl";
 import { useMediaQuery } from "../hooks/useMediaQuery";
+import { LANE_META, type TimelineLane } from "../components/timeline/types";
 
 const FUTURE_WINDOW_YEARS = 40;
 const LOOKBACK_YEARS = 20;
@@ -65,12 +66,12 @@ const buildTimelineData = (birthDate: Date, birthTime: string): TimelineData | n
   const billionSeconds = base.add(1_000_000_000, "second");
 
   const events: TimelineEvent[] = [
-    { id: "birth", label: "Birth", subLabel: formatWithWeekday(base), value: base.valueOf(), placement: "above", accent: "highlight" },
-    { id: "midpoint", label: "Midpoint", subLabel: formatWithWeekday(midpoint), value: midpoint.valueOf(), placement: "above", accent: "muted" },
-    { id: "today", label: "Today", subLabel: formatWithWeekday(now), value: now.valueOf(), placement: "below", markerShape: "triangle", accent: "highlight" },
-    { id: "10kdays", label: "10,000 days old", subLabel: formatWithWeekday(tenThousandDays), value: tenThousandDays.valueOf(), placement: "below" },
-    { id: "1Bseconds", label: "1 billion seconds old", subLabel: formatWithWeekday(billionSeconds, true), value: billionSeconds.valueOf(), placement: "above" },
-    { id: "500months", label: "500 months old", subLabel: formatWithWeekday(fiveHundredMonth, true), value: fiveHundredMonth.valueOf(), placement: "above" },
+    { id: "birth", label: "Birth", subLabel: formatWithWeekday(base), value: base.valueOf(), placement: "above", accent: "highlight", lane: "personal" },
+    { id: "midpoint", label: "Midpoint", subLabel: formatWithWeekday(midpoint), value: midpoint.valueOf(), placement: "above", accent: "muted", lane: "personal" },
+    { id: "today", label: "Today", subLabel: formatWithWeekday(now), value: now.valueOf(), placement: "below", markerShape: "triangle", accent: "highlight", lane: "personal" },
+    { id: "10kdays", label: "10,000 days old", subLabel: formatWithWeekday(tenThousandDays), value: tenThousandDays.valueOf(), placement: "below", lane: "markers" },
+    { id: "1Bseconds", label: "1 billion seconds old", subLabel: formatWithWeekday(billionSeconds, true), value: billionSeconds.valueOf(), placement: "above", lane: "markers" },
+    { id: "500months", label: "500 months old", subLabel: formatWithWeekday(fiveHundredMonth, true), value: fiveHundredMonth.valueOf(), placement: "above", lane: "markers" },
   ];
 
   return {
@@ -98,7 +99,14 @@ export default function Milestones() {
   const [tab, setTab] = useState<keyof typeof TAB_ROWS>("Classic");
   const [focusValue, setFocusValue] = useState(() => dayjs().valueOf());
   const { events: historicalEvents } = useHistoricalEvents();
-  const { activeCategories, toggleCategory, show3D, setShow3D } = usePreferences();
+  const {
+    activeCategories,
+    toggleCategory,
+    show3D,
+    setShow3D,
+    visibleTimelineLanes,
+    toggleTimelineLane,
+  } = usePreferences();
   /** Perspectives panel: always open on desktop, toggle on mobile */
   const isDesktop = useMediaQuery("(min-width:720px)");
   const [perspMobileOpen, setPerspMobileOpen] = useState(false);
@@ -145,12 +153,14 @@ export default function Milestones() {
         placement: e.placement ?? "above",
         accent: "muted" as const,
         color: CATEGORY_META[e.category].color,
+        lane: "historical" as const,
       }));
-
-    return [...personal, ...historical];
-  }, [timeline, historicalEvents, activeCategories]);
+    const merged = [...personal, ...historical];
+    return merged.filter(event => visibleTimelineLanes.has(event.lane ?? "personal"));
+  }, [timeline, historicalEvents, activeCategories, visibleTimelineLanes]);
 
   const CATEGORIES = Object.keys(CATEGORY_META) as EventCategory[];
+  const LANE_KEYS = Object.keys(LANE_META) as TimelineLane[];
 
   const renderFocus = useCallback((value: number) => {
     const instant = dayjs(value);
@@ -296,30 +306,52 @@ export default function Milestones() {
 
             {/* ── Historical event category filters (only in 2D mode) ── */}
             {!show3D && (
-              <div className="timeline__filter-section">
-                <span className="timeline__filter-section__label">Filter events</span>
-                <div className="timeline__category-filters" role="group" aria-label="Event categories">
-                  {CATEGORIES.map(cat => {
-                    const meta   = CATEGORY_META[cat];
-                    const active = activeCategories.has(cat);
-                    return (
-                      <button
-                        key={cat}
-                        type="button"
-                        className={`timeline__category-filter${active ? " timeline__category-filter--active" : ""}`}
-                        onClick={() => toggleCategory(cat)}
-                        aria-pressed={active}
-                        style={active ? { background: `${meta.color}33`, borderColor: meta.color } : undefined}
-                      >
-                        <span
-                          className="timeline__category-filter__dot"
-                          style={{ background: meta.color }}
-                          aria-hidden="true"
-                        />
-                        {meta.label}
-                      </button>
-                    );
-                  })}
+              <div className="timeline__filter-stack">
+                <div className="timeline__filter-section">
+                  <span className="timeline__filter-section__label">Filter events</span>
+                  <div className="timeline__category-filters" role="group" aria-label="Event categories">
+                    {CATEGORIES.map(cat => {
+                      const meta = CATEGORY_META[cat];
+                      const active = activeCategories.has(cat);
+                      return (
+                        <button
+                          key={cat}
+                          type="button"
+                          className={`timeline__category-filter${active ? " timeline__category-filter--active" : ""}`}
+                          onClick={() => toggleCategory(cat)}
+                          aria-pressed={active}
+                          style={active ? { background: `${meta.color}33`, borderColor: meta.color } : undefined}
+                        >
+                          <span
+                            className="timeline__category-filter__dot"
+                            style={{ background: meta.color }}
+                            aria-hidden="true"
+                          />
+                          {meta.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="timeline__filter-section">
+                  <span className="timeline__filter-section__label">Visible lanes</span>
+                  <div className="timeline__category-filters" role="group" aria-label="Timeline lanes">
+                    {LANE_KEYS.map(lane => {
+                      const active = visibleTimelineLanes.has(lane);
+                      return (
+                        <button
+                          key={lane}
+                          type="button"
+                          className={`timeline__category-filter${active ? " timeline__category-filter--active" : ""}`}
+                          onClick={() => toggleTimelineLane(lane)}
+                          aria-pressed={active}
+                        >
+                          {LANE_META[lane].label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             )}

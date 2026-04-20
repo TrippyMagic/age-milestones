@@ -229,7 +229,7 @@ Persistenza: `localStorage` key `"user_profile"`.
 
 ---
 
-### Fase 5 — Timeline Evolution: verso il Time Map (stimata: 5-8 giorni)
+### ✅ Fase 5 — Timeline Evolution: verso il Time Map (Completata: 2026-04-20)
 
 > **Nota:** Questa è la fase più ambiziosa e può essere suddivisa in sub-fasi.
 
@@ -342,10 +342,9 @@ Il progetto è stato rinominato **Kronoscope** (Fase 0). Il nome evoca:
 | Fase 2 — Data Model: Metriche con Range | ✅ Completata | Fase 1 |
 | Fase 3 — Personalizzazione Utente | ✅ Completata | Fase 2 |
 | Fase 4 — About Page Revamp + DOB Simplification | ✅ Completata | Fase 0 |
-| Fase 5 — Timeline Evolution (Time Map) | 🔲 Da fare | Fase 1, Fase 2 |
+| Fase 5 — Timeline Evolution (Time Map) | ✅ Completata | Fase 1, Fase 2 |
 | Fase 6 — 3D Strategy | 🔲 Da fare | Nessuna |
 
 ---
 
 *Questo piano è un documento vivente. Aggiornare lo stato delle fasi man mano che vengono completate.*
-

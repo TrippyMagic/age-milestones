@@ -26,12 +26,21 @@ export type TimelineEvent = {
   id: string;
   label: string;
   value: number;
+  lane?: TimelineLane;
   subLabel?: string;
   placement?: "above" | "below";
   markerShape?: MarkerShape;
   accent?: Accent;
   /** Optional direct color override for the marker dot (e.g. from event category). */
   color?: string;
+};
+
+export type TimelineLane = "personal" | "historical" | "markers";
+
+export const LANE_META: Record<TimelineLane, { label: string }> = {
+  personal:   { label: "Personal" },
+  historical: { label: "Historical" },
+  markers:    { label: "Scale markers" },
 };
 
 // ── Component props ───────────────────────────────────────────
@@ -89,6 +98,13 @@ export type SubTick = {
   label: string;
 };
 
+export type DetailPanelItem = {
+  id: string;
+  label: string;
+  subLabel?: string;
+  value: number;
+};
+
 // ── Constants ─────────────────────────────────────────────────
 
 export const SLIDER_RESOLUTION           = 5_000;
@@ -99,4 +115,3 @@ export const SUB_TIMELINE_CONNECTOR_HEIGHT = 72;
 export const SUB_TIMELINE_MARGIN_RATIO   = 0.3;
 export const MIN_SUB_TIMELINE_SPAN       = 86_400_000; // 1 day in ms
 export const PAN_THRESHOLD_PX            = 5;
-

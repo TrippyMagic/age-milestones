@@ -42,9 +42,19 @@ type EventElementProps = {
   variant: "main" | "sub";
   range: Range;
   now: number;
+  onSelect?: (event: TimelineEvent) => void;
+  selected?: boolean;
 };
 
-export function EventElement({ event, leftPercent, variant, range, now }: EventElementProps) {
+export function EventElement({
+  event,
+  leftPercent,
+  variant,
+  range,
+  now,
+  onSelect,
+  selected = false,
+}: EventElementProps) {
   const placement   = event.placement  ?? "above";
   const markerShape = event.markerShape ?? "dot";
   const accent: Accent = event.accent  ?? "default";
@@ -66,6 +76,7 @@ export function EventElement({ event, leftPercent, variant, range, now }: EventE
   ];
   if (variant === "main" && isClamped) eventClasses.push("timeline__event--clamped");
   if (event.id === "birth") eventClasses.push("timeline__event--birth");
+  if (selected) eventClasses.push("timeline__event--selected");
 
   const labelClasses = ["timeline__label", `timeline__label--${accent}`];
 
@@ -80,6 +91,15 @@ export function EventElement({ event, leftPercent, variant, range, now }: EventE
       tabIndex={0}
       aria-labelledby={labelId}
       aria-label={event.label}
+      aria-pressed={selected}
+      onClick={() => onSelect?.(event)}
+      onKeyDown={evt => {
+        if (!onSelect) return;
+        if (evt.key === "Enter" || evt.key === " ") {
+          evt.preventDefault();
+          onSelect(event);
+        }
+      }}
     >
       <span
         className={`timeline__marker timeline__marker--${markerShape}`}
@@ -98,4 +118,3 @@ export function EventElement({ event, leftPercent, variant, range, now }: EventE
     </div>
   );
 }
-

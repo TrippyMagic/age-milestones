@@ -117,3 +117,68 @@ La prop `renderNumber` è stata rimossa da `AgeTable`. La logica di apertura del
 
 ### Motivazione
 Principio di **least knowledge**: `Milestones.tsx` non deve sapere come funziona l'overlay. `AgeTable` è l'unico componente con accesso diretto ai valori raw e al profilo di ogni riga — è il posto corretto per decidere quando mostrare il modale.
+
+---
+
+## D-06 — Time Map a lane parallele (Fase 5)
+
+**Data:** 2026-04-20  
+**Fase:** 5 — Timeline Evolution
+
+### Decisione
+Introdotta architettura a lane condivise con un viewport unico (`center + spanMs`) e `scaleMode` unico:
+- `personal`
+- `historical`
+- `markers`
+
+Ogni evento ora può dichiarare `lane?: TimelineLane`; assenza di lane => fallback `personal` per backward compatibility.
+
+### Motivazione
+La timeline monolinea produceva clustering eccessivo e sovrapposizioni. Le lane separano semantica e densità informativa senza duplicare la logica di pan/zoom.
+
+### Impatto tecnico
+- `TimelineEvent` esteso con `lane`.
+- `Timeline.tsx` ora costruisce i render items per lane (`buildRenderItems` riusata lane-by-lane).
+- Ruler ticks condivisa in alto; eventi distribuiti verticalmente per lane.
+
+### Trade-off
+- Altezza asse aumentata (300/330px) per mantenere leggibilità.
+- I marker condividono ancora il medesimo engine di grouping (coerente, ma non lane-aware per collisioni inter-lane — non necessario in questa fase).
+
+---
+
+## D-07 — Sostituzione SubTimeline con Detail Panel
+
+**Data:** 2026-04-20  
+**Fase:** 5 — Timeline Evolution
+
+### Decisione
+La `SubTimeline` espansa è stata sostituita da `TimelineDetailPanel`:
+- Desktop: pannello ancorato sotto la timeline
+- Mobile: half-sheet con dismiss via drag verticale (`Framer Motion drag="y"`)
+
+Selezionando un marker singolo viene mostrato 1 evento; selezionando un gruppo viene mostrata la lista degli eventi sovrapposti.
+
+### Motivazione
+Il pattern precedente richiedeva contesto mentale extra (mini-axis nel mini-axis). Il detail panel riduce il carico cognitivo e rende il contenuto gerarchico esplicito.
+
+### Trade-off
+- Persa la mini-rappresentazione temporale locale del gruppo.
+- Guadagnata una UX più stabile su mobile (niente outside-click race nel path principale).
+
+---
+
+## D-08 — Lane visibility controls persistenti
+
+**Data:** 2026-04-20  
+**Fase:** 5 — Timeline Evolution
+
+### Decisione
+Aggiunto stato preferenze per visibilità lane:
+- `pref_visibleTimelineLanes` (localStorage)
+- API context: `visibleTimelineLanes`, `toggleTimelineLane`
+
+UI in `Milestones.tsx`: sezione "Visible lanes" con chip toggle, con guardrail "almeno una lane attiva".
+
+### Motivazione
+In una Time Map multi-layer, la riduzione di rumore è cruciale. L'utente può spegnere ciò che non è rilevante nel suo flusso esplorativo.
