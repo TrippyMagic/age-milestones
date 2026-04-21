@@ -562,6 +562,31 @@ La priorità dichiarata del refactor_3 è la stabilità mobile. Alcune aree eran
 
 ---
 
+## D-28 — Allineamento condiviso dei layout e lane globale con stato esplicito
+
+**Data:** 2026-04-21  
+**Fase:** Polish finale post-Fase 12
+
+### Decisione
+Due polish trasversali vengono trattati come parte della chiusura del refactor:
+1. i container `.page` non devono più aggiungere un gutter orizzontale proprio, perché il gutter canonico vive già su `body` / `#root` e sulla navbar;
+2. la lane globale di `Milestones` deve distinguere esplicitamente tra `loading`, `error` ed `empty`, invece di mostrare subito il warning “No global items match…” quando i dataset sono ancora vuoti solo perché in caricamento.
+
+### Motivazione
+Il disallineamento visto in `AgeTable` era il sintomo di un problema più generale: alcune pagine sommavano un padding orizzontale locale al gutter già fornito dal layout root, producendo bordi visivi incoerenti rispetto alla navbar sticky. In parallelo, la timeline globale comunicava un falso stato vuoto nei cold load o nei casi di fetch lento, facendo sembrare i marker globali “spariti” quando in realtà non avevano ancora finito di caricarsi.
+
+### Implementazione
+- `index.css`: `.page` usa ora solo padding verticale; il gutter orizzontale resta centralizzato a livello root
+- `Milestones.tsx`: gli hook `useHistoricalEvents()` e `useProjectedEvents()` espongono ora anche `status` ed `error` al livello pagina
+- aggiunto `src/utils/globalLaneNotice.ts` per risolvere in modo puro lo stato della lane globale (`loading` / `error` / `empty` / `null`)
+- aggiunti test unitari dedicati in `src/tests/globalLaneNotice.test.ts`
+
+### Trade-off
+- Alcune pagine risultano leggermente più “flush” rispetto al root container, ma in cambio guadagnano allineamento consistente con navbar e superfici principali
+- Il warning di lane vuota compare un po' più tardi, ma solo quando il dataset è davvero stabilizzato e l'assenza di marker globali è reale
+
+---
+
 ## D-20 — DOB mancante come stato rosso esplicito, non come failure silenziosa
 
 **Data:** 2026-04-21  

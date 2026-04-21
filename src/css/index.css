@@ -159,14 +159,16 @@ body::before {
   flex-direction: column;
   align-items: center;
   width: 100%;
-  padding: 20px var(--space-md);   /* mobile base */
+  max-width: 100%;
+  min-width: 0;
+  padding: 20px 0;                 /* root/body already provide the outer gutter */
   gap: 20px;                       /* mobile base */
   box-sizing: border-box;
 }
 
 /* Restore spacious desktop layout */
 @media (min-width: 480px) {
-  .page    { padding: clamp(24px, 4vw, 48px); gap: clamp(24px, 5vh, 36px); }
+  .page    { padding-block: clamp(24px, 4vw, 48px); padding-inline: 0; gap: clamp(24px, 5vh, 36px); }
   .wrapper { margin-top: 40px; }
   .footer  { font-size: .85rem; }
 }
@@ -174,6 +176,7 @@ body::before {
 .milestones-page {
   max-width: var(--layout-max-width);
   align-self: center;
+  padding-inline: 0;
 }
 
 .wrapper {

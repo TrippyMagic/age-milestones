@@ -343,6 +343,7 @@
 .age-table__wrap {
   width: 100%;
   max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
   overflow-y: visible;
   -webkit-overflow-scrolling: touch;
@@ -390,6 +391,7 @@
 
 .age-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   font-variant-numeric: tabular-nums;
   overflow: hidden;
@@ -475,12 +477,17 @@
 ----------------------------------------------------------- */
 .perspectives-panel {
   width: 100%;
+  max-width: var(--layout-max-width);
+  align-self: stretch;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 /* Toggle button: visible on mobile, hidden on desktop */
 .perspectives-panel__toggle {
   display: flex;
   width: 100%;
+  max-width: 100%;
   align-items: center;
   justify-content: space-between;
   padding: 14px clamp(16px, 3vw, 24px);
@@ -494,6 +501,7 @@
   backdrop-filter: blur(18px);
   box-shadow: var(--shadow-card);
   transition: background .15s ease;
+  box-sizing: border-box;
 }
 
 .perspectives-panel__toggle:hover {
@@ -515,11 +523,15 @@
 ----------------------------------------------------------- */
 .perspective-card {
   width: 100%;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
   gap: clamp(20px, 3vw, 30px);
   padding: clamp(24px, 4vw, 36px);
   border-radius: var(--radius-lg);     /* 20px mobile base — desktop restores to 32px */
+  margin: 0 auto;
+  box-sizing: border-box;
+  overflow: hidden;
   /* background / border / shadow / backdrop from .card-base */
 }
 
@@ -531,9 +543,11 @@
 .perspective-card__body {
   display: flex;
   flex-direction: column;
-  align-items: center;
+   align-items: stretch;
   gap: 18px;
   text-align: center;
+   width: 100%;
+   min-width: 0;
 }
 
 .perspective-card__title {
@@ -555,12 +569,22 @@
   font-size: .95rem;
   color: var(--text-muted);
   max-width: 36ch;
+  align-self: center;
 }
 
 .perspective-card__table {
   width: 100%;
+  min-width: 0;
   display: flex;
   justify-content: center;
+}
+
+.perspective-card__title,
+.perspective-card__hint,
+.perspective-card__toast,
+.perspective-card__tabs,
+.perspective-card__body > .help-link {
+  align-self: center;
 }
 
 /* -----------------------------------------------------------

@@ -531,6 +531,7 @@ Rimuovere ogni affordance o linguaggio che suggerisca viste parallele o modalit�
 4. **Edge grouping nel 2D** — `buildRenderItems.ts` ora crea group bubble ai bordi per gli eventi fuori viewport, così a sinistra/destra estrema non si vede più solo il marker clamped più vicino ma il conteggio dei marker oltre il limite visibile.
 5. **2D/mobile hardening** — `Timeline.tsx` riduce i rerender frequenti (tick `now` meno aggressivo), gestisce `pointercancel/lostpointercapture`, stabilizza la selezione dei marker e usa `EventElement` memoizzato.
 6. **Responsive audit finale** — layout principali riallineati a `max-width`, flex/grid e breakpoint coerenti in Landing, Settings, Timescales, AgeTable e 3D labels/surfaces.
+7. **Final alignment + global lane loading polish** — i container `.page` ora delegano il gutter orizzontale al root condiviso per mantenere l'allineamento con navbar e card principali in tutte le pagine; `Milestones.tsx` distingue esplicitamente `loading`, `error` ed `empty` della lane globale, evitando il falso warning “No global items match…” mentre dataset storici/proiettati stanno ancora caricando.
 
 #### Analisi critica
 

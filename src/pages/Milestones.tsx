@@ -18,6 +18,7 @@ import { useMediaQuery } from "../hooks/useMediaQuery";
 import { LANE_META, type TimelineLane } from "../components/timeline/types";
 import { SectionErrorBoundary } from "../components/SectionErrorBoundary";
 import { getAboutSectionHref } from "../utils/aboutLinks";
+import { resolveGlobalLaneNotice } from "../utils/globalLaneNotice";
 
 const FUTURE_WINDOW_YEARS = 40;
 const LOOKBACK_YEARS = 20;
@@ -168,8 +169,16 @@ export default function Milestones() {
   const nav = useNavigate();
   const [tab, setTab] = useState<keyof typeof TAB_ROWS>("Classic");
   const [focusValue, setFocusValue] = useState(() => dayjs().valueOf());
-  const { events: historicalEvents } = useHistoricalEvents();
-  const { events: projectedEvents } = useProjectedEvents();
+  const {
+    events: historicalEvents,
+    status: historicalStatus,
+    error: historicalError,
+  } = useHistoricalEvents();
+  const {
+    events: projectedEvents,
+    status: projectedStatus,
+    error: projectedError,
+  } = useProjectedEvents();
   const {
     activeCategories,
     toggleCategory,
@@ -258,6 +267,12 @@ export default function Milestones() {
   const visibleGlobalItems = allEvents.filter(event => (event.lane ?? "personal") === "global");
   const noTimelineItems = allEvents.length === 0;
   const noGlobalItems = visibleGlobalItems.length === 0;
+  const globalLaneNotice = resolveGlobalLaneNotice({
+    historicalStatus,
+    projectedStatus,
+    noGlobalItems,
+  });
+  const globalLaneError = [historicalError, projectedError].filter(Boolean).join(" • ");
 
   const renderFocus = useCallback((value: number) => {
     const instant = dayjs(value);
@@ -530,9 +545,21 @@ export default function Milestones() {
                   </SectionErrorBoundary>
                 )}
 
-                {noGlobalItems && !noTimelineItems && visibleTimelineLanes.has("global") && (
+                {noGlobalItems && !noTimelineItems && visibleTimelineLanes.has("global") && globalLaneNotice === "loading" && (
+                  <div className="timeline__surface-note" role="status" aria-live="polite">
+                    Loading global events and projections for the world lane…
+                  </div>
+                )}
+
+                {noGlobalItems && !noTimelineItems && visibleTimelineLanes.has("global") && globalLaneNotice === "error" && (
+                  <div className="timeline__surface-note timeline__surface-note--warning" role="status" aria-live="polite">
+                    Global items could not be loaded right now{globalLaneError ? `: ${globalLaneError}` : "."}
+                  </div>
+                )}
+
+                {noGlobalItems && !noTimelineItems && visibleTimelineLanes.has("global") && globalLaneNotice === "empty" && (
                   <div className="timeline__surface-note timeline__surface-note--warning" role="status">
-                    No global items match the current filters. Re-enable categories to bring the world lane back.
+                    No global items match the current filters or visible time window. Re-enable categories or pan the time map to bring the world lane back.
                   </div>
                 )}
               </>
