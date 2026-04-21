@@ -7,11 +7,11 @@
 
 ## Executive Summary
 
-Il progetto "Age Milestones" viene rinominato **Kronoscope** e trasformato da calcolatore di età a *time exploration sandbox* multi-paradigma. Il refactor si concentra su: (1) stabilizzazione mobile e bug fix, (2) modello dati con range per metriche stimate, (3) personalizzazione utente, (4) evoluzione timeline verso un sistema a lane ("Time Map"), (5) strategia 3D razionalizzata.
+Il progetto "Age Milestones" viene rinominato **Kronoscope** e trasformato da calcolatore di età a *time exploration sandbox* multi-paradigma. Il refactor si concentra su: (1) stabilizzazione mobile e bug fix, (2) modello dati con range per metriche stimate, (3) personalizzazione utente, (4) evoluzione timeline verso un sistema a lane ("Time Map"), (5) redesign incrementale della timeline come sistema più leggibile, stabile e meno aggressivo nel clustering, (6) strategia 3D razionalizzata come ultimo step opzionale.
 
 **Vincoli dichiarati:** lingua inglese, no i18n, no gamification, no social features. Il progetto resta un sandbox sperimentale/didattico.
 
-**Priorità:** Mobile UX + stabilità > Modello dati accurato > Personalizzazione > Time Map > 3D
+**Priorità:** Stabilità UI > Mobile UX > Semplificazione interazione timeline > Coerenza concettuale sandbox > Modello dati accurato > Personalizzazione > 3D
 
 ---
 
@@ -62,6 +62,7 @@ Il progetto "Age Milestones" viene rinominato **Kronoscope** e trasformato da ca
 | Incremental | Nessun rewrite totale — ogni fase è deployabile |
 | Plain CSS BEM | Nessuna migrazione a Tailwind/CSS Modules |
 | React Context | Sufficiente per il numero di contesti attuale (3-4 max) |
+| Preserve reusable internals | Se una feature UI viene rimossa, la logica interna può restare se utile a future iterazioni (es. log scale) |
 
 ---
 
@@ -260,7 +261,215 @@ Tutte le lane condividono lo stesso `Viewport` (center + spanMs) e lo stesso `sc
 
 ---
 
-### Fase 6 — 3D Strategy Rationalization (stimata: 1-2 giorni)
+### Fase 6 — Timeline Core Refactor: grouping, viewport safety, interaction cleanup (stimata: 1-2 giorni)
+
+**Obiettivo:** Rendere la timeline più stabile, meno rumorosa e meno aggressiva nel clustering, senza buttare via il motore già costruito in Fase 5.
+
+#### 6.1 — Grouping logic refinement (zoom-aware, conservative)
+**File:** `src/components/timeline/buildRenderItems.ts`, `src/components/timeline/types.ts`, `src/components/timeline/Timeline.tsx`
+**Cosa:** Sostituire la logica basata su `GROUPING_GAP_PX` fisso con una soglia dinamica derivata da:
+- livello di zoom / `viewport.spanMs`
+- larghezza asse effettiva
+- densità reale degli eventi nella lane attiva
+
+Regola attesa:
+- **zoom alto** → grouping quasi nullo
+- **zoom medio** → grouping raro e solo su collisioni reali
+- **zoom basso** → grouping attivo ma controllato, senza trasformare la lane in una serie di cluster onnipresenti
+
+**Perché:** il clustering attuale è troppo pervasivo e produce una percezione di timeline "compressa" anche quando gli eventi dovrebbero rimanere leggibili individualmente.
+
+**Nota di design:** il grouping deve diventare una strategia di collision management, non il comportamento dominante.
+
+#### 6.2 — Safe viewport + guard per errore ricorrente `center`
+**File:** `src/components/timeline/Timeline.tsx`, `src/utils/scaleTransform.ts`, `src/components/ErrorBoundary.tsx`
+**Cosa:** Formalizzare guard per impedire stati invalidi del viewport:
+- nessun render se `range.start >= range.end` senza fallback valido
+- nessuna trasformazione se `center`/`spanMs` sono non finiti o derivano da dati invalidi
+- fallback UI locale della timeline se il viewport non è costruibile
+- recovery path esplicito invece di dipendere solo dal boundary globale
+
+**Perché:** il bug "property `center` null" non deve più poter portare alla perdita completa dell'interfaccia.
+
+#### 6.3 — UI simplification: rimozione del pulsante Log, non del motore
+**File:** `src/components/timeline/TimelineControls.tsx`, `src/context/PreferencesContext.tsx`, `src/utils/scaleTransform.ts`
+**Cosa:** Rimuovere dalla UI la "log view" / il toggle `Lin/Log`, mantenendo però la logica `scaleMode` internamente riutilizzabile in futuro.
+
+**Perché:** l'obiettivo è semplificare la superficie di interazione, non distruggere una capacità tecnica che potrebbe tornare utile in contesti specifici.
+
+**Trade-off accettato:** meno opzioni visibili oggi, più chiarezza per l'utente; il codice di trasformazione può restare dietro feature flag o API interna.
+
+#### 6.4 — Time grid dinamica + rimozione hover date preview continua
+**File:** `src/utils/scaleTransform.ts`, `src/components/timeline/Timeline.tsx`, `src/css/timeline.css`
+**Cosa:**
+- rendere le linee verticali / tick realmente adattive allo zoom
+- eliminare completamente la hover preview costante della data durante scroll/pan
+- lasciare il dettaglio temporale solo in focus state, marker selezionati e detail panel
+
+**Perché:** la hover preview continua aggiunge rumore cognitivo e interferisce con l'esperienza di esplorazione mobile/touch.
+
+---
+
+### Fase 7 — Timeline Information Architecture: future events + two-lane model (stimata: 1-2 giorni)
+
+**Obiettivo:** ripulire la semantica della timeline e ridurre la frammentazione visiva a due lane principali: **Personal** e **Global**.
+
+#### 7.1 — Dataset separato per gli eventi futuri
+**File:** nuovo `public/data/projected-events.json`, `src/hooks/useHistoricalEvents.ts` (o hook parallelo), `src/types/events.ts`
+**Cosa:** Introdurre un dataset separato dedicato agli eventi futuri previsti / stimati / culturali / cosmici.
+
+**Perché:** mescolare eventi passati e proiezioni nello stesso file storico riduce chiarezza editoriale e semantica. Un file separato rende esplicito che si tratta di proiezioni, non di fatti storici consolidati.
+
+**Principio:** stesso shape base del dataset storico quando possibile, con campi aggiuntivi per `projectionType`, `certainty` o label di natura stimata.
+
+#### 7.2 — Distinzione forte tra `past events` e `future projections`
+**File:** `src/components/timeline/EventElement.tsx`, `src/components/timeline/types.ts`, `src/css/timeline.css`
+**Cosa:** Ogni evento globale deve dichiarare il proprio stato temporale / epistemico:
+- `past event`
+- `future projection`
+
+La distinzione deve essere visibile con:
+- gerarchia visiva differente
+- pattern, badge o treatment grafico dedicato
+- copy esplicito nel detail panel
+
+**Perché:** il futuro non va trattato come se fosse un fatto equivalente al passato. Non basta cambiare colore.
+
+#### 7.3 — Semplificazione lane: `Personal` + `Global`
+**File:** `src/components/timeline/types.ts`, `src/pages/Milestones.tsx`, `src/context/PreferencesContext.tsx`
+**Cosa:** Evolvere da `personal | historical | markers` a:
+1. **Personal lane** — DOB, today, midpoint, milestone personali
+2. **Global lane** — eventi storici, scientifici, cosmici, scale references, projected events
+
+**Perché:** tre lane separate oggi espongono dettagli implementativi più che modelli mentali utili. La semplificazione a due lane riflette meglio il prodotto: "me" vs "the world / the universe".
+
+**Nota:** categorie e metadata restano filtrabili, ma non diventano lane indipendenti.
+
+#### 7.4 — Breakdown dettagliato modifiche timeline
+**Output atteso di questa fase:**
+- grouping più raro e leggibile
+- lane più chiare
+- projected events come nuovo layer concettuale
+- time grid che segue lo zoom
+- detail panel come unico punto di approfondimento
+
+---
+
+### Fase 8 — Timeline UX Cleanup + Mobile Layout Stability (stimata: 1-2 giorni)
+
+**Obiettivo:** trasformare la timeline in un contenitore fisico e leggibile, eliminando fragilità mobili e layout troppo rigidi.
+
+#### 8.1 — Visual redesign della timeline
+**File:** `src/css/timeline.css`
+**Cosa:** Rafforzare:
+- bordi esterni della timeline
+- padding e spacing coerenti
+- separazione visiva tra background, lane e marker
+- percezione delle lane come contenitori fisici, non overlay piatti
+
+**Perché:** oggi la timeline è funzionale ma poco strutturata visivamente. Serve una gerarchia più netta per supportare esplorazione e comprensione.
+
+#### 8.2 — Timeline surface semplificata
+**File:** `src/components/timeline/Timeline.tsx`, `src/components/timeline/TimelineControls.tsx`
+**Cosa:** Mantenere solo:
+- timeline view
+- zoom / pan
+
+Rimuovere ogni affordance o linguaggio che suggerisca viste parallele o modalità secondarie non essenziali.
+
+#### 8.3 — Mobile UX fixes trasversali
+**File:** `src/css/navbar.css`, `src/css/timeline.css`, `src/css/personalize.css`, altri CSS layout-based
+**Cosa:**
+- navbar sticky sempre visibile top
+- miglioramento allineamento box e card su viewport stretti
+- tabelle senza scroll interno, espanse verticalmente
+- rimozione di height fisse dai componenti critici dove bloccano il flusso naturale del contenuto
+
+**Perché:** la stabilità mobile è la priorità assoluta del refactor_3.
+
+#### 8.4 — Stability hardening: boundary + fallback locali
+**File:** `src/components/ErrorBoundary.tsx`, `src/components/timeline/Timeline.tsx`, pagine principali
+**Cosa:**
+- nessuna perdita totale UI in caso di eccezione locale
+- boundary globale come safety net, non come prima linea difensiva
+- fallback state sempre validi per timeline, settings, about e landing
+
+**Perché:** un sandbox esplorativo non può degradare in pagina vuota per un singolo edge case.
+
+---
+
+### Fase 9 — Settings Refactor + DOB Governance (stimata: 1 giorno)
+
+**Obiettivo:** centralizzare tutte le modifiche ai dati utente in un'unica pagina coerente, rinominando `Personalize` in `Settings`.
+
+#### 9.1 — Rename `Personalize` → `Settings`
+**File:** `src/pages/Personalize.tsx` → `Settings.tsx`, `src/components/common/Headers.tsx`, `src/main.tsx`, `src/pages/Landing.tsx`
+**Cosa:** Rinominare la pagina e l'etichetta di navigazione per riflettere che non si tratta solo di personalizzazione ma di gestione centralizzata di DOB, profilo e preferenze.
+
+#### 9.2 — Rimozione del pulsante `Edit Birth Date`
+**File:** `src/components/common/Headers.tsx`, `src/pages/Milestones.tsx`
+**Cosa:** Eliminare il pulsante rapido dalla navbar e spostare completamente la gestione DOB in Settings.
+
+**Perché:** il DOB è un'informazione primaria di configurazione, non un'azione contestuale da spargere in più entry point.
+
+#### 9.3 — UI settings uniforme
+**File:** `src/pages/Settings.tsx`, `src/css/personalize.css` (o CSS rinominato in seguito)
+**Cosa:** Organizzare la pagina in box coerenti:
+- Identity / birth date
+- Personal metrics
+- Lifestyle modifiers
+- Reset / save / warnings
+
+**Perché:** serve una information architecture unica e prevedibile.
+
+---
+
+### Fase 10 — DOB Validation UX + Access Guardrails (stimata: 0.5-1 giorno)
+
+**Obiettivo:** rendere esplicito quando la timeline non può essere usata e quando le stime sono meno affidabili.
+
+#### 10.1 — Missing DOB: blocking red state
+**File:** `src/pages/Landing.tsx`, `src/pages/Milestones.tsx`, `src/pages/Settings.tsx`
+**Cosa:** Se il DOB non è impostato:
+- bloccare accessi alle aree che dipendono dal DOB
+- mostrare errore rosso chiaro e non ambiguo
+
+#### 10.2 — Reset senza DOB: warning all'uscita da Settings
+**File:** `src/pages/Settings.tsx`, `src/context/BirthDateContext.tsx`
+**Cosa:** Se l'utente resetta / cancella i dati e prova a uscire senza DOB, mostrare warning esplicito.
+
+#### 10.3 — Campi opzionali mancanti: warning giallo non bloccante
+**File:** `src/pages/Settings.tsx`
+**Cosa:** Mostrare hint tipo:
+> Estimates will be less precise without these details.
+
+**Perché:** il prodotto deve comunicare qualità e limiti dei dati senza punire l'utente.
+
+---
+
+### Fase 11 — About FAQ + deep links “How it works” (stimata: 1 giorno)
+
+**Obiettivo:** trasformare About in una documentazione orientata all'uso e collegare ogni area principale alla sua spiegazione dedicata.
+
+#### 11.1 — About page FAQ-based
+**File:** `src/pages/About.tsx`
+**Cosa:** Ristrutturare in sezioni FAQ:
+1. General concept
+2. Timeline system
+3. Timescales system
+4. Personalization / Settings system
+
+#### 11.2 — CTA `How it works` in landing
+**File:** `src/pages/Landing.tsx`
+**Cosa:** Aggiungere un pulsante / link secondario sotto la descrizione breve che mandi alla sezione FAQ corretta in About.
+
+#### 11.3 — Deep links dai componenti principali
+**File:** pagine principali e card/section headers rilevanti
+**Cosa:** Ogni area maggiore deve offrire un link contestuale `How it works` che scrolli direttamente alla sezione FAQ corrispondente.
+
+---
+
+### Fase 12 — 3D Strategy Rationalization (stimata: 1-2 giorni)
 
 **Obiettivo:** Definire il ruolo del 3D nel progetto e razionalizzare l'investimento.
 
@@ -281,6 +490,19 @@ Tutte le lane condividono lo stesso `Viewport` (center + spanMs) e lo stesso `sc
 - **Investire** in 2D ricco: SVG per scale visualization, Canvas 2D per timeline ad alte prestazioni se necessario
 - **Documentare** che il 3D è un esperimento, non il paradigma primario
 - Valutare rimozione di `@react-three/rapier` (non usato)
+
+---
+
+### 3.x — UX architecture changes summary
+
+Le nuove fasi 6-11 consolidano alcuni principi trasversali:
+
+- **Single source of truth per i dati utente** → DOB e profiling vivono in Settings, non in scorciatoie disperse
+- **Timeline come spazio esplorabile, non come widget multi-mode** → meno toggle, più chiarezza
+- **Due sole lane mentali** → Personal / Global
+- **Futuro come proiezione, non come fatto** → dataset separato + gerarchia visiva esplicita
+- **Fallback locali prima del boundary globale** → resilienza maggiore e meno schermate vuote
+- **Mobile layout prima di tutto** → sticky nav, contenitori verticali, no scroll annidati non necessari
 
 ---
 
@@ -317,6 +539,11 @@ Tutte le lane condividono lo stesso `Viewport` (center + spanMs) e lo stesso `sc
 | Cognitive overload utente | Progressive disclosure (micro-onboarding già implementato). Default semplice, complessità opt-in |
 | Regressioni CSS desktop durante refactor lane | Screenshot diff con Playwright visual regression |
 | Performance Time Map con molte lane | Lazy rendering: solo lane visibili nel viewport. `will-change` solo durante pan/zoom |
+| Grouping dinamico troppo aggressivo o troppo permissivo | Introdurre soglie min/max e verificare comportamento su range brevi, medi e lunghi |
+| Confusione semantica tra eventi futuri e storici | Tenere `projected-events.json` separato e usare copy/gerarchia visiva dedicati |
+| Regressioni mobile da fix CSS trasversali | Checklist viewport 320/360/390/480/720 prima di considerare chiusa ogni fase |
+| Settings come unico entry-point DOB percepito come frizione | CTA chiare da Landing e guardrail espliciti nelle pagine che dipendono dal DOB |
+| Conservare la logica log-scale senza UI pubblica crea debito morto | Documentare che è logica interna riutilizzabile e rivalutarla al termine del refactor_3 |
 
 ### 5.2 — Idee future (fuori scope refactor_3)
 
@@ -331,6 +558,31 @@ Il progetto è stato rinominato **Kronoscope** (Fase 0). Il nome evoca:
 - **-scope** (σκοπέω): strumento per osservare
 - Coerente con la natura sandbox/strumento esplorativo
 
+### 5.4 — Migration strategy (incrementale, non breaking)
+
+1. **Prima il motore, poi la pelle:** introdurre grouping dinamico, guard del viewport e dataset projected senza cambiare subito tutta la UI.
+2. **Poi semplificare la semantica:** migrare da 3 lane a 2 lane mantenendo adapter temporanei (`historical`/`markers` → `global`) finché i consumer non sono allineati.
+3. **Poi rimuovere UI ridondante:** togliere il pulsante log dalla toolbar senza eliminare `scaleMode` dal core.
+4. **Poi centralizzare i dati utente:** rinominare Personalize in Settings e spostare lì DOB + profile editing.
+5. **Infine documentare e razionalizzare:** FAQ deep-linked e strategia 3D solo dopo aver stabilizzato il 2D.
+
+### 5.5 — Checklist implementativa finale
+
+- [ ] Inserire `projected-events.json` con shape coerente al dataset storico
+- [ ] Ridurre il clustering automatico a collision management zoom-aware
+- [ ] Migrare la timeline a due lane: Personal / Global
+- [ ] Rendere il time grid realmente adattivo allo zoom
+- [ ] Rimuovere l'hover date preview continua
+- [ ] Rimuovere dalla UI il toggle log mantenendo la logica interna riusabile
+- [ ] Rendere la navbar sticky e rimuovere height fisse critiche
+- [ ] Eliminare scroll interni non necessari nelle tabelle
+- [ ] Aggiungere guard e fallback per stati viewport invalidi / `center`
+- [ ] Rinominare Personalize in Settings
+- [ ] Spostare completamente la gestione DOB in Settings
+- [ ] Aggiungere feedback rosso/giallo per missing DOB e dati opzionali assenti
+- [ ] Convertire About in FAQ con anchor link per Timeline / Timescales / Settings
+- [ ] Rivalutare il 3D solo dopo la stabilizzazione del 2D
+
 ---
 
 ## 6 — Checklist per fase
@@ -343,7 +595,13 @@ Il progetto è stato rinominato **Kronoscope** (Fase 0). Il nome evoca:
 | Fase 3 — Personalizzazione Utente | ✅ Completata | Fase 2 |
 | Fase 4 — About Page Revamp + DOB Simplification | ✅ Completata | Fase 0 |
 | Fase 5 — Timeline Evolution (Time Map) | ✅ Completata | Fase 1, Fase 2 |
-| Fase 6 — 3D Strategy | 🔲 Da fare | Nessuna |
+| Fase 6 — Timeline Core Refactor | 🔲 Da fare | Fase 5 |
+| Fase 7 — Timeline IA: Future Events + Two-Lane Model | 🔲 Da fare | Fase 6 |
+| Fase 8 — Timeline UX Cleanup + Mobile Stability | 🔲 Da fare | Fase 6, Fase 7 |
+| Fase 9 — Settings Refactor + DOB Governance | 🔲 Da fare | Fase 3, Fase 8 |
+| Fase 10 — DOB Validation UX + Access Guardrails | 🔲 Da fare | Fase 9 |
+| Fase 11 — About FAQ + Deep Links | 🔲 Da fare | Fase 9 |
+| Fase 12 — 3D Strategy | 🔲 Da fare | Fase 6, Fase 8 |
 
 ---
 

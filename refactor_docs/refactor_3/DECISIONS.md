@@ -182,3 +182,153 @@ UI in `Milestones.tsx`: sezione "Visible lanes" con chip toggle, con guardrail "
 
 ### Motivazione
 In una Time Map multi-layer, la riduzione di rumore è cruciale. L'utente può spegnere ciò che non è rilevante nel suo flusso esplorativo.
+
+---
+
+## D-09 — Grouping dinamico zoom-aware e clustering conservativo
+
+**Data:** 2026-04-21  
+**Fase:** 6 — Timeline Core Refactor
+
+### Decisione
+Il grouping automatico non deve più dipendere da una soglia fissa globale (`GROUPING_GAP_PX`) come regola dominante. La nuova direzione è:
+- grouping attivo solo per collisioni reali
+- soglia derivata dal livello di zoom / densità / larghezza asse
+- comportamento quasi nullo ad alto zoom
+
+### Motivazione
+Il clustering attuale è percepito come troppo aggressivo: appiattisce la timeline e fa sembrare "sovrapposti" eventi che non lo sono concettualmente. Il gruppo deve servire a preservare leggibilità, non a sostituire la visualizzazione individuale.
+
+### Alternative valutate
+- **Lasciare la soglia fissa e ridurre solo il valore**: semplice ma troppo rigido
+- **Rimuovere del tutto il grouping**: migliora trasparenza ma crea collisioni severe a zoom basso
+- **Grouping per bucket temporali statici**: più predicibile ma meno fedele al layout reale
+
+### Impatto atteso
+- Migliore leggibilità a zoom medio/alto
+- Minore sensazione di timeline "compressa"
+- Necessità di testare più combinazioni di span/larghezza rispetto alla versione precedente
+
+---
+
+## D-10 — `projected-events.json` separato dagli eventi storici
+
+**Data:** 2026-04-21  
+**Fase:** 7 — Timeline Information Architecture
+
+### Decisione
+Gli eventi futuri verranno gestiti in un dataset separato: `public/data/projected-events.json`.
+
+### Motivazione
+Gli eventi previsti, stimati o cosmici futuri non hanno lo stesso statuto epistemico degli eventi storici già accaduti. Tenerli separati evita ambiguità semantiche e rende più semplice manutenzione, curation e messaging UI.
+
+### Alternative valutate
+- **Unire passato e futuro in `historical-events.json`**: meno file ma maggiore ambiguità
+- **Hardcodare le projections in `Milestones.tsx`**: rapido ma fragile e poco editoriale
+
+### Impatto atteso
+- Parser/hook probabilmente duplicabile o generalizzabile con minimo overhead
+- Più chiarezza nella UI tra `past events` e `future projections`
+
+---
+
+## D-11 — Modello a due lane: `Personal` + `Global`
+
+**Data:** 2026-04-21  
+**Fase:** 7 — Timeline Information Architecture
+
+### Decisione
+La timeline converge da tre lane (`personal`, `historical`, `markers`) a due lane principali:
+- `personal`
+- `global`
+
+Scale markers, eventi storici, eventi scientifici, riferimenti cosmici e projected events confluiscono nella lane globale.
+
+### Motivazione
+Le tre lane attuali espongono dettagli di implementazione, non un modello mentale pulito. Il prodotto si capisce meglio come relazione tra tempo personale e tempo del mondo / cosmo.
+
+### Trade-off
+- Si perde una lane dedicata ai marker di scala
+- Si guadagna una struttura narrativa molto più chiara
+
+### Nota di migrazione
+Accettabile prevedere adapter temporanei (`historical` / `markers` → `global`) per evitare una migrazione big-bang.
+
+---
+
+## D-12 — Rimozione del pulsante Log, preservando il motore interno
+
+**Data:** 2026-04-21  
+**Fase:** 6 / 8 — Timeline Core Refactor + UX Cleanup
+
+### Decisione
+La UI pubblica non esporrà più il toggle `Lin/Log`. Tuttavia la logica di trasformazione (`scaleMode`, utilità math e API interne) può rimanere nel codice finché non diventa chiaramente inutile.
+
+### Motivazione
+Il problema non è la mera esistenza della logica logaritmica, ma la complessità aggiunta all'utente da un controllo in più nella toolbar. Prima si semplifica la superficie di interazione; poi, a refactor concluso, si rivaluta se il motore vada rimosso o riutilizzato.
+
+### Alternative valutate
+- **Rimuovere sia bottone sia motore**: più pulito nel breve, meno flessibile nel medio termine
+- **Lasciare il toggle ma nasconderlo su mobile**: complessità ancora troppo alta
+
+### Impatto atteso
+- Toolbar più semplice
+- Debito tecnico controllato ma documentato
+
+---
+
+## D-13 — Settings come fonte unica per DOB e profilo utente
+
+**Data:** 2026-04-21  
+**Fase:** 9 — Settings Refactor
+
+### Decisione
+`Personalize` viene evoluta in `Settings`, che diventa il punto unico per:
+- DOB
+- metriche personali opzionali
+- lifestyle modifiers
+- warning e reset
+
+Il pulsante `Edit birth date` viene rimosso dalla navbar e non resta come scorciatoia distribuita.
+
+### Motivazione
+Il DOB è una configurazione primaria del sistema, non un'azione contestuale. Centralizzarlo riduce incoerenze, semplifica la navigazione e prepara una UX di validazione più chiara.
+
+### Rischio accettato
+Un click in più per modificare il DOB da Milestones. Compensazione: CTA chiare e guardrail espliciti.
+
+---
+
+## D-14 — Stability hardening con fallback locali prima del boundary globale
+
+**Data:** 2026-04-21  
+**Fase:** 6 / 8 — Timeline Core Refactor + Mobile/Stability
+
+### Decisione
+Il `ErrorBoundary` globale resta come rete di sicurezza, ma le feature critiche devono introdurre guard e fallback locali per evitare il collasso completo della UI su errori prevedibili.
+
+### Focus iniziale
+- stati viewport invalidi (`center`, `spanMs`, range non validi)
+- assenza di DOB
+- dataset mancanti o malformati
+
+### Motivazione
+Una pagina vuota con solo boundary fallback è accettabile come ultima risorsa, non come comportamento normale davanti a edge case noti.
+
+---
+
+## D-15 — About FAQ-based + deep links contestuali
+
+**Data:** 2026-04-21  
+**Fase:** 11 — About FAQ + Deep Links
+
+### Decisione
+La pagina About evolve in struttura FAQ navigabile per sezioni, con link contestuali `How it works` da Landing, Timeline, Timescales e Settings.
+
+### Motivazione
+L'utente deve poter capire il sistema senza leggere testo generico o cercare spiegazioni sparse. Le FAQ deep-linked riducono carico cognitivo e migliorano discoverability delle logiche di timeline, timescales e personalizzazione.
+
+### Impatto atteso
+- Documentazione più utile e meno narrativa
+- Migliore onboarding secondario per utenti curiosi
+
