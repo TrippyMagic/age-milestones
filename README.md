@@ -12,6 +12,7 @@ Kronoscope is a React 19 + Vite application that helps you visualise your life f
 - **Interactive 2D timeline** — pan, zoom (Ctrl+scroll), Personal + Global lanes, per-category global filters, and edge-aware grouping for offscreen markers
 - **Future projections dataset** — separate editorial layer for scheduled, astronomical, forecast, and speculative events with explicit confidence labels
 - **Mobile-first timeline surface** — sticky navigation, stronger timeline framing, fewer nested scroll areas, and local fallbacks before the global error boundary
+- **Responsive layout audit completed** — primary surfaces now prefer `max-width`, flex/grid layouts, and breakpoint-based wrapping instead of rigid fixed-width containers
 - **Central Settings page** — one place for birth date, personal metrics, lifestyle modifiers, and the data that refines estimate ranges
 - **DOB guardrails** — explicit blocking states when birth date is missing, plus reliability warnings when optional profile details are incomplete
 - **Optional 3D timeline** — WebGL-powered (Three.js, lazy-loaded), lane-aware, and automatically reduced to a low-power profile on mobile / reduced-motion devices

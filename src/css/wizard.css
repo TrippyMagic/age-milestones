@@ -27,7 +27,8 @@
   align-items: center;
   gap: 16px;
   text-align: center;
-  width: min(100%, 340px);
+  width: 100%;
+  max-width: min(100%, 34rem);
   margin: 0 auto;
 }
 
@@ -42,21 +43,24 @@
   flex-direction: column;
   gap: 12px;
   width: 100%;
+  align-items: stretch;
 }
 
 .landing__buttons .button {
   margin-top: 0;
   width: 100%;
+  max-width: 100%;
 }
 
 @media (min-width: 480px) {
   .landing__buttons {
     flex-direction: row;
     justify-content: center;
+    flex-wrap: wrap;
   }
 
   .landing__buttons .button {
-    width: auto;
+    flex: 1 1 12rem;
   }
 }
 

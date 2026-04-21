@@ -3,12 +3,18 @@
 ============================================================= */
 
 .personalize-page {
-  max-width: 560px;
+  max-width: min(52rem, 100%);
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: clamp(20px, 3vw, 32px);
   width: 100%;
+}
+
+.personalize__grid {
+  width: 100%;
+  display: grid;
+  gap: clamp(18px, 2.5vw, 24px);
 }
 
 .personalize__title {
@@ -40,6 +46,8 @@
   flex-direction: column;
   gap: 20px;
   backdrop-filter: blur(18px);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .personalize__section-title {
@@ -56,6 +64,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
 }
 
 .personalize__label {
@@ -76,10 +85,14 @@
   gap: 8px;
   margin-top: 4px;
   flex-wrap: wrap;
+  width: 100%;
 }
 
 .personalize__input {
-  width: min(180px, 100%);
+  flex: 1 1 12rem;
+  width: 100%;
+  max-width: min(100%, 20rem);
+  min-width: 0;
   text-align: center;
 }
 
@@ -103,8 +116,9 @@
 
 .personalize__actions .button {
   margin-top: 0;
-  flex: 1;
-  min-width: 140px;
+  flex: 1 1 12rem;
+  min-width: 0;
+  max-width: min(100%, 20rem);
 }
 
 @media (max-width: 479px) {
@@ -124,6 +138,14 @@
   .dob-picker__field {
     min-width: 0;
   }
+
+  .dob-picker__actions {
+    justify-content: stretch;
+  }
+
+  .dob-picker__clear {
+    width: 100%;
+  }
 }
 
 /* -----------------------------------------------------------
@@ -133,20 +155,22 @@
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
+  width: 100%;
+  align-items: flex-end;
 }
 
 .dob-picker__actions {
   width: 100%;
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
 
 .dob-picker__field {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  flex: 1;
-  min-width: 140px;
+  flex: 1 1 14rem;
+  min-width: 0;
 }
 
 .dob-picker__label {
@@ -198,6 +222,13 @@
 
 .dob-picker__clear:hover {
   background: rgba(153, 27, 27, 0.28);
+}
+
+@media (min-width: 720px) {
+  .personalize__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
 }
 
 /* -----------------------------------------------------------

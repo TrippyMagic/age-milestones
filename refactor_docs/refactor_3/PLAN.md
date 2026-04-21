@@ -1,7 +1,7 @@
 # PLAN — Refactor 3: Kronoscope Evolution
 
 **Data:** 2026-04-20
-**Stato:** 🚧 In corso
+**Stato:** ✅ Completato
 
 ---
 
@@ -530,6 +530,7 @@ Rimuovere ogni affordance o linguaggio che suggerisca viste parallele o modalit�
 3. **Marker personali corretti** — milestone numeriche personali come `10,000 days`, `500 months`, `1 billion seconds` sono tornate nella `personal` lane in `Milestones.tsx`, evitando che spariscano quando la lane globale è nascosta.
 4. **Edge grouping nel 2D** — `buildRenderItems.ts` ora crea group bubble ai bordi per gli eventi fuori viewport, così a sinistra/destra estrema non si vede più solo il marker clamped più vicino ma il conteggio dei marker oltre il limite visibile.
 5. **2D/mobile hardening** — `Timeline.tsx` riduce i rerender frequenti (tick `now` meno aggressivo), gestisce `pointercancel/lostpointercapture`, stabilizza la selezione dei marker e usa `EventElement` memoizzato.
+6. **Responsive audit finale** — layout principali riallineati a `max-width`, flex/grid e breakpoint coerenti in Landing, Settings, Timescales, AgeTable e 3D labels/surfaces.
 
 #### Analisi critica
 
@@ -629,12 +630,12 @@ Il progetto è stato rinominato **Kronoscope** (Fase 0). Il nome evoca:
 - [x] Inserire `projected-events.json` con shape coerente al dataset storico
 - [x] Ridurre il clustering automatico a collision management zoom-aware
 - [x] Migrare la timeline a due lane: Personal / Global
-- [ ] Rendere il time grid realmente adattivo allo zoom
-- [ ] Rimuovere l'hover date preview continua
-- [ ] Rimuovere dalla UI il toggle log mantenendo la logica interna riusabile
+- [x] Rendere il time grid realmente adattivo allo zoom
+- [x] Rimuovere l'hover date preview continua
+- [x] Rimuovere dalla UI il toggle log mantenendo la logica interna riusabile
 - [x] Rendere la navbar sticky e rimuovere height fisse critiche
 - [x] Eliminare scroll interni non necessari nelle tabelle
-- [ ] Aggiungere guard e fallback per stati viewport invalidi / `center`
+- [x] Aggiungere guard e fallback per stati viewport invalidi / `center`
 - [x] Rinominare Personalize in Settings
 - [x] Spostare completamente la gestione DOB in Settings
 - [x] Aggiungere feedback rosso/giallo per missing DOB e dati opzionali assenti

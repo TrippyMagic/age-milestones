@@ -535,6 +535,33 @@ Su mobile, rerender continui + gesture interrotte sono una combinazione tipica d
 
 ---
 
+## D-27 — Responsive audit finale: preferire `max-width`, flex/grid e breakpoint ai layout rigidi
+
+**Data:** 2026-04-21  
+**Fase:** Audit finale post-Fase 12
+
+### Decisione
+Nei layout attivi del prodotto, le larghezze principali non devono più dipendere da width rigide usate come vincolo di layout. La direzione finale è:
+- `width: 100%` + `max-width` per i contenitori principali
+- flex/grid con `minmax(0, 1fr)` o `auto-fit/auto-fill` per le superfici complesse
+- breakpoint chiari a `480px` e `720px`
+
+### Motivazione
+La priorità dichiarata del refactor_3 è la stabilità mobile. Alcune aree erano già funzionali ma ancora troppo strette o dipendenti da colli di bottiglia di layout: CTA landing, form di Settings, comparator di Timescales, tooltip e label 3D.
+
+### Implementazione
+- `components.css`: card/shared layout e `AgeTable` meno rigidi
+- `personalize.css` + `Settings.tsx`: pagina Settings evoluta con grid responsive e DOB picker più elastico
+- `wizard.css`: CTA landing e azioni più flessibili
+- `timescales.css`: comparator, tooltip e explorer grid riallineati a max-width/flex/grid responsive
+- `timeline3d.css`: scene label e viewport 3D meno rigidi su mobile
+
+### Trade-off
+- Più wrapping controllato su alcuni breakpoint intermedi
+- Meno rischio di overflow/orizzontalità forzata e migliore adattabilità 320/360/390/480/720px
+
+---
+
 ## D-20 — DOB mancante come stato rosso esplicito, non come failure silenziosa
 
 **Data:** 2026-04-21  
