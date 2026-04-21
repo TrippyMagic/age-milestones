@@ -9,12 +9,14 @@ import { Navbar } from "../components/common/Headers";
 import { useMilestone } from "../hooks/useMilestone";
 import { TAB_ROWS } from "../utils/perspectivesConstants";
 import { useHistoricalEvents } from "../hooks/useHistoricalEvents";
+import { useProjectedEvents } from "../hooks/useProjectedEvents";
 import { usePreferences } from "../context/PreferencesContext";
 import { CATEGORY_META, type EventCategory } from "../types/events";
 import { Timeline3DWrapper } from "../components/3d/Timeline3DWrapper";
 import { WEB_GL_SUPPORTED } from "../utils/webgl";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { LANE_META, type TimelineLane } from "../components/timeline/types";
+import { SectionErrorBoundary } from "../components/SectionErrorBoundary";
 
 const FUTURE_WINDOW_YEARS = 40;
 const LOOKBACK_YEARS = 20;
@@ -26,6 +28,11 @@ type TimelineData = {
 };
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+
+const getTemporalStatus = (value: number, nowValue: number): TimelineEvent["temporalStatus"] => {
+  if (Math.abs(value - nowValue) < 1_000) return "present";
+  return value > nowValue ? "future" : "past";
+};
 
 const formatRelative = (now: dayjs.Dayjs, target: dayjs.Dayjs) => {
   if (target.isSame(now, "day")) return "Today";
@@ -64,14 +71,76 @@ const buildTimelineData = (birthDate: Date, birthTime: string): TimelineData | n
   const tenThousandDays = base.add(10_000, "day");
   const fiveHundredMonth = base.add(500, "month");
   const billionSeconds = base.add(1_000_000_000, "second");
+  const nowValue = now.valueOf();
 
   const events: TimelineEvent[] = [
-    { id: "birth", label: "Birth", subLabel: formatWithWeekday(base), value: base.valueOf(), placement: "above", accent: "highlight", lane: "personal" },
-    { id: "midpoint", label: "Midpoint", subLabel: formatWithWeekday(midpoint), value: midpoint.valueOf(), placement: "above", accent: "muted", lane: "personal" },
-    { id: "today", label: "Today", subLabel: formatWithWeekday(now), value: now.valueOf(), placement: "below", markerShape: "triangle", accent: "highlight", lane: "personal" },
-    { id: "10kdays", label: "10,000 days old", subLabel: formatWithWeekday(tenThousandDays), value: tenThousandDays.valueOf(), placement: "below", lane: "markers" },
-    { id: "1Bseconds", label: "1 billion seconds old", subLabel: formatWithWeekday(billionSeconds, true), value: billionSeconds.valueOf(), placement: "above", lane: "markers" },
-    { id: "500months", label: "500 months old", subLabel: formatWithWeekday(fiveHundredMonth, true), value: fiveHundredMonth.valueOf(), placement: "above", lane: "markers" },
+    {
+      id: "birth",
+      label: "Birth",
+      subLabel: formatWithWeekday(base),
+      value: base.valueOf(),
+      placement: "above",
+      accent: "highlight",
+      lane: "personal",
+      semanticKind: "personal",
+      temporalStatus: getTemporalStatus(base.valueOf(), nowValue),
+    },
+    {
+      id: "midpoint",
+      label: "Midpoint",
+      subLabel: formatWithWeekday(midpoint),
+      value: midpoint.valueOf(),
+      placement: "above",
+      accent: "muted",
+      lane: "personal",
+      semanticKind: "personal",
+      temporalStatus: getTemporalStatus(midpoint.valueOf(), nowValue),
+    },
+    {
+      id: "today",
+      label: "Today",
+      subLabel: formatWithWeekday(now),
+      value: nowValue,
+      placement: "below",
+      markerShape: "triangle",
+      accent: "highlight",
+      lane: "personal",
+      semanticKind: "personal",
+      temporalStatus: "present",
+    },
+    {
+      id: "10kdays",
+      label: "10,000 days old",
+      subLabel: formatWithWeekday(tenThousandDays),
+      value: tenThousandDays.valueOf(),
+      placement: "below",
+      lane: "global",
+      semanticKind: "marker",
+      temporalStatus: getTemporalStatus(tenThousandDays.valueOf(), nowValue),
+      accent: "default",
+    },
+    {
+      id: "1Bseconds",
+      label: "1 billion seconds old",
+      subLabel: formatWithWeekday(billionSeconds, true),
+      value: billionSeconds.valueOf(),
+      placement: "above",
+      lane: "global",
+      semanticKind: "marker",
+      temporalStatus: getTemporalStatus(billionSeconds.valueOf(), nowValue),
+      accent: "default",
+    },
+    {
+      id: "500months",
+      label: "500 months old",
+      subLabel: formatWithWeekday(fiveHundredMonth, true),
+      value: fiveHundredMonth.valueOf(),
+      placement: "above",
+      lane: "global",
+      semanticKind: "marker",
+      temporalStatus: getTemporalStatus(fiveHundredMonth.valueOf(), nowValue),
+      accent: "default",
+    },
   ];
 
   return {
@@ -99,6 +168,7 @@ export default function Milestones() {
   const [tab, setTab] = useState<keyof typeof TAB_ROWS>("Classic");
   const [focusValue, setFocusValue] = useState(() => dayjs().valueOf());
   const { events: historicalEvents } = useHistoricalEvents();
+  const { events: projectedEvents } = useProjectedEvents();
   const {
     activeCategories,
     toggleCategory,
@@ -117,9 +187,6 @@ export default function Milestones() {
   const rows = TAB_ROWS[safeTab];
 
   useEffect(() => {
-    if (!birthDate) nav("/");
-  }, [birthDate, nav]);
-  useEffect(() => {
     document.body.style.backgroundColor = "#111827";
     return () => {
       document.body.style.backgroundColor = "";
@@ -134,7 +201,7 @@ export default function Milestones() {
     if (timeline) setFocusValue(timeline.focus);
   }, [timeline]);
 
-  /** Merge personal + filtered historical events */
+  /** Merge personal + filtered global events */
   const allEvents = useMemo<TimelineEvent[]>(() => {
     if (!timeline) return [];
     const { range, events: personal } = timeline;
@@ -153,14 +220,43 @@ export default function Milestones() {
         placement: e.placement ?? "above",
         accent: "muted" as const,
         color: CATEGORY_META[e.category].color,
-        lane: "historical" as const,
+        lane: "global" as const,
+        category: e.category,
+        semanticKind: "event" as const,
+        temporalStatus: "past" as const,
       }));
-    const merged = [...personal, ...historical];
+
+    const projections: TimelineEvent[] = projectedEvents
+      .filter(e =>
+        activeCategories.has(e.category) &&
+        e.timestamp >= range.start &&
+        e.timestamp <= range.end
+      )
+      .map(e => ({
+        id: `proj-${e.id}`,
+        label: e.label,
+        value: e.timestamp,
+        subLabel: e.description,
+        placement: e.placement ?? "above",
+        accent: "default" as const,
+        color: CATEGORY_META[e.category].color,
+        lane: "global" as const,
+        category: e.category,
+        semanticKind: "projection" as const,
+        temporalStatus: "future" as const,
+        projectionType: e.projectionType,
+        certainty: e.certainty,
+      }));
+
+    const merged = [...personal, ...historical, ...projections];
     return merged.filter(event => visibleTimelineLanes.has(event.lane ?? "personal"));
-  }, [timeline, historicalEvents, activeCategories, visibleTimelineLanes]);
+  }, [timeline, historicalEvents, projectedEvents, activeCategories, visibleTimelineLanes]);
 
   const CATEGORIES = Object.keys(CATEGORY_META) as EventCategory[];
   const LANE_KEYS = Object.keys(LANE_META) as TimelineLane[];
+  const visibleGlobalItems = allEvents.filter(event => (event.lane ?? "personal") === "global");
+  const noTimelineItems = allEvents.length === 0;
+  const noGlobalItems = visibleGlobalItems.length === 0;
 
   const renderFocus = useCallback((value: number) => {
     const instant = dayjs(value);
@@ -209,11 +305,26 @@ export default function Milestones() {
 
   return (
     <>
-      <Navbar onEditBirthDate={() => nav("/personalize")} />
+      <Navbar />
       <main className="page milestones-page">
 
+        {!birthDate && (
+          <section className="card timeline-card">
+            <div className="status-banner status-banner--danger" role="alert" aria-live="assertive">
+              <h2 className="status-banner__title">Birth date required</h2>
+              <p className="status-banner__message">
+                Milestones depends on your date of birth. Set it in Settings before exploring the timeline or age perspectives.
+              </p>
+              <div className="status-banner__actions">
+                <button type="button" className="button" onClick={() => nav("/settings")}>Open Settings</button>
+                <button type="button" className="button button--ghost" onClick={() => nav("/")}>Go home</button>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* ── Collapsible perspectives panel ── */}
-        <div className="perspectives-panel">
+        {birthDate && <div className="perspectives-panel">
           {/* Toggle shown only on mobile (CSS hides on ≥720px) */}
           <button
             type="button"
@@ -272,43 +383,58 @@ export default function Milestones() {
                   Switch the lens to reveal how your lifetime translates across different units.
                 </p>
                 <div className="perspective-card__table">
-                  <AgeTable rows={rows} />
+                  <SectionErrorBoundary
+                    compact
+                    title="Perspective unavailable"
+                    message="This perspective failed to render. Try switching tabs or reload the section."
+                  >
+                    <AgeTable rows={rows} />
+                  </SectionErrorBoundary>
                 </div>
               </div>
             </section>
           )}
-        </div>
+        </div>}
 
-        {timeline && (
+        {birthDate && timeline && (
           <section className="card timeline-card">
-            {/* ── Section header + 3D toggle ── */}
-            <div className="timeline-3d__toggle-row">
-              <span className="subtitle">
-                Explore your timeline and its upcoming milestones
-              </span>
+            <div className="timeline__section-header">
+              <div className="timeline__section-copy">
+                <h2 className="timeline__section-title">Time map</h2>
+                <p className="timeline__section-description">
+                  Pan across your personal lane and the wider global lane. Pinch or Ctrl+scroll to zoom.
+                </p>
+              </div>
+
               <button
                 type="button"
-                className={`timeline-3d__toggle-btn${show3D ? " timeline-3d__toggle-btn--active" : ""}`}
+                className={`timeline__experimental-btn${show3D ? " timeline__experimental-btn--active" : ""}`}
                 onClick={() => setShow3D(!show3D)}
                 disabled={!WEB_GL_SUPPORTED}
                 title={
                   !WEB_GL_SUPPORTED
                     ? "WebGL is not supported in this browser"
                     : show3D
-                    ? "Switch back to 2D"
-                    : "Switch to 3D view"
+                    ? "Leave the experimental 3D scene"
+                    : "Open the experimental 3D scene"
                 }
               >
                 <span aria-hidden="true">🌐</span>
-                {show3D ? "2D" : "3D"}
+                {show3D ? "Exit experimental 3D" : "Open experimental 3D"}
               </button>
             </div>
+
+            {!show3D && (
+              <p className="timeline__surface-note">
+                Personal markers stay separate from world events, global references, and future projections.
+              </p>
+            )}
 
             {/* ── Historical event category filters (only in 2D mode) ── */}
             {!show3D && (
               <div className="timeline__filter-stack">
                 <div className="timeline__filter-section">
-                  <span className="timeline__filter-section__label">Filter events</span>
+                  <span className="timeline__filter-section__label">Filter global events</span>
                   <div className="timeline__category-filters" role="group" aria-label="Event categories">
                     {CATEGORIES.map(cat => {
                       const meta = CATEGORY_META[cat];
@@ -358,21 +484,63 @@ export default function Milestones() {
 
             {/* ── Timeline (2D or 3D) ── */}
             {show3D ? (
-              <Timeline3DWrapper
-                events={allEvents}
-                range={timeline.range}
-                focusValue={focusValue}
-                onExitTo2D={() => setShow3D(false)}
-              />
+              <SectionErrorBoundary
+                title="Experimental 3D scene unavailable"
+                message="The experimental 3D scene hit a problem. Return to the standard time map and try again."
+                actionLabel="Return to time map"
+                onAction={() => setShow3D(false)}
+              >
+                <Timeline3DWrapper
+                  events={allEvents}
+                  range={timeline.range}
+                  focusValue={focusValue}
+                  onExitTo2D={() => setShow3D(false)}
+                />
+              </SectionErrorBoundary>
             ) : (
-              <Timeline
-                range={timeline.range}
-                value={focusValue}
-                onChange={setFocusValue}
-                events={allEvents}
-                renderValue={renderFocus}
-              />
+              <>
+                {noTimelineItems ? (
+                  <div className="timeline__empty-state" role="status" aria-live="polite">
+                    <h3 className="timeline__empty-title">Nothing to show right now</h3>
+                    <p className="timeline__empty-text">
+                      Re-enable at least one lane to rebuild the time map.
+                    </p>
+                  </div>
+                ) : (
+                  <SectionErrorBoundary
+                    title="Timeline unavailable"
+                    message="The time map hit a local rendering problem. Reset the section and try again."
+                    actionLabel="Reset section"
+                    onAction={() => setFocusValue(timeline.focus)}
+                  >
+                    <Timeline
+                      range={timeline.range}
+                      value={focusValue}
+                      onChange={setFocusValue}
+                      events={allEvents}
+                      renderValue={renderFocus}
+                    />
+                  </SectionErrorBoundary>
+                )}
+
+                {noGlobalItems && !noTimelineItems && visibleTimelineLanes.has("global") && (
+                  <div className="timeline__surface-note timeline__surface-note--warning" role="status">
+                    No global items match the current filters. Re-enable categories to bring the world lane back.
+                  </div>
+                )}
+              </>
             )}
+          </section>
+        )}
+
+        {!timeline && birthDate && (
+          <section className="card timeline-card">
+            <div className="timeline__empty-state" role="status" aria-live="polite">
+              <h3 className="timeline__empty-title">Time map unavailable</h3>
+              <p className="timeline__empty-text">
+                Your saved birth date could not be converted into a valid timeline range. Update it in Settings and try again.
+              </p>
+            </div>
           </section>
         )}
       </main>

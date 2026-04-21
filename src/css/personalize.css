@@ -1,5 +1,5 @@
 /* =============================================================
-   Personalize page + DOB picker
+   Settings page + DOB picker
 ============================================================= */
 
 .personalize-page {
@@ -8,6 +8,7 @@
   display: flex;
   flex-direction: column;
   gap: clamp(20px, 3vw, 32px);
+  width: 100%;
 }
 
 .personalize__title {
@@ -74,10 +75,11 @@
   align-items: center;
   gap: 8px;
   margin-top: 4px;
+  flex-wrap: wrap;
 }
 
 .personalize__input {
-  width: 110px;
+  width: min(180px, 100%);
   text-align: center;
 }
 
@@ -105,6 +107,25 @@
   min-width: 140px;
 }
 
+@media (max-width: 479px) {
+  .personalize__actions {
+    flex-direction: column;
+  }
+
+  .personalize__actions .button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .dob-picker {
+    flex-direction: column;
+  }
+
+  .dob-picker__field {
+    min-width: 0;
+  }
+}
+
 /* -----------------------------------------------------------
    DOB inline picker
 ----------------------------------------------------------- */
@@ -112,6 +133,12 @@
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
+}
+
+.dob-picker__actions {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .dob-picker__field {
@@ -156,6 +183,21 @@
   outline: none;
   border-color: var(--indigo-300);
   box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.2), inset 0 0 0 1px rgba(79, 70, 229, 0.3);
+}
+
+.dob-picker__clear {
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(248, 113, 113, 0.28);
+  background: rgba(127, 29, 29, 0.18);
+  color: #fecaca;
+  font-size: .8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dob-picker__clear:hover {
+  background: rgba(153, 27, 27, 0.28);
 }
 
 /* -----------------------------------------------------------

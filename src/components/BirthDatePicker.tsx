@@ -11,13 +11,16 @@ const toDateStr = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
 export default function BirthDatePicker() {
-  const { birthDate, setBirthDate, birthTime, setBirthTime } = useBirthDate();
+  const { birthDate, setBirthDate, birthTime, setBirthTime, clearBirthDate } = useBirthDate();
 
   const dateValue = birthDate ? toDateStr(birthDate) : "";
 
   const handleDate = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
-    if (!val) return;
+    if (!val) {
+      clearBirthDate();
+      return;
+    }
     const [y, m, d] = val.split("-").map(Number);
     const date = new Date(y, m - 1, d);
     date.setHours(0, 0, 0, 0);
@@ -59,6 +62,18 @@ export default function BirthDatePicker() {
           onChange={handleTime}
         />
       </div>
+
+      {birthDate && (
+        <div className="dob-picker__actions">
+          <button
+            type="button"
+            className="dob-picker__clear"
+            onClick={clearBirthDate}
+          >
+            Clear birth date
+          </button>
+        </div>
+      )}
     </div>
   );
 }

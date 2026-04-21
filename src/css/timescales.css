@@ -46,7 +46,7 @@
 .ts-overview__container {
   position: relative;
   width: 100%;
-  height: 720px;
+  min-height: clamp(520px, 72vh, 720px);
   overflow: hidden;
 }
 
@@ -531,6 +531,7 @@
 }
 
 .ts-era-card {
+  --era-color: #818cf8;
   padding: clamp(14px, 2.5vw, 20px);
   border-radius: var(--radius-lg);   /* 20px */
   /* background inherited from multi-selector above */
@@ -670,6 +671,7 @@
    Detail panel
 ----------------------------------------------------------- */
 .ts-explorer__detail {
+  --era-color: #818cf8;
   padding: clamp(16px, 3vw, 24px);
   border-radius: 22px;
   background: rgba(10, 15, 30, 0.7);
@@ -800,10 +802,6 @@
   display: flex;
   flex-direction: column;
   gap: 5px;
-  max-height: 220px;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(129, 140, 248, 0.35) transparent;
 }
 
 .ts-explorer__detail-event-item {
@@ -967,14 +965,14 @@
 .ts-comparator__ratio-sentence { max-width: none; }
 
 /* ts-overview: shortest on mobile */
-.ts-overview__container { height: 520px; }
+.ts-overview__container { min-height: 520px; }
 
 /* ts-explorer: single column on mobile */
 .ts-explorer__grid { grid-template-columns: 1fr; }
 
 /* ≥ 480px — taller overview */
 @media (min-width: 480px) {
-  .ts-overview__container { height: 600px; }
+  .ts-overview__container { min-height: 600px; }
 }
 
 /* ≥ 720px — restore full desktop layouts */
@@ -993,7 +991,7 @@
 
   .ts-comparator__ratio-sentence { max-width: 130px; }
 
-  .ts-overview__container { height: 720px; }
+  .ts-overview__container { min-height: 720px; }
 
   .ts-explorer__grid {
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));

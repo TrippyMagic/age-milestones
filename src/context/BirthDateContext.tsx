@@ -5,6 +5,7 @@ type Ctx = {
   setBirthDate: (d: Date) => void;
   birthTime: string;                
   setBirthTime: (t: string) => void;
+  clearBirthDate: () => void;
 };
 
 const BirthCtx = createContext<Ctx | undefined>(undefined);
@@ -31,16 +32,24 @@ export function BirthDateProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("dobTime", t);
   };
 
+  const clearBirthDate = () => {
+    setBirthDateState(null);
+    setBirthTimeState("00:00");
+    localStorage.removeItem("dob");
+    localStorage.removeItem("dobTime");
+  };
+
   /* ---------- context value ----------------------- */
   return (
     <BirthCtx.Provider
-      value={{ birthDate, setBirthDate, birthTime, setBirthTime }}
+      value={{ birthDate, setBirthDate, birthTime, setBirthTime, clearBirthDate }}
     >
       {children}
     </BirthCtx.Provider>
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useBirthDate() {
   const ctx = useContext(BirthCtx);
   if (!ctx)

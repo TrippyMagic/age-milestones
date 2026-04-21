@@ -4,7 +4,11 @@
  * Converts raw date strings to Unix timestamps (ms) once on load.
  */
 import { useEffect, useRef, useState } from "react";
-import type { HistoricalEventRaw, HistoricalEventParsed } from "../types/events";
+import {
+  parseHistoricalEvents,
+  type HistoricalEventRaw,
+  type HistoricalEventParsed,
+} from "../types/events";
 
 type Status = "idle" | "loading" | "success" | "error";
 
@@ -16,12 +20,6 @@ type UseHistoricalEventsResult = {
 
 /** Module-level cache so the JSON is fetched only once per session */
 let _cache: HistoricalEventParsed[] | null = null;
-
-const parseEvents = (raw: HistoricalEventRaw[]): HistoricalEventParsed[] =>
-  raw.map(({ date, ...rest }) => ({
-    ...rest,
-    timestamp: new Date(date).getTime(),
-  }));
 
 export function useHistoricalEvents(): UseHistoricalEventsResult {
   const [events, setEvents]   = useState<HistoricalEventParsed[]>(_cache ?? []);
@@ -44,7 +42,7 @@ export function useHistoricalEvents(): UseHistoricalEventsResult {
       })
       .then(raw => {
         if (cancelled) return;
-        const parsed = parseEvents(raw);
+        const parsed = parseHistoricalEvents(raw);
         _cache = parsed;
         setEvents(parsed);
         setStatus("success");

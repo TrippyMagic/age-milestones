@@ -6,7 +6,10 @@
  */
 import { createContext, useContext, useState, type ReactNode } from "react";
 import type { EventCategory } from "../types/events";
-import type { TimelineLane } from "../components/timeline/types";
+import {
+  normalizeTimelineLanes,
+  type TimelineLane,
+} from "../components/timeline/types";
 
 export type ScaleMode = "linear" | "log";
 export type TimescalesTab = "overview" | "comparator" | "explorer";
@@ -24,7 +27,6 @@ const LS_CATS     = "pref_eventCategories";
 const LS_3D       = "pref_show3D";
 const LS_TS_TAB   = "pref_timescalesTab";
 const LS_LANES    = "pref_visibleTimelineLanes";
-const ALL_LANES: TimelineLane[] = ["personal", "historical", "markers"];
 
 /* ── helpers ──────────────────────────────────────────────── */
 const readLS = <T,>(key: string, fallback: T): T => {
@@ -89,8 +91,8 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
 
   const [visibleTimelineLanes, setVisibleTimelineLanes] = useState<Set<TimelineLane>>(
     () => {
-      const saved = readLS<TimelineLane[] | null>(LS_LANES, null);
-      return new Set<TimelineLane>(saved ?? ALL_LANES);
+      const saved = readLS<unknown>(LS_LANES, null);
+      return new Set<TimelineLane>(normalizeTimelineLanes(saved));
     }
   );
 
@@ -161,6 +163,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
 }
 
 /* ── consumer hook ────────────────────────────────────────── */
+// eslint-disable-next-line react-refresh/only-export-components
 export function usePreferences(): PreferencesCtx {
   const ctx = useContext(PreferencesCtx);
   if (!ctx) throw new Error("usePreferences must be used inside PreferencesProvider");

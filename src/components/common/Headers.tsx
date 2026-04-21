@@ -1,4 +1,4 @@
-import {JSX, useEffect, useId, useRef, useState} from "react";
+import {JSX, useEffect, useId, useRef, useState, type MouseEvent as ReactMouseEvent} from "react";
 import { Link, useLocation } from "react-router-dom";
 
 type TitleProps = {
@@ -15,15 +15,17 @@ const NAV_ITEMS = [
   { to: "/", label: "Home" },
   { to: "/milestones", label: "Milestones" },
   { to: "/timescales", label: "Timescales" },
-  { to: "/personalize", label: "Personalize" },
+  { to: "/settings", label: "Settings" },
   { to: "/about", label: "About" },
 ] as const;
 
+type NavItem = (typeof NAV_ITEMS)[number];
+
 type NavbarProps = {
-  onEditBirthDate?: () => void;
+  onNavigateAttempt?: (to: NavItem["to"]) => boolean;
 };
 
-export function Navbar({ onEditBirthDate }: NavbarProps) {
+export function Navbar({ onNavigateAttempt }: NavbarProps) {
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const menuId = useId();
@@ -59,6 +61,13 @@ export function Navbar({ onEditBirthDate }: NavbarProps) {
     return location.pathname.startsWith(path);
   };
 
+  const handleNavClick = (item: NavItem, evt: ReactMouseEvent<HTMLAnchorElement>) => {
+    if (onNavigateAttempt && !onNavigateAttempt(item.to)) {
+      evt.preventDefault();
+    }
+    setOpen(false);
+  };
+
   return (
     <header className="app-navbar">
       <Link to="/" className="app-navbar__brand" aria-label="Go to landing page">
@@ -67,17 +76,6 @@ export function Navbar({ onEditBirthDate }: NavbarProps) {
       </Link>
 
       <div className="app-navbar__actions">
-        {/* Inline edit button — visible only on desktop (CSS hides it on mobile) */}
-        {onEditBirthDate && (
-          <button
-            type="button"
-            className="app-navbar__edit"
-            onClick={onEditBirthDate}
-          >
-            Edit birth date
-          </button>
-        )}
-
         <div className="app-navbar__menu" ref={menuRef}>
           <button
             type="button"
@@ -98,16 +96,6 @@ export function Navbar({ onEditBirthDate }: NavbarProps) {
             }`}
             aria-hidden={!open}
           >
-            {/* Edit button in dropdown — visible only on mobile (CSS hides it on desktop) */}
-            {onEditBirthDate && (
-              <button
-                type="button"
-                className="app-navbar__edit-dropdown"
-                onClick={() => { onEditBirthDate(); setOpen(false); }}
-              >
-                Edit birth date
-              </button>
-            )}
             {NAV_ITEMS.map(item => (
               <Link
                 key={item.to}
@@ -115,6 +103,7 @@ export function Navbar({ onEditBirthDate }: NavbarProps) {
                 className={`app-navbar__link ${
                   isActive(item.to) ? "app-navbar__link--active" : ""
                 }`}
+                onClick={evt => handleNavClick(item, evt)}
               >
                 {item.label}
               </Link>

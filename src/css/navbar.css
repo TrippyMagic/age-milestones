@@ -14,8 +14,10 @@
   border-radius: 24px;
   box-shadow: 0 26px 48px rgba(15, 23, 42, 0.45);
   backdrop-filter: blur(18px);
-  position: relative;
+  position: sticky;
+  top: max(10px, env(safe-area-inset-top));
   z-index: var(--z-navbar);
+  box-sizing: border-box;
 }
 
 .app-navbar__brand {
@@ -39,23 +41,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-}
-
-.app-navbar__edit {
-  padding: 10px 20px;
-  border-radius: 999px;
-  border: 1px solid rgba(129, 140, 248, 0.6);
-  background: linear-gradient(120deg, rgba(79, 70, 229, 0.85), rgba(129, 140, 248, 0.8));
-  color: #fff;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 18px 32px rgba(79, 70, 229, 0.45);
-  transition: transform .15s ease, box-shadow .15s ease;
-}
-
-.app-navbar__edit:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 22px 40px rgba(79, 70, 229, 0.55);
+  min-width: 0;
 }
 
 .app-navbar__menu {
@@ -135,6 +121,7 @@
   gap: 8px;
   padding: 18px;
   min-width: 200px;
+  max-width: min(280px, calc(100vw - 24px));
   border-radius: 20px;
   background: rgba(15, 23, 42, 0.88);
   border: 1px solid rgba(129, 140, 248, 0.35);
@@ -192,34 +179,32 @@
    Responsive — mobile-first compact navbar
 ----------------------------------------------------------- */
 
-/* ── Mobile: hide "Edit birth date" inline, hide "Menu" text ── */
-.app-navbar__edit        { display: none; }   /* moved to dropdown on mobile */
+/* ── Mobile: hide "Menu" text ── */
 .app-navbar__menu-label  { display: none; }   /* icon-only hamburger on mobile */
 
-/* ── Edit-in-dropdown button (visible only on mobile) ─────── */
-.app-navbar__edit-dropdown {
-  width: 100%;
-  text-align: center;
-  padding: 10px 14px;
-  border-radius: 999px;
-  border: 1px solid rgba(129, 140, 248, 0.6);
-  background: linear-gradient(120deg, rgba(79, 70, 229, 0.85), rgba(129, 140, 248, 0.8));
-  color: #fff;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 12px 28px rgba(79, 70, 229, 0.35);
-  transition: filter .15s ease, transform .15s ease;
+@media (max-width: 479px) {
+  .app-navbar {
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 18px;
+  }
+
+  .app-navbar__brand {
+    gap: 8px;
+  }
+
+  .app-navbar__menu-toggle {
+    padding: 10px 12px;
+  }
+
+  .app-navbar__dropdown {
+    right: 0;
+    min-width: min(220px, calc(100vw - 32px));
+  }
 }
 
-.app-navbar__edit-dropdown:hover {
-  filter: brightness(1.1);
-  transform: translateY(-1px);
-}
-
-/* ── ≥ 720px: restore inline edit button, show "Menu" label ── */
+/* ── ≥ 720px: show "Menu" label ── */
 @media (min-width: 720px) {
-  .app-navbar__edit       { display: inline-flex; }
   .app-navbar__menu-label { display: inline; }
-  .app-navbar__edit-dropdown { display: none; } /* hidden in dropdown on desktop */
 }
 

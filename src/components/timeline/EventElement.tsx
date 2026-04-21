@@ -6,6 +6,11 @@ import type { CSSProperties } from "react";
 import type { Range } from "../../utils/scaleTransform";
 import type { TimelineEvent, Accent } from "./types";
 import { accentColors } from "./types";
+import {
+  CATEGORY_META,
+  PROJECTION_CERTAINTY_META,
+  PROJECTION_TYPE_META,
+} from "../../types/events";
 
 // ── Time formatting helpers ───────────────────────────────────
 
@@ -46,6 +51,19 @@ type EventElementProps = {
   selected?: boolean;
 };
 
+const getSemanticLabel = (event: TimelineEvent): string => {
+  switch (event.semanticKind) {
+    case "projection":
+      return "Future projection";
+    case "event":
+      return "Past event";
+    case "marker":
+      return "Global reference";
+    default:
+      return "Personal marker";
+  }
+};
+
 export function EventElement({
   event,
   leftPercent,
@@ -58,9 +76,10 @@ export function EventElement({
   const placement   = event.placement  ?? "above";
   const markerShape = event.markerShape ?? "dot";
   const accent: Accent = event.accent  ?? "default";
+  const semanticLabel = getSemanticLabel(event);
 
   const isClamped   = event.value < range.start || event.value > range.end;
-  const showTiming  = event.id !== "today" && !event.id.startsWith("hist-");
+  const showTiming  = event.id !== "today" && event.semanticKind !== "event";
   const timing      = showTiming ? formatEventTiming(event.value, now) : null;
   const isFuture    = event.value - now > 0;
   const timingClass = isFuture
@@ -77,6 +96,9 @@ export function EventElement({
   if (variant === "main" && isClamped) eventClasses.push("timeline__event--clamped");
   if (event.id === "birth") eventClasses.push("timeline__event--birth");
   if (selected) eventClasses.push("timeline__event--selected");
+  if (event.category) eventClasses.push(`timeline__event--${event.category}`);
+  if (event.semanticKind) eventClasses.push(`timeline__event--${event.semanticKind}`);
+  if (event.temporalStatus) eventClasses.push(`timeline__event--${event.temporalStatus}`);
 
   const labelClasses = ["timeline__label", `timeline__label--${accent}`];
 
@@ -108,8 +130,20 @@ export function EventElement({
       />
       <div className={labelClasses.join(" ")} id={labelId}>
         <span className="timeline__label-title">{event.label}</span>
+        <span
+          className={`timeline__label-kind timeline__label-kind--${event.semanticKind ?? "personal"}`}
+        >
+          {semanticLabel}
+        </span>
         {event.subLabel && (
           <span className="timeline__label-sub">{event.subLabel}</span>
+        )}
+        {(event.category || event.projectionType || event.certainty) && (
+          <span className="timeline__label-meta">
+            {event.category && <span>{CATEGORY_META[event.category].label}</span>}
+            {event.projectionType && <span>{PROJECTION_TYPE_META[event.projectionType].label}</span>}
+            {event.certainty && <span>{PROJECTION_CERTAINTY_META[event.certainty].label}</span>}
+          </span>
         )}
         {showTiming && timing && (
           <span className={`timeline__label-relative ${timingClass}`}>{timing}</span>

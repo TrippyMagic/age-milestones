@@ -33,6 +33,8 @@ export type TimelineTick = {
   label: string;
 };
 
+const isFiniteNumber = (value: number): boolean => Number.isFinite(value);
+
 // ── Constants ─────────────────────────────────────────────────
 
 export const ZOOM_IN        = 0.65;
@@ -46,6 +48,29 @@ const MS_PER_YEAR = 365.25 * 24 * 60 * 60 * 1000;
 
 export const clamp = (value: number, min: number, max: number): number =>
   Math.min(Math.max(value, min), max);
+
+export const isValidRange = (range: Range): boolean =>
+  isFiniteNumber(range.start) && isFiniteNumber(range.end) && range.end > range.start;
+
+export const createViewportFromRange = (range: Range): Viewport | null => {
+  if (!isValidRange(range)) return null;
+  return {
+    center: (range.start + range.end) / 2,
+    spanMs: clamp(range.end - range.start, MIN_SPAN_MS, MAX_SPAN_MS),
+  };
+};
+
+export const sanitizeViewport = (vp: Viewport, fallbackRange?: Range): Viewport | null => {
+  const fallback = fallbackRange ? createViewportFromRange(fallbackRange) : null;
+  if (!isFiniteNumber(vp.center) || !isFiniteNumber(vp.spanMs) || vp.spanMs <= 0) {
+    return fallback;
+  }
+
+  return {
+    center: vp.center,
+    spanMs: clamp(vp.spanMs, MIN_SPAN_MS, MAX_SPAN_MS),
+  };
+};
 
 export const toPercent = (ratio: number): number => ratio * 100;
 
@@ -106,8 +131,12 @@ export const ratioToValue = (
 // ── Viewport helpers ──────────────────────────────────────────
 
 export const viewportToRange = (vp: Viewport): Range => ({
-  start: vp.center - vp.spanMs / 2,
-  end:   vp.center + vp.spanMs / 2,
+  start: !isFiniteNumber(vp.center) || !isFiniteNumber(vp.spanMs) || vp.spanMs <= 0
+    ? 0
+    : vp.center - vp.spanMs / 2,
+  end: !isFiniteNumber(vp.center) || !isFiniteNumber(vp.spanMs) || vp.spanMs <= 0
+    ? 0
+    : vp.center + vp.spanMs / 2,
 });
 
 export const applyZoom = (
@@ -115,10 +144,14 @@ export const applyZoom = (
   factor: number,
   anchorMs?: number,
 ): Viewport => {
-  const newSpan = clamp(vp.spanMs * factor, MIN_SPAN_MS, MAX_SPAN_MS);
-  if (anchorMs === undefined) return { center: vp.center, spanMs: newSpan };
-  const currentStart = vp.center - vp.spanMs / 2;
-  const anchorRatio  = (anchorMs - currentStart) / vp.spanMs;
+  const safeViewport = sanitizeViewport(vp) ?? { center: 0, spanMs: MIN_SPAN_MS };
+  const safeFactor = isFiniteNumber(factor) && factor > 0 ? factor : 1;
+  const newSpan = clamp(safeViewport.spanMs * safeFactor, MIN_SPAN_MS, MAX_SPAN_MS);
+  if (anchorMs === undefined || !isFiniteNumber(anchorMs)) {
+    return { center: safeViewport.center, spanMs: newSpan };
+  }
+  const currentStart = safeViewport.center - safeViewport.spanMs / 2;
+  const anchorRatio  = (anchorMs - currentStart) / safeViewport.spanMs;
   const newStart     = anchorMs - anchorRatio * newSpan;
   return { center: newStart + newSpan / 2, spanMs: newSpan };
 };
@@ -131,10 +164,26 @@ const pushYear = (ticks: TimelineTick[], year: number, viewRange: Range) => {
     ticks.push({ id: `atick-${v}`, value: v, label: `${year}` });
 };
 
+const pushDateTick = (
+  ticks: TimelineTick[],
+  date: Date,
+  viewRange: Range,
+  formatter: Intl.DateTimeFormat,
+) => {
+  const value = date.getTime();
+  if (value >= viewRange.start && value <= viewRange.end) {
+    ticks.push({ id: `atick-${value}`, value, label: formatter.format(date) });
+  }
+};
+
 const generateLinearTicks = (viewRange: Range): TimelineTick[] => {
+  if (!isValidRange(viewRange)) return [];
+
   const span      = viewRange.end - viewRange.start;
   const spanYears = span / MS_PER_YEAR;
   const ticks: TimelineTick[] = [];
+  const monthFmt = new Intl.DateTimeFormat(undefined, { month: "short", year: "numeric" });
+  const dayFmt = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short" });
 
   if (spanYears > 200) {
     const s = 100; const f = Math.ceil(new Date(viewRange.start).getFullYear() / s) * s;
@@ -154,23 +203,41 @@ const generateLinearTicks = (viewRange: Range): TimelineTick[] => {
   } else if (spanYears > 1.5) {
     const f = new Date(viewRange.start).getFullYear();
     for (let y = f; y <= new Date(viewRange.end).getFullYear() + 1; y++) pushYear(ticks, y, viewRange);
-  } else if (spanYears > 0.35) {
-    const fmt = new Intl.DateTimeFormat(undefined, { month: "short", year: "numeric" });
+  } else if (spanYears > 0.5) {
     let d = new Date(viewRange.start);
     d = new Date(d.getFullYear(), Math.floor(d.getMonth() / 3) * 3, 1);
     while (d.getTime() <= viewRange.end) {
-      const v = d.getTime();
-      if (v >= viewRange.start) ticks.push({ id: `atick-${v}`, value: v, label: fmt.format(new Date(v)) });
+      pushDateTick(ticks, d, viewRange, monthFmt);
       d = new Date(d.getFullYear(), d.getMonth() + 3, 1);
     }
-  } else {
-    const fmt = new Intl.DateTimeFormat(undefined, { month: "short", year: "numeric" });
+  } else if (spanYears > 0.35) {
+    let d = new Date(viewRange.start);
+    d = new Date(d.getFullYear(), Math.floor(d.getMonth() / 3) * 3, 1);
+    while (d.getTime() <= viewRange.end) {
+      pushDateTick(ticks, d, viewRange, monthFmt);
+      d = new Date(d.getFullYear(), d.getMonth() + 3, 1);
+    }
+  } else if (spanYears > 0.12) {
     let d = new Date(viewRange.start);
     d = new Date(d.getFullYear(), d.getMonth(), 1);
     while (d.getTime() <= viewRange.end) {
-      const v = d.getTime();
-      if (v >= viewRange.start) ticks.push({ id: `atick-${v}`, value: v, label: fmt.format(new Date(v)) });
+      pushDateTick(ticks, d, viewRange, monthFmt);
       d = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+    }
+  } else if (spanYears > 0.04) {
+    let d = new Date(viewRange.start);
+    const dayOffset = (d.getDay() + 6) % 7;
+    d = new Date(d.getFullYear(), d.getMonth(), d.getDate() - dayOffset);
+    while (d.getTime() <= viewRange.end) {
+      pushDateTick(ticks, d, viewRange, dayFmt);
+      d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 7);
+    }
+  } else {
+    let d = new Date(viewRange.start);
+    d = new Date(d.getFullYear(), d.getMonth(), 1);
+    while (d.getTime() <= viewRange.end) {
+      pushDateTick(ticks, d, viewRange, dayFmt);
+      d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
     }
   }
   return ticks;
@@ -178,8 +245,7 @@ const generateLinearTicks = (viewRange: Range): TimelineTick[] => {
 
 const generateLogTicks = (viewRange: Range, targetCount = 8): TimelineTick[] => {
   const ticks: TimelineTick[] = [];
-  const span = viewRange.end - viewRange.start;
-  if (span <= 0) return ticks;
+  if (!isValidRange(viewRange)) return ticks;
   const seen = new Set<string>();
   for (let i = 0; i <= targetCount; i++) {
     const ratio = i / targetCount;

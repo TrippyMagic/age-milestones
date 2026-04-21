@@ -9,6 +9,7 @@ import { GeoCosmicExplorer } from "../components/timescales/GeoCosmicExplorer";
 import type { PhenomenonCategory } from "../types/phenomena";
 import { PHENOMENON_CATEGORY_META } from "../types/phenomena";
 import type { TimescalesTab } from "../context/PreferencesContext";
+import { SectionErrorBoundary } from "../components/SectionErrorBoundary";
 
 const ALL_CATS: PhenomenonCategory[] = [
   "quantum", "biological", "human", "geological", "cosmic",
@@ -105,11 +106,16 @@ export default function Timescales() {
               })}
             </div>
 
-            <TimescaleOverview
-              phenomena={phenomena}
-              status={status}
-              activeCategories={activeCats}
-            />
+            <SectionErrorBoundary
+              title="Overview unavailable"
+              message="The overview ruler hit a local rendering problem. Try this section again."
+            >
+              <TimescaleOverview
+                phenomena={phenomena}
+                status={status}
+                activeCategories={activeCats}
+              />
+            </SectionErrorBoundary>
           </section>
         )}
 
@@ -125,7 +131,12 @@ export default function Timescales() {
                 Failed to load phenomena: {error}
               </p>
             )}
-            <PhenomenaComparator phenomena={phenomena} status={status} />
+            <SectionErrorBoundary
+              title="Comparator unavailable"
+              message="The comparison panel hit a local rendering problem. Try reloading this section."
+            >
+              <PhenomenaComparator phenomena={phenomena} status={status} />
+            </SectionErrorBoundary>
           </section>
         )}
 
@@ -136,7 +147,12 @@ export default function Timescales() {
             role="tabpanel"
             aria-label="Explorer panel"
           >
-            <GeoCosmicExplorer />
+            <SectionErrorBoundary
+              title="Explorer unavailable"
+              message="The explorer panel hit a local rendering problem. Try opening it again."
+            >
+              <GeoCosmicExplorer />
+            </SectionErrorBoundary>
           </section>
         )}
       </main>

@@ -209,6 +209,9 @@ Il clustering attuale è percepito come troppo aggressivo: appiattisce la timeli
 - Minore sensazione di timeline "compressa"
 - Necessità di testare più combinazioni di span/larghezza rispetto alla versione precedente
 
+### Nota di implementazione
+Implementato in modo conservativo: gli eventi fuori range restano singoli anche se clamped ai bordi, evitando cluster artificiali dovuti solo alla compressione visiva.
+
 ---
 
 ## D-10 — `projected-events.json` separato dagli eventi storici
@@ -217,7 +220,7 @@ Il clustering attuale è percepito come troppo aggressivo: appiattisce la timeli
 **Fase:** 7 — Timeline Information Architecture
 
 ### Decisione
-Gli eventi futuri verranno gestiti in un dataset separato: `public/data/projected-events.json`.
+Gli eventi futuri sono ora gestiti in un dataset separato: `public/data/projected-events.json`.
 
 ### Motivazione
 Gli eventi previsti, stimati o cosmici futuri non hanno lo stesso statuto epistemico degli eventi storici già accaduti. Tenerli separati evita ambiguità semantiche e rende più semplice manutenzione, curation e messaging UI.
@@ -230,6 +233,11 @@ Gli eventi previsti, stimati o cosmici futuri non hanno lo stesso statuto episte
 - Parser/hook probabilmente duplicabile o generalizzabile con minimo overhead
 - Più chiarezza nella UI tra `past events` e `future projections`
 
+### Implementazione
+- Aggiunto `useProjectedEvents()` con cache sessione parallela a `useHistoricalEvents()`
+- Parsing centralizzato in `src/types/events.ts` con campi espliciti `projectionType` e `certainty`
+- Dataset iniziale curato con projection types `scheduled`, `astronomical`, `forecast`, `speculative`
+
 ---
 
 ## D-11 — Modello a due lane: `Personal` + `Global`
@@ -238,7 +246,7 @@ Gli eventi previsti, stimati o cosmici futuri non hanno lo stesso statuto episte
 **Fase:** 7 — Timeline Information Architecture
 
 ### Decisione
-La timeline converge da tre lane (`personal`, `historical`, `markers`) a due lane principali:
+La timeline è stata migrata da tre lane (`personal`, `historical`, `markers`) a due lane principali:
 - `personal`
 - `global`
 
@@ -253,6 +261,91 @@ Le tre lane attuali espongono dettagli di implementazione, non un modello mental
 
 ### Nota di migrazione
 Accettabile prevedere adapter temporanei (`historical` / `markers` → `global`) per evitare una migrazione big-bang.
+
+### Implementazione
+- `TimelineEvent` ora usa `lane?: "personal" | "global"`
+- `PreferencesContext` normalizza i valori legacy salvati in `pref_visibleTimelineLanes`
+- I marker numerici personali (`10,000 days`, `1 billion seconds`, `500 months`) vivono ora nella lane `global`
+
+---
+
+## D-16 — Distinzione epistemica esplicita tra passato e proiezione futura
+
+**Data:** 2026-04-21  
+**Fase:** 7 — Timeline Information Architecture
+
+### Decisione
+La UI timeline deve dichiarare esplicitamente se un elemento globale è:
+- `Past event`
+- `Future projection`
+- `Global reference`
+
+Questa distinzione non dipende solo dalla data: deriva dal dataset sorgente e dai metadati dell'evento.
+
+### Motivazione
+Un evento futuro non deve apparire equivalente a un fatto storico già accaduto. Il solo colore non basta: servono badge, copy e trattamento dedicato nei marker e nel detail panel.
+
+### Implementazione
+- `TimelineEvent` e `DetailPanelItem` estesi con `semanticKind`, `temporalStatus`, `projectionType`, `certainty`
+- `EventElement.tsx` mostra badge e metadata contestuali nelle hover label
+- `TimelineDetailPanel.tsx` espone pill semantiche e confidence labels
+- `EventMarker3D.tsx` usa un trattamento dedicato per le projections
+
+---
+
+## D-17 — Timeline come contenitore fisico, non overlay piatto
+
+**Data:** 2026-04-21  
+**Fase:** 8 — Timeline UX Cleanup + Mobile Stability
+
+### Decisione
+La timeline 2D viene resa più “contenitore” che “overlay” tramite:
+- frame esterno più esplicito
+- surface interna dell'asse più leggibile
+- lane visualizzate come bande/contenitori separati
+- empty state e support copy integrati nella card
+
+### Motivazione
+La timeline funzionava tecnicamente, ma appariva troppo piatta e fragile. Rafforzare i contenitori visivi migliora leggibilità, senso di orientamento e percezione della separazione tra `Personal` e `Global`.
+
+### Implementazione
+- `timeline.css` aggiornata con surface, ruler e lane cards più marcate
+- `Milestones.tsx` ora usa header `Time map` + support note contestuali
+
+---
+
+## D-18 — Il 3D resta disponibile ma non è più il toggle primario della timeline
+
+**Data:** 2026-04-21  
+**Fase:** 8 — Timeline UX Cleanup + Mobile Stability
+
+### Decisione
+La surface principale di `Milestones` non presenta più il 3D come alternanza paritaria `2D/3D`. Il 3D viene de-enfatizzato come azione sperimentale secondaria: `Open experimental 3D`.
+
+### Motivazione
+Il modello mentale centrale del prodotto è la timeline 2D esplorabile. Presentare il 3D come toggle primario suggerisce due paradigmi equivalenti, aumentando rumore cognitivo e complessità percepita.
+
+### Trade-off
+- Il 3D resta raggiungibile come opt-in
+- La UI primaria torna centrata su pan/zoom della timeline 2D
+
+---
+
+## D-19 — Boundary locali prima del boundary globale
+
+**Data:** 2026-04-21  
+**Fase:** 8 — Timeline UX Cleanup + Mobile Stability
+
+### Decisione
+Le sezioni critiche vengono avvolte in boundary locali dedicati (`SectionErrorBoundary`) prima di affidarsi al `ErrorBoundary` globale.
+
+### Motivazione
+Un errore isolato in timeline, AgeTable o Timescales non deve più degradare l'intera pagina o l'intera applicazione. Il boundary globale resta safety net finale, non linea difensiva primaria.
+
+### Implementazione
+- creato `src/components/SectionErrorBoundary.tsx`
+- usato in `Milestones.tsx`, `Timescales.tsx`, `Landing.tsx`, `About.tsx`
+- aggiunti fallback locali e copy contestuale per stati vuoti / problemi di rendering
 
 ---
 
@@ -274,6 +367,9 @@ Il problema non è la mera esistenza della logica logaritmica, ma la complessit�
 ### Impatto atteso
 - Toolbar più semplice
 - Debito tecnico controllato ma documentato
+
+### Nota di implementazione
+La timeline 2D ora usa internamente la modalità lineare come default non esposto, mentre le utility logaritmiche restano nel core math per possibili reintroduzioni future.
 
 ---
 
@@ -297,6 +393,13 @@ Il DOB è una configurazione primaria del sistema, non un'azione contestuale. Ce
 ### Rischio accettato
 Un click in più per modificare il DOB da Milestones. Compensazione: CTA chiare e guardrail espliciti.
 
+### Implementazione
+- aggiunto `src/pages/Settings.tsx` come pagina primaria
+- `main.tsx` ora espone `/settings` e mantiene un redirect legacy `/personalize` → `/settings`
+- `Headers.tsx` usa `Settings` come voce di navigazione primaria
+- `Milestones.tsx` non passa più `onEditBirthDate` alla navbar
+- `Landing.tsx`, `About.tsx` e i fallback timeline rimandano esplicitamente a `Settings`
+
 ---
 
 ## D-14 — Stability hardening con fallback locali prima del boundary globale
@@ -315,6 +418,9 @@ Il `ErrorBoundary` globale resta come rete di sicurezza, ma le feature critiche 
 ### Motivazione
 Una pagina vuota con solo boundary fallback è accettabile come ultima risorsa, non come comportamento normale davanti a edge case noti.
 
+### Nota di implementazione
+Introdotti guard e recovery path nel core timeline tramite sanitizzazione del viewport e fallback locale renderizzato direttamente dal componente.
+
 ---
 
 ## D-15 — About FAQ-based + deep links contestuali
@@ -331,4 +437,59 @@ L'utente deve poter capire il sistema senza leggere testo generico o cercare spi
 ### Impatto atteso
 - Documentazione più utile e meno narrativa
 - Migliore onboarding secondario per utenti curiosi
+
+---
+
+## D-20 — DOB mancante come stato rosso esplicito, non come failure silenziosa
+
+**Data:** 2026-04-21  
+**Fase:** 10 — DOB Validation UX + Access Guardrails
+
+### Decisione
+Quando il DOB manca, Kronoscope non deve più affidarsi solo a redirect impliciti o a pulsanti disabilitati. Le aree DOB-dipendenti mostrano invece uno stato rosso esplicito e bloccante.
+
+### Motivazione
+L'assenza di DOB non è un errore tecnico: è uno stato utente importante. Va comunicato chiaramente, con copy diretto e CTA verso `Settings`.
+
+### Implementazione
+- `Landing.tsx` mostra un banner rosso quando il DOB manca
+- `Milestones.tsx` non fa più redirect silenzioso alla home; mostra un blocco esplicito con CTA verso `Settings`
+- `Settings.tsx` mostra un warning rosso persistente finché il DOB non viene reinserito
+
+---
+
+## D-21 — Warning giallo per profilo opzionale incompleto
+
+**Data:** 2026-04-21  
+**Fase:** 10 — DOB Validation UX + Access Guardrails
+
+### Decisione
+L'assenza di campi opzionali del profilo non blocca l'uso dell'app, ma deve essere comunicata come riduzione della personalizzazione delle stime.
+
+### Motivazione
+Il prodotto deve essere onesto sui limiti epistemici senza punire l'utente. Un warning giallo non bloccante è più appropriato di un errore.
+
+### Implementazione
+- aggiunto helper puro `src/utils/profileCompleteness.ts`
+- `Settings.tsx` mostra un warning giallo con campi mancanti e conteggio dei dati forniti
+- aggiunti test unitari per la logica di completezza profilo
+
+---
+
+## D-22 — Uscita da Settings bloccata finché il DOB è assente
+
+**Data:** 2026-04-21  
+**Fase:** 10 — DOB Validation UX + Access Guardrails
+
+### Decisione
+Se l'utente rimuove il DOB in `Settings`, la navigazione away viene intercettata e accompagnata da un warning esplicito. Il browser riceve anche un guard `beforeunload`.
+
+### Motivazione
+Se `Settings` è la fonte unica di verità per il DOB, uscirne senza data deve essere una scelta evidente, non accidentale.
+
+### Implementazione
+- `BirthDateContext.tsx` espone `clearBirthDate()`
+- `BirthDatePicker.tsx` espone `Clear birth date`
+- `Headers.tsx` supporta un hook opzionale `onNavigateAttempt`
+- `Settings.tsx` blocca la navigazione navbar verso altre aree quando il DOB è assente e abilita anche `beforeunload`
 

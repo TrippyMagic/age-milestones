@@ -9,6 +9,7 @@ import {
   logRatio,    logValue,
   valueToRatio, ratioToValue,
   applyZoom,   viewportToRange,
+  isValidRange, createViewportFromRange, sanitizeViewport,
   toPercent,
   generateTicks,
   MIN_SPAN_MS, MAX_SPAN_MS,
@@ -22,6 +23,17 @@ describe("clamp", () => {
   it("clamps below min",                     () => expect(clamp(-5, 0, 10)).toBe(0));
   it("clamps above max",                     () => expect(clamp(15, 0, 10)).toBe(10));
   it("handles equal min/max",                () => expect(clamp(3, 7, 7)).toBe(7));
+});
+
+describe("isValidRange", () => {
+  it("accepts finite positive-span ranges", () => {
+    expect(isValidRange({ start: 10, end: 20 })).toBe(true);
+  });
+
+  it("rejects zero-span or inverted ranges", () => {
+    expect(isValidRange({ start: 10, end: 10 })).toBe(false);
+    expect(isValidRange({ start: 20, end: 10 })).toBe(false);
+  });
 });
 
 // ── toPercent ─────────────────────────────────────────────────
@@ -112,6 +124,29 @@ describe("viewportToRange", () => {
     expect(r.end - r.start).toBe(vp.spanMs);
     expect((r.start + r.end) / 2).toBe(vp.center);
   });
+
+  it("fails soft for invalid viewport values", () => {
+    expect(viewportToRange({ center: Number.NaN, spanMs: 0 })).toEqual({ start: 0, end: 0 });
+  });
+});
+
+describe("createViewportFromRange / sanitizeViewport", () => {
+  it("builds a viewport from a valid range", () => {
+    expect(createViewportFromRange({ start: 100, end: 500 })).toEqual({ center: 300, spanMs: MIN_SPAN_MS });
+  });
+
+  it("returns null for invalid range", () => {
+    expect(createViewportFromRange({ start: 500, end: 100 })).toBeNull();
+  });
+
+  it("sanitizes an invalid viewport using fallback range", () => {
+    const safe = sanitizeViewport(
+      { center: Number.NaN, spanMs: -10 },
+      { start: 0, end: 10 * MIN_SPAN_MS },
+    );
+
+    expect(safe).toEqual({ center: 5 * MIN_SPAN_MS, spanMs: MAX_SPAN_MS > 10 * MIN_SPAN_MS ? 10 * MIN_SPAN_MS : MAX_SPAN_MS });
+  });
 });
 
 // ── applyZoom ─────────────────────────────────────────────────
@@ -164,6 +199,14 @@ describe("generateTicks", () => {
       expect(t.value).toBeGreaterThanOrEqual(start);
       expect(t.value).toBeLessThanOrEqual(end);
     }
+  });
+
+  it("linear: produces day or week ticks for zoomed-in ranges", () => {
+    const start = new Date("2024-01-01").getTime();
+    const end   = new Date("2024-01-10").getTime();
+    const ticks = generateTicks({ start, end }, "linear");
+
+    expect(ticks.length).toBeGreaterThanOrEqual(5);
   });
 
   it("log: returns ticks for a large range", () => {

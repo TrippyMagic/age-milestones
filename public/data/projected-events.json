@@ -1,0 +1,63 @@
+[
+  {
+    "id": "artemis-iii",
+    "label": "Artemis III Moon landing",
+    "date": "2027-12-01",
+    "category": "space",
+    "description": "NASA's planned Artemis III mission aims to return astronauts to the lunar surface.",
+    "placement": "above",
+    "projectionType": "scheduled",
+    "certainty": "medium"
+  },
+  {
+    "id": "apophis-flyby",
+    "label": "Apophis close Earth flyby",
+    "date": "2029-04-13",
+    "category": "space",
+    "description": "Asteroid 99942 Apophis is expected to pass unusually close to Earth in a well-modelled trajectory.",
+    "placement": "below",
+    "projectionType": "astronomical",
+    "certainty": "high"
+  },
+  {
+    "id": "2038-problem",
+    "label": "Year 2038 pressure point",
+    "date": "2038-01-19",
+    "category": "technological",
+    "description": "Legacy 32-bit Unix systems may fail without mitigation as signed timestamps overflow.",
+    "placement": "above",
+    "projectionType": "forecast",
+    "certainty": "medium"
+  },
+  {
+    "id": "iter-demo-fusion",
+    "label": "ITER demonstration milestone",
+    "date": "2039-12-01",
+    "category": "scientific",
+    "description": "A broad planning window often associated with ITER's long-term fusion demonstration ambitions.",
+    "placement": "below",
+    "projectionType": "forecast",
+    "certainty": "low"
+  },
+  {
+    "id": "moon-landing-centenary",
+    "label": "Moon landing centenary",
+    "date": "2069-07-20",
+    "category": "cultural",
+    "description": "One hundred years since Apollo 11, likely to become a major global remembrance milestone.",
+    "placement": "above",
+    "projectionType": "scheduled",
+    "certainty": "high"
+  },
+  {
+    "id": "halley-return",
+    "label": "Halley's Comet returns",
+    "date": "2061-07-28",
+    "category": "space",
+    "description": "The next perihelion of Halley's Comet is astronomically predicted and likely to dominate skywatching coverage.",
+    "placement": "below",
+    "projectionType": "astronomical",
+    "certainty": "high"
+  }
+]
+

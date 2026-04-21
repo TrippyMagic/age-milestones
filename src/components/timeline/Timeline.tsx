@@ -7,23 +7,25 @@ import {
   type CSSProperties,
   type ChangeEvent,
   type PointerEvent as ReactPointerEvent,
-  type MouseEvent as ReactMouseEvent,
 } from "react";
 
 import { AnimatePresence } from "framer-motion";
 import { useElementSize } from "../../hooks/useElementSize";
-import { usePreferences } from "../../context/PreferencesContext";
 import { usePinchZoom } from "../../hooks/usePinchZoom";
 import {
   viewportToRange,
   applyZoom,
   generateTicks,
+  createViewportFromRange,
+  sanitizeViewport,
   valueToRatio,
   ratioToValue,
   toPercent,
   clamp,
+  MIN_SPAN_MS,
   ZOOM_IN,
   ZOOM_OUT,
+  type ScaleMode,
   type Viewport,
 } from "../../utils/scaleTransform";
 import { buildRenderItems } from "./buildRenderItems";
@@ -33,69 +35,46 @@ import { TimelineDetailPanel } from "./TimelineDetailPanel";
 import { LANE_META, type DetailPanelItem, type Props, type TimelineLane } from "./types";
 import { SLIDER_RESOLUTION, PAN_THRESHOLD_PX } from "./types";
 
-const MS_IN_HOUR = 60 * 60 * 1_000;
-const MS_IN_DAY = 24 * MS_IN_HOUR;
-const LANE_ORDER: TimelineLane[] = ["personal", "historical", "markers"];
+const LANE_ORDER: TimelineLane[] = ["personal", "global"];
+const INTERNAL_SCALE_MODE: ScaleMode = "linear";
 
-const hoverDateFormatter = new Intl.DateTimeFormat(undefined, {
-  day: "numeric", month: "short", year: "numeric",
-});
-
-const formatHoverTiming = (dateMs: number, now: number): string => {
-  const diff = dateMs - now;
-  const absDiff = Math.abs(diff);
-  if (absDiff < 1_000) return "Now";
-
-  const years = absDiff / (365.25 * MS_IN_DAY);
-  if (years >= 1.5) {
-    const d = `${years >= 10 ? Math.round(years) : years.toFixed(1)} years`;
-    return diff > 0 ? `In ${d}` : `${d} ago`;
-  }
-
-  const days = Math.floor(absDiff / MS_IN_DAY);
-  const hours = Math.floor((absDiff % MS_IN_DAY) / MS_IN_HOUR);
-  const parts: string[] = [];
-  if (days > 0) parts.push(`${days}d`);
-  if (hours > 0 && days < 60) parts.push(`${hours}h`);
-  if (!parts.length) {
-    const minutes = Math.floor((absDiff % MS_IN_HOUR) / 60_000);
-    parts.push(minutes > 0 ? `${minutes}m` : "< 1m");
-  }
-
-  const d = parts.slice(0, 2).join(" ");
-  return diff > 0 ? `In ${d}` : `${d} ago`;
+const FALLBACK_VIEWPORT: Viewport = {
+  center: 0,
+  spanMs: MIN_SPAN_MS,
 };
 
 export default function Timeline({ range, value, onChange, events, renderValue }: Props) {
-  const [viewport, setViewport] = useState<Viewport>(() => ({
-    center: (range.start + range.end) / 2,
-    spanMs: range.end - range.start,
-  }));
+  const safeRange = useMemo(
+    () => ({ start: range.start, end: range.end }),
+    [range.start, range.end],
+  );
+  const baseViewport = useMemo(() => createViewportFromRange(safeRange), [safeRange]);
+  const [viewport, setViewport] = useState<Viewport>(() => baseViewport ?? FALLBACK_VIEWPORT);
 
   useEffect(() => {
-    setViewport({ center: (range.start + range.end) / 2, spanMs: range.end - range.start });
-  }, [range.start, range.end]);
+    if (baseViewport) setViewport(baseViewport);
+  }, [baseViewport]);
 
-  const viewportRef = useRef(viewport);
-  viewportRef.current = viewport;
+  const activeViewport = useMemo(
+    () => sanitizeViewport(viewport, safeRange) ?? baseViewport,
+    [viewport, safeRange, baseViewport],
+  );
 
-  const { scaleMode } = usePreferences();
-  const scaleModeRef = useRef(scaleMode);
-  scaleModeRef.current = scaleMode;
-
-  const [isScaleSwitching, setIsScaleSwitching] = useState(false);
-  const prevScaleModeRef = useRef(scaleMode);
   useEffect(() => {
-    if (prevScaleModeRef.current === scaleMode) return;
-    prevScaleModeRef.current = scaleMode;
-    setIsScaleSwitching(true);
-    const id = window.setTimeout(() => setIsScaleSwitching(false), 420);
-    return () => window.clearTimeout(id);
-  }, [scaleMode]);
+    if (!activeViewport) return;
+    if (viewport.center === activeViewport.center && viewport.spanMs === activeViewport.spanMs) return;
+    setViewport(activeViewport);
+  }, [activeViewport, viewport.center, viewport.spanMs]);
 
-  const viewRange = useMemo(() => viewportToRange(viewport), [viewport]);
+  const viewportRef = useRef<Viewport>(activeViewport ?? FALLBACK_VIEWPORT);
+  viewportRef.current = activeViewport ?? FALLBACK_VIEWPORT;
+
+  const scaleModeRef = useRef<ScaleMode>(INTERNAL_SCALE_MODE);
+
+  const effectiveViewport = activeViewport ?? FALLBACK_VIEWPORT;
+  const viewRange = useMemo(() => viewportToRange(effectiveViewport), [effectiveViewport]);
   const safeValue = clamp(value, viewRange.start, viewRange.end);
-  const valueRatio = valueToRatio(safeValue, viewRange, scaleMode);
+  const valueRatio = valueToRatio(safeValue, viewRange, INTERNAL_SCALE_MODE);
   const sliderValue = valueRatio * SLIDER_RESOLUTION;
 
   const [now, setNow] = useState(() => Date.now());
@@ -112,24 +91,23 @@ export default function Timeline({ range, value, onChange, events, renderValue }
   }, [axisRef]);
 
   const sortedEvents = useMemo(() => events.slice().sort((a, b) => a.value - b.value), [events]);
-  const autoTicks = useMemo(() => generateTicks(viewRange, scaleMode), [viewRange, scaleMode]);
+  const autoTicks = useMemo(() => generateTicks(viewRange, INTERNAL_SCALE_MODE), [viewRange]);
 
   const renderItemsByLane = useMemo(() => {
     const map: Record<TimelineLane, ReturnType<typeof buildRenderItems>> = {
-      personal: [], historical: [], markers: [],
+      personal: [], global: [],
     };
 
     for (const lane of LANE_ORDER) {
       const laneEvents = sortedEvents.filter(event => (event.lane ?? "personal") === lane);
-      map[lane] = buildRenderItems(laneEvents, viewRange, axisSize.width, scaleMode);
+      map[lane] = buildRenderItems(laneEvents, viewRange, axisSize.width, INTERNAL_SCALE_MODE);
     }
 
     return map;
-  }, [sortedEvents, viewRange, axisSize.width, scaleMode]);
+  }, [sortedEvents, viewRange, axisSize.width]);
 
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [selectedItems, setSelectedItems] = useState<DetailPanelItem[]>([]);
-  const [hoverState, setHoverState] = useState<{ dateMs: number; leftPercent: number } | null>(null);
   const [isPanning, setIsPanning] = useState(false);
 
   const clearSelection = useCallback(() => {
@@ -189,7 +167,7 @@ export default function Timeline({ range, value, onChange, events, renderValue }
         const rect = axis.getBoundingClientRect();
         const relative = clamp((evt.clientX - rect.left) / rect.width, 0, 1);
         const vp = viewportRef.current;
-        onChange(ratioToValue(relative, viewportToRange(vp), scaleModeRef.current));
+        onChange(ratioToValue(relative, viewportToRange(vp), INTERNAL_SCALE_MODE));
       }
     }
     panStartRef.current = null;
@@ -216,38 +194,15 @@ export default function Timeline({ range, value, onChange, events, renderValue }
   const handleZoomIn = useCallback(() => setViewport(p => applyZoom(p, ZOOM_IN)), []);
   const handleZoomOut = useCallback(() => setViewport(p => applyZoom(p, ZOOM_OUT)), []);
   const handleReset = useCallback(
-    () => setViewport({ center: (range.start + range.end) / 2, spanMs: range.end - range.start }),
-    [range.start, range.end],
+    () => setViewport(baseViewport ?? FALLBACK_VIEWPORT),
+    [baseViewport],
   );
 
   const handleSliderChange = (evt: ChangeEvent<HTMLInputElement>) => {
     const ratio = Number(evt.target.value) / SLIDER_RESOLUTION;
     const vp = viewportRef.current;
-    onChange(ratioToValue(ratio, viewportToRange(vp), scaleModeRef.current));
+    onChange(ratioToValue(ratio, viewportToRange(vp), INTERNAL_SCALE_MODE));
   };
-
-  const handleAxisMouseMove = useCallback((evt: ReactMouseEvent<HTMLDivElement>) => {
-    if (isPanningRef.current || panStartRef.current) {
-      setHoverState(null);
-      return;
-    }
-    if ((evt.target as HTMLElement).closest(".timeline__event, .timeline__group")) {
-      setHoverState(null);
-      return;
-    }
-    const axis = axisNodeRef.current;
-    if (!axis) return;
-    const rect = axis.getBoundingClientRect();
-    if (rect.width === 0) return;
-    const relative = clamp((evt.clientX - rect.left) / rect.width, 0, 1);
-    const vp = viewportRef.current;
-    setHoverState({
-      dateMs: ratioToValue(relative, viewportToRange(vp), scaleModeRef.current),
-      leftPercent: relative * 100,
-    });
-  }, []);
-
-  const handleAxisMouseLeave = useCallback(() => setHoverState(null), []);
 
   const handleSingleSelect = useCallback((item: DetailPanelItem) => {
     setSelectedGroupId(item.id);
@@ -263,7 +218,23 @@ export default function Timeline({ range, value, onChange, events, renderValue }
   }, []);
 
   const valueNode = renderValue?.(safeValue);
-  if (viewport.spanMs <= 0) return null;
+  const showFallback = !activeViewport || viewRange.end <= viewRange.start;
+
+  if (showFallback) {
+    return (
+      <div className="timeline timeline--fallback">
+        <div className="timeline__fallback" role="status" aria-live="polite">
+          <h3 className="timeline__fallback-title">Timeline unavailable</h3>
+          <p className="timeline__fallback-message">
+            The current date range is invalid. Set a valid birth date in Settings and try again.
+          </p>
+          <button type="button" className="timeline__fallback-action" onClick={handleReset}>
+            Reset view
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="timeline">
@@ -283,18 +254,15 @@ export default function Timeline({ range, value, onChange, events, renderValue }
           className={[
             "timeline__axis",
             isPanning ? "timeline__axis--panning" : "",
-            isScaleSwitching ? "timeline__axis--transitioning" : "",
           ].filter(Boolean).join(" ")}
           ref={setAxisRef}
           onPointerDown={handleAxisPointerDown}
           onPointerMove={handleAxisPointerMove}
           onPointerUp={handleAxisPointerUp}
-          onMouseMove={handleAxisMouseMove}
-          onMouseLeave={handleAxisMouseLeave}
         >
           <div className="timeline__lane-ruler">
             {autoTicks.map(tick => {
-              const left = toPercent(valueToRatio(tick.value, viewRange, scaleMode));
+              const left = toPercent(valueToRatio(tick.value, viewRange, INTERNAL_SCALE_MODE));
               return (
                 <div key={tick.id} className="timeline__tick" style={{ left: `${left}%` }}>
                   <span className="timeline__tick-line" />
@@ -310,7 +278,7 @@ export default function Timeline({ range, value, onChange, events, renderValue }
             return (
               <div
                 key={lane}
-                className="timeline__lane"
+                className={`timeline__lane timeline__lane--${lane}`}
                 style={{ ["--timeline-line-top" as string]: `${laneTop}%` }}
               >
                 <span className="timeline__lane-label">{LANE_META[lane].label}</span>
@@ -324,6 +292,11 @@ export default function Timeline({ range, value, onChange, events, renderValue }
                       label: event.label,
                       subLabel: event.subLabel,
                       value: event.value,
+                        category: event.category,
+                        semanticKind: event.semanticKind,
+                        temporalStatus: event.temporalStatus,
+                        projectionType: event.projectionType,
+                        certainty: event.certainty,
                     }));
 
                     return (
@@ -355,6 +328,11 @@ export default function Timeline({ range, value, onChange, events, renderValue }
                         label: event.label,
                         subLabel: event.subLabel,
                         value: event.value,
+                        category: event.category,
+                        semanticKind: event.semanticKind,
+                        temporalStatus: event.temporalStatus,
+                        projectionType: event.projectionType,
+                        certainty: event.certainty,
                       })}
                     />
                   );
@@ -371,16 +349,6 @@ export default function Timeline({ range, value, onChange, events, renderValue }
           >
             <span className="timeline__focus-stem" />
           </div>
-
-          {hoverState !== null && (
-            <div className="timeline__hover-tooltip" style={{ left: `${hoverState.leftPercent}%` }} aria-hidden="true">
-              <span className="timeline__hover-line" />
-              <div className="timeline__hover-card">
-                <span className="timeline__hover-date">{hoverDateFormatter.format(new Date(hoverState.dateMs))}</span>
-                <span className="timeline__hover-rel">{formatHoverTiming(hoverState.dateMs, now)}</span>
-              </div>
-            </div>
-          )}
 
           <TimelineControls onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} onReset={handleReset} />
 

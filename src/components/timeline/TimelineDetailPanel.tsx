@@ -1,6 +1,11 @@
 import { motion } from "framer-motion";
 import { useMemo } from "react";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
+import {
+  CATEGORY_META,
+  PROJECTION_CERTAINTY_META,
+  PROJECTION_TYPE_META,
+} from "../../types/events";
 import type { DetailPanelItem } from "./types";
 
 type TimelineDetailPanelProps = {
@@ -15,6 +20,19 @@ const dateFmt = new Intl.DateTimeFormat(undefined, {
   hour: "2-digit",
   minute: "2-digit",
 });
+
+const getSemanticLabel = (item: DetailPanelItem): string => {
+  switch (item.semanticKind) {
+    case "projection":
+      return "Future projection";
+    case "event":
+      return "Past event";
+    case "marker":
+      return "Global reference";
+    default:
+      return "Personal marker";
+  }
+};
 
 export function TimelineDetailPanel({ items, onClose }: TimelineDetailPanelProps) {
   const isMobile = useMediaQuery("(max-width:719px)");
@@ -41,7 +59,7 @@ export function TimelineDetailPanel({ items, onClose }: TimelineDetailPanelProps
       } : undefined}
     >
       <header className="timeline__detail-header">
-        <h3>Selected events</h3>
+        <h3>Selected timeline items</h3>
         <button type="button" className="timeline__detail-close" onClick={onClose} aria-label="Close details">
           ✕
         </button>
@@ -51,6 +69,18 @@ export function TimelineDetailPanel({ items, onClose }: TimelineDetailPanelProps
         {sorted.map(item => (
           <li key={item.id} className="timeline__detail-item">
             <span className="timeline__detail-title">{item.label}</span>
+            <div className="timeline__detail-meta">
+              <span className={`timeline__detail-pill timeline__detail-pill--${item.semanticKind ?? "personal"}`}>
+                {getSemanticLabel(item)}
+              </span>
+              {item.category && <span className="timeline__detail-pill">{CATEGORY_META[item.category].label}</span>}
+              {item.projectionType && (
+                <span className="timeline__detail-pill">{PROJECTION_TYPE_META[item.projectionType].label}</span>
+              )}
+              {item.certainty && (
+                <span className="timeline__detail-pill">{PROJECTION_CERTAINTY_META[item.certainty].label}</span>
+              )}
+            </div>
             {item.subLabel && <span className="timeline__detail-sub">{item.subLabel}</span>}
             <span className="timeline__detail-date">{dateFmt.format(new Date(item.value))}</span>
           </li>

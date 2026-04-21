@@ -11,10 +11,16 @@ import { useFrame } from "@react-three/fiber";
 import { Html, Line } from "@react-three/drei";
 import * as THREE from "three";
 import type { TimelineEvent } from "../timeline/types";
+import {
+  CATEGORY_META,
+  PROJECTION_CERTAINTY_META,
+  PROJECTION_TYPE_META,
+} from "../../types/events";
 
 // ── Colour palette ─────────────────────────────────────────────
 const PERSONAL_COLOR   = "#a5b4fc";   // indigo-100 — matches app palette
-const HISTORICAL_COLOR = "#4a5568";   // slate-600
+const GLOBAL_COLOR     = "#4a5568";   // slate-600
+const PROJECTION_COLOR = "#f59e0b";   // amber-500
 
 // ── Component ──────────────────────────────────────────────────
 type EventMarker3DProps = {
@@ -24,14 +30,24 @@ type EventMarker3DProps = {
   /** Signed Y offset from axis (positive = above, negative = below) */
   y: number;
   isPersonal: boolean;
+  isProjection: boolean;
 };
 
-export function EventMarker3D({ event, x, y, isPersonal }: EventMarker3DProps) {
+export function EventMarker3D({ event, x, y, isPersonal, isProjection }: EventMarker3DProps) {
   const meshRef  = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
 
-  const color     = isPersonal ? PERSONAL_COLOR : HISTORICAL_COLOR;
-  const baseScale = isPersonal ? 0.22 : 0.15;
+  const color = isProjection
+    ? PROJECTION_COLOR
+    : (event.color ?? (isPersonal ? PERSONAL_COLOR : GLOBAL_COLOR));
+  const baseScale = isProjection ? 0.18 : (isPersonal ? 0.22 : 0.15);
+  const semanticLabel = event.semanticKind === "projection"
+    ? "Future projection"
+    : event.semanticKind === "event"
+    ? "Past event"
+    : event.semanticKind === "marker"
+    ? "Global reference"
+    : "Personal marker";
 
   // Smooth scale animation on hover
   useFrame(() => {
@@ -89,8 +105,18 @@ export function EventMarker3D({ event, x, y, isPersonal }: EventMarker3DProps) {
         >
           <div className="timeline-3d__label">
             <span className="timeline-3d__label-text">{event.label}</span>
+            <span className="timeline-3d__label-sub">{semanticLabel}</span>
             {event.subLabel && (
               <span className="timeline-3d__label-sub">{event.subLabel}</span>
+            )}
+            {event.category && (
+              <span className="timeline-3d__label-sub">{CATEGORY_META[event.category].label}</span>
+            )}
+            {event.projectionType && (
+              <span className="timeline-3d__label-sub">{PROJECTION_TYPE_META[event.projectionType].label}</span>
+            )}
+            {event.certainty && (
+              <span className="timeline-3d__label-sub">{PROJECTION_CERTAINTY_META[event.certainty].label}</span>
             )}
           </div>
         </Html>

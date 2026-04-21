@@ -116,7 +116,7 @@ function TimelineScene({ events, range, focusValue }: SceneProps) {
       {/* ── Event markers ── */}
       {events.map(ev => {
         const x          = toX(ev.value, range);
-        const isPersonal = ev.accent !== "muted";
+        const isPersonal = (ev.lane ?? "personal") === "personal";
         const y          = ev.placement === "below" ? -1.75 : 1.75;
         return (
           <EventMarker3D
@@ -125,6 +125,7 @@ function TimelineScene({ events, range, focusValue }: SceneProps) {
             x={x}
             y={y}
             isPersonal={isPersonal}
+            isProjection={ev.semanticKind === "projection"}
           />
         );
       })}

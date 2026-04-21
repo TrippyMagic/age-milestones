@@ -21,6 +21,7 @@
 :root {
   /* ── Colour palette ──────────────────────────────────── */
   --indigo-100: #a5b4fc;
+  --indigo-200: #c7d2fe;
   --indigo-300: #a070ff;
   --indigo-600: #4f46e5;
   --slate-700: #374151;
