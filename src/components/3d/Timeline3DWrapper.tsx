@@ -13,6 +13,7 @@ import { lazy, Suspense } from "react";
 import type { TimelineEvent } from "../timeline/types";
 import type { Range } from "../../utils/scaleTransform";
 import { WEB_GL_SUPPORTED } from "../../utils/webgl";
+import { useMediaQuery } from "../../hooks/useMediaQuery";
 
 // ── Lazy import ────────────────────────────────────────────────
 const Timeline3DLazy = lazy(() => import("./Timeline3D"));
@@ -48,11 +49,17 @@ type WrapperProps = {
 };
 
 export function Timeline3DWrapper(props: WrapperProps) {
+  const isMobile = useMediaQuery("(max-width:719px)");
+  const prefersReducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
+
   if (!WEB_GL_SUPPORTED) return <NoWebGLFallback />;
 
   return (
     <Suspense fallback={<LoadingFallback />}>
-      <Timeline3DLazy {...props} />
+      <Timeline3DLazy
+        {...props}
+        qualityProfile={isMobile || prefersReducedMotion ? "low-power" : "balanced"}
+      />
     </Suspense>
   );
 }

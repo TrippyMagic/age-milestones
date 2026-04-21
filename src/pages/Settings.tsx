@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Footer from "../components/common/Footer";
 import { Navbar } from "../components/common/Headers";
 import BirthDatePicker from "../components/BirthDatePicker";
 import { useUserProfile, type ActivityLevel } from "../context/UserProfileContext";
 import { useBirthDate } from "../context/BirthDateContext";
 import { getProfileCompleteness } from "../utils/profileCompleteness";
+import { getAboutSectionHref } from "../utils/aboutLinks";
 
 const numOrUndef = (v: string): number | undefined => {
   if (v === "") return undefined;
@@ -70,6 +71,9 @@ export default function Settings() {
           This is the single place where Kronoscope stores your birth date and optional profile details.
           Update them here to keep Milestones, timeline estimates, and future comparisons in sync.
         </p>
+        <Link to={getAboutSectionHref("settings")} className="help-link help-link--inline">
+          How Settings works
+        </Link>
 
         {showMissingDobWarning && (
           <section className="status-banner status-banner--danger" role="alert" aria-live="assertive">

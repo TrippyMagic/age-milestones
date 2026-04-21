@@ -438,6 +438,101 @@ L'utente deve poter capire il sistema senza leggere testo generico o cercare spi
 - Documentazione più utile e meno narrativa
 - Migliore onboarding secondario per utenti curiosi
 
+### Implementazione
+- aggiunto `src/utils/aboutLinks.ts` come punto unico per anchor canoniche (`general`, `timeline`, `timescales`, `settings`)
+- `About.tsx` usa ora una struttura FAQ data-driven con hero card, section-nav e 4 blocchi deep-linkabili
+- gestione hash locale in `About.tsx` tramite `useLocation()` + `requestAnimationFrame()` per garantire scroll corretto anche in navigazione cross-route (`/about#timeline`)
+- `components.css` introduce stili riusabili per `help-link` e per la gerarchia FAQ; `personalize.css` amplia il layout di `about-page`
+- `Landing.tsx`, `Milestones.tsx`, `Timescales.tsx` e `Settings.tsx` espongono link contestuali `How it works` verso la sezione FAQ pertinente
+
+### Trade-off
+- La gestione degli hash resta locale alla pagina `About` invece di diventare una policy globale del router: scelta intenzionale per mantenere il comportamento circoscritto all'unica pagina che oggi usa deep links documentali.
+- Le FAQ restano editoriali e statiche in JSX/data locale, senza introdurre un CMS o file markdown separati: meno complessità, più velocità di iterazione.
+
+---
+
+## D-23 — Il 3D resta nello stack attuale ma con quality profiles, non con nuove librerie
+
+**Data:** 2026-04-21  
+**Fase:** 12 — 3D Strategy Rationalization
+
+### Decisione
+La timeline 3D continua a usare `@react-three/fiber` + `@react-three/drei`. Non vengono introdotte nuove librerie 3D: il problema non era lo stack, ma la strategia di rendering su device deboli.
+
+### Motivazione
+Lo stack corrente è già best-in-class per una scena React/Three.js di questa scala. Aggiungere altre librerie avrebbe aumentato peso e superficie di manutenzione senza risolvere i problemi principali: costi GPU troppo alti su mobile, scene troppo dense e assenza di un profilo low-power.
+
+### Implementazione
+- `Timeline3DWrapper.tsx` rileva mobile e `prefers-reduced-motion`
+- `Timeline3D.tsx` usa profili `balanced` / `low-power`
+- aggiunti `AdaptiveDpr` e `AdaptiveEvents`
+- `Canvas` ora usa DPR più conservativo e `powerPreference` coerente col profilo
+- la scena 3D è stata resa lane-aware con rail `Personal` / `Global`
+
+### Trade-off
+- qualità visiva leggermente ridotta su mobile
+- maggiore stabilità e meno crash/performance cliff su viewport stretti
+
+---
+
+## D-24 — I milestone numerici dell'età appartengono alla Personal lane
+
+**Data:** 2026-04-21  
+**Fase:** 12 — Timeline Rendering Accuracy
+
+### Decisione
+Eventi come `10,000 days old`, `500 months old` e `1 billion seconds old` vengono trattati come marker personali, non come riferimenti globali.
+
+### Motivazione
+Sono derivati direttamente dalla vita dell'utente e non devono scomparire quando la lane globale viene filtrata o nascosti semanticamente insieme a eventi storici/proiezioni.
+
+### Implementazione
+- `Milestones.tsx` assegna ora questi eventi a `lane: "personal"`
+- `semanticKind` aggiornato a `personal`
+- la scena 3D eredita automaticamente il nuovo posizionamento lane-aware
+
+---
+
+## D-25 — Gli eventi fuori viewport ai bordi devono essere aggregati esplicitamente
+
+**Data:** 2026-04-21  
+**Fase:** 12 — Timeline Rendering Accuracy
+
+### Decisione
+Quando esistono marker a sinistra/destra del viewport corrente, la timeline 2D non deve più mostrarne implicitamente solo uno tramite clamp visivo. Deve invece renderizzare un group bubble ai bordi con il conteggio degli eventi oltre il limite visibile.
+
+### Motivazione
+La precedente scelta conservativa evitava cluster artificiali, ma produceva un effetto UX peggiore ai bordi: più marker offscreen collassavano in pratica in un solo marker visibile/clamped. Questo nascondeva informazione e faceva sembrare i marker "scomparsi".
+
+### Implementazione
+- `buildRenderItems.ts` partiziona ora gli eventi in `startOffscreen`, `visible`, `endOffscreen`
+- gli eventi offscreen generano group bubble `edge-start` / `edge-end`
+- il grouping collision-based resta separato per gli eventi realmente visibili
+- `Timeline.tsx` espone copy/ARIA dedicati per i gruppi di bordo
+
+### Trade-off
+- la timeline mostra un affordance in più ai bordi
+- si guadagna trasparenza sul numero reale di marker fuori dalla finestra corrente
+
+---
+
+## D-26 — Hardening mobile della timeline 2D: meno rerender, pointer lifecycle completo
+
+**Data:** 2026-04-21  
+**Fase:** 12 — Timeline Rendering Accuracy / Mobile Stability
+
+### Decisione
+La timeline 2D riduce il carico di rendering continuo e gestisce meglio il lifecycle delle gesture touch/pointer.
+
+### Implementazione
+- `Timeline.tsx` aggiorna `now` ogni 60s invece che ogni secondo
+- aggiunti handler `pointercancel` e `lostpointercapture`
+- callback di selezione marker resa stabile
+- `EventElement.tsx` memoizzato per tagliare rerender inutili
+
+### Motivazione
+Su mobile, rerender continui + gesture interrotte sono una combinazione tipica di instabilità percepita. Ridurre la frequenza degli update e chiudere tutti i path pointer riduce i casi in cui la sezione timeline sembra bloccarsi o crashare.
+
 ---
 
 ## D-20 — DOB mancante come stato rosso esplicito, non come failure silenziosa

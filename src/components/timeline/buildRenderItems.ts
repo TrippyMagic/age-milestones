@@ -21,6 +21,7 @@ import type {
 import { MAX_GROUPING_GAP_PX, MIN_GROUPING_GAP_PX } from "./types";
 
 const MS_IN_DAY = 24 * 60 * 60 * 1_000;
+const EDGE_GROUP_INSET_RATIO = 0.03;
 
 const isEventVisibleInRange = (value: number, range: Range): boolean =>
   value >= range.start && value <= range.end;
@@ -62,6 +63,46 @@ const getGroupingGapPx = (
   return MIN_GROUPING_GAP_PX + (MAX_GROUPING_GAP_PX - MIN_GROUPING_GAP_PX) * strength;
 };
 
+const toGroup = (
+  items: PositionedEvent[],
+  range: Range,
+  grouping: RenderGroup["grouping"],
+  ratioOverride?: number,
+): RenderGroup => {
+  const first = items[0];
+  const last = items[items.length - 1];
+  const ratios = items.map(item => item.ratio);
+  const avg = ratioOverride ?? ratios.reduce((acc, ratio) => acc + ratio, 0) / items.length;
+  const rangeValues = items.map(item => clamp(item.event.value, range.start, range.end));
+
+  return {
+    type: "group",
+    id: items.map(item => item.event.id).join("::"),
+    events: items.map(item => item.event),
+    leftPercent: toPercent(avg),
+    ratio: avg,
+    startRatio: first.ratio,
+    endRatio: last.ratio,
+    valueRange: {
+      start: Math.min(...rangeValues),
+      end: Math.max(...rangeValues),
+    },
+    grouping,
+  };
+};
+
+const toEdgeGroup = (
+  items: PositionedEvent[],
+  range: Range,
+  side: "start" | "end",
+): RenderGroup =>
+  toGroup(
+    items,
+    range,
+    side === "start" ? "edge-start" : "edge-end",
+    side === "start" ? EDGE_GROUP_INSET_RATIO : 1 - EDGE_GROUP_INSET_RATIO,
+  );
+
 export const buildRenderItems = (
   events: TimelineEvent[],
   range: Range,
@@ -75,15 +116,28 @@ export const buildRenderItems = (
     ratio: valueToRatio(event.value, range, mode),
   }));
 
-  // Without a measured axis, skip grouping
-  if (axisWidth <= 0) {
-    return positioned.map(toSingle);
-  }
-
-  const visibleCount = positioned.filter(item => isEventVisibleInRange(item.event.value, range)).length;
-  const groupingGapPx = getGroupingGapPx(visibleCount, axisWidth, range);
+  const startOffscreen = positioned.filter(item => item.event.value < range.start);
+  const visible = positioned.filter(item => isEventVisibleInRange(item.event.value, range));
+  const endOffscreen = positioned.filter(item => item.event.value > range.end);
 
   const items: RenderItem[] = [];
+
+  if (startOffscreen.length > 0) {
+    items.push(toEdgeGroup(startOffscreen, range, "start"));
+  }
+
+  // Without a measured axis, skip visible collision grouping
+  if (axisWidth <= 0) {
+    items.push(...visible.map(toSingle));
+    if (endOffscreen.length > 0) {
+      items.push(toEdgeGroup(endOffscreen, range, "end"));
+    }
+    return items;
+  }
+
+  const visibleCount = visible.length;
+  const groupingGapPx = getGroupingGapPx(visibleCount, axisWidth, range);
+
   let buffer: PositionedEvent[] = [];
 
   const flush = () => {
@@ -96,31 +150,13 @@ export const buildRenderItems = (
       return;
     }
 
-    const first = buffer[0];
-    const last  = buffer[buffer.length - 1];
-    const ratios = buffer.map(b => b.ratio);
-    const avg    = ratios.reduce((acc, r) => acc + r, 0) / buffer.length;
-    const rangeValues = buffer.map(b => clamp(b.event.value, range.start, range.end));
-
-    items.push({
-      type: "group",
-      id: buffer.map(b => b.event.id).join("::"),
-      events: buffer.map(b => b.event),
-      leftPercent: toPercent(avg),
-      ratio: avg,
-      startRatio: first.ratio,
-      endRatio: last.ratio,
-      valueRange: {
-        start: Math.min(...rangeValues),
-        end:   Math.max(...rangeValues),
-      },
-    } satisfies RenderGroup);
+    items.push(toGroup(buffer, range, "collision"));
 
     buffer = [];
   };
 
-  for (const item of positioned) {
-    const canGroupCurrent = groupingGapPx > 0 && isEventVisibleInRange(item.event.value, range);
+  for (const item of visible) {
+    const canGroupCurrent = groupingGapPx > 0;
     if (!canGroupCurrent) {
       flush();
       items.push(toSingle(item));
@@ -138,6 +174,10 @@ export const buildRenderItems = (
     }
   }
   flush();
+
+  if (endOffscreen.length > 0) {
+    items.push(toEdgeGroup(endOffscreen, range, "end"));
+  }
 
   return items;
 };

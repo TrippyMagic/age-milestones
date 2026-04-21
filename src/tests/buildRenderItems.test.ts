@@ -50,9 +50,12 @@ describe("buildRenderItems", () => {
 
     expect(items).toHaveLength(1);
     expect(items[0]?.type).toBe("group");
+    if (items[0]?.type === "group") {
+      expect(items[0].grouping).toBe("collision");
+    }
   });
 
-  it("does not group events that are merely clamped outside the visible range", () => {
+  it("groups offscreen events at the left edge instead of rendering only the nearest clamped marker", () => {
     const range: Range = {
       start: new Date("2000-01-01").getTime(),
       end: new Date("2001-01-01").getTime(),
@@ -68,8 +71,12 @@ describe("buildRenderItems", () => {
       "linear",
     );
 
-    expect(items).toHaveLength(2);
-    expect(items.every(item => item.type === "single")).toBe(true);
+    expect(items).toHaveLength(1);
+    expect(items[0]?.type).toBe("group");
+    if (items[0]?.type === "group") {
+      expect(items[0].grouping).toBe("edge-start");
+      expect(items[0].events).toHaveLength(2);
+    }
   });
 
   it("still groups exact overlaps when measured axis is available", () => {
@@ -90,6 +97,59 @@ describe("buildRenderItems", () => {
 
     expect(items).toHaveLength(1);
     expect(items[0]?.type).toBe("group");
+  });
+
+  it("shows a visible event and a separate offscreen group when older items sit beyond the viewport edge", () => {
+    const range: Range = {
+      start: new Date("2000-01-01").getTime(),
+      end: new Date("2001-01-01").getTime(),
+    };
+
+    const items = buildRenderItems(
+      [
+        makeEvent("old-a", new Date("1980-01-01").getTime()),
+        makeEvent("old-b", new Date("1985-01-01").getTime()),
+        makeEvent("visible", new Date("2000-01-05").getTime()),
+      ],
+      range,
+      800,
+      "linear",
+    );
+
+    expect(items).toHaveLength(2);
+    expect(items[0]?.type).toBe("group");
+    expect(items[1]?.type).toBe("single");
+    if (items[0]?.type === "group") {
+      expect(items[0].grouping).toBe("edge-start");
+      expect(items[0].events.map(event => event.id)).toEqual(["old-a", "old-b"]);
+    }
+    if (items[1]?.type === "single") {
+      expect(items[1].event.id).toBe("visible");
+    }
+  });
+
+  it("groups future offscreen events at the right edge", () => {
+    const range: Range = {
+      start: new Date("2000-01-01").getTime(),
+      end: new Date("2001-01-01").getTime(),
+    };
+
+    const items = buildRenderItems(
+      [
+        makeEvent("future-a", new Date("2025-01-01").getTime()),
+        makeEvent("future-b", new Date("2030-01-01").getTime()),
+      ],
+      range,
+      800,
+      "linear",
+    );
+
+    expect(items).toHaveLength(1);
+    expect(items[0]?.type).toBe("group");
+    if (items[0]?.type === "group") {
+      expect(items[0].grouping).toBe("edge-end");
+      expect(items[0].events.map(event => event.id)).toEqual(["future-a", "future-b"]);
+    }
   });
 });
 

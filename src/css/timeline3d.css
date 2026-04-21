@@ -9,13 +9,22 @@
 ----------------------------------------------------------- */
 .timeline-3d {
   width: 100%;
-  height: 320px;                  /* mobile base */
+  height: 300px;                  /* mobile base */
   border-radius: 20px;
   overflow: hidden;
   position: relative;
   background: #090c1a;
   touch-action: none;             /* prevent native zoom/scroll on 3D canvas */
   isolation: isolate;             /* create stacking context — prevents OrbitControls events leaking (F-02) */
+  contain: layout paint style;
+}
+
+.timeline-3d canvas {
+  display: block;
+}
+
+.timeline-3d--low-power {
+  background: radial-gradient(circle at top, rgba(79, 70, 229, 0.08), transparent 55%), #090c1a;
 }
 
 /* -----------------------------------------------------------
@@ -40,7 +49,7 @@
 
 .timeline-3d__hint {
   font-size: .72rem;
-  color: rgba(165, 180, 252, 0.45);
+  color: rgba(165, 180, 252, 0.62);
   letter-spacing: .06em;
   user-select: none;
 }
@@ -150,6 +159,28 @@
   user-select: none;
 }
 
+.timeline-3d__lane-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(129, 140, 248, 0.22);
+  background: rgba(9, 12, 26, 0.78);
+  font-size: .65rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.timeline-3d__lane-label--personal {
+  color: var(--indigo-100);
+}
+
+.timeline-3d__lane-label--global {
+  color: #cbd5e1;
+}
+
 /* -----------------------------------------------------------
    Loading state (shown while the three-vendor chunk downloads)
 ----------------------------------------------------------- */
@@ -209,7 +240,7 @@
 .timeline-3d__hint { display: none; }
 
 @media (min-width: 480px) {
-  .timeline-3d { height: 380px; }
+  .timeline-3d { height: 360px; }
 }
 
 @media (min-width: 720px) {

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import Footer from "../components/common/Footer";
 import { Navbar } from "../components/common/Headers";
 import { usePreferences } from "../context/PreferencesContext";
@@ -10,6 +11,7 @@ import type { PhenomenonCategory } from "../types/phenomena";
 import { PHENOMENON_CATEGORY_META } from "../types/phenomena";
 import type { TimescalesTab } from "../context/PreferencesContext";
 import { SectionErrorBoundary } from "../components/SectionErrorBoundary";
+import { getAboutSectionHref } from "../utils/aboutLinks";
 
 const ALL_CATS: PhenomenonCategory[] = [
   "quantum", "biological", "human", "geological", "cosmic",
@@ -53,6 +55,9 @@ export default function Timescales() {
               From the Planck time to the heat death of the universe —
               every phenomenon in perspective.
             </p>
+            <Link to={getAboutSectionHref("timescales")} className="help-link help-link--inline">
+              How this view works
+            </Link>
           </div>
 
           <div className="tabs timescales-tabs" role="tablist" aria-label="Timescales sections">

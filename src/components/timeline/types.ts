@@ -111,6 +111,7 @@ export type RenderGroup = {
   startRatio: number;
   endRatio: number;
   valueRange: Range;
+  grouping: "collision" | "edge-start" | "edge-end";
 };
 
 export type RenderItem = RenderSingle | RenderGroup;

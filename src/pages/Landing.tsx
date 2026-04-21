@@ -1,11 +1,12 @@
 import { useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import Footer from "../components/common/Footer.tsx";
 import BirthDatePicker from "../components/BirthDatePicker";
 import { Title } from "../components/common/Headers.tsx";
 import { useBirthDate } from "../context/BirthDateContext";
 import { SectionErrorBoundary } from "../components/SectionErrorBoundary";
+import { getAboutSectionHref } from "../utils/aboutLinks";
 
 export default function Landing() {
   const nav = useNavigate();
@@ -37,6 +38,9 @@ export default function Landing() {
                 It turns abstract counts into concrete waypoints, showing how far you've travelled
                 and how vast the road ahead can be.
               </p>
+              <Link to={getAboutSectionHref("general")} className="help-link help-link--inline">
+                How it works
+              </Link>
               <hr className="divider" />
 
               <div className="landing__cta">

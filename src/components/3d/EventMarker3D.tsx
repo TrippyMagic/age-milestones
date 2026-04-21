@@ -29,18 +29,32 @@ type EventMarker3DProps = {
   x: number;
   /** Signed Y offset from axis (positive = above, negative = below) */
   y: number;
+  /** Lane rail Y position used as the connector anchor. */
+  axisY: number;
   isPersonal: boolean;
   isProjection: boolean;
+  qualityProfile: "balanced" | "low-power";
 };
 
-export function EventMarker3D({ event, x, y, isPersonal, isProjection }: EventMarker3DProps) {
+export function EventMarker3D({
+  event,
+  x,
+  y,
+  axisY,
+  isPersonal,
+  isProjection,
+  qualityProfile,
+}: EventMarker3DProps) {
   const meshRef  = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
 
   const color = isProjection
     ? PROJECTION_COLOR
     : (event.color ?? (isPersonal ? PERSONAL_COLOR : GLOBAL_COLOR));
-  const baseScale = isProjection ? 0.18 : (isPersonal ? 0.22 : 0.15);
+  const baseScale = qualityProfile === "low-power"
+    ? (isProjection ? 0.15 : (isPersonal ? 0.18 : 0.13))
+    : (isProjection ? 0.18 : (isPersonal ? 0.22 : 0.15));
+  const segments = qualityProfile === "low-power" ? 14 : 20;
   const semanticLabel = event.semanticKind === "projection"
     ? "Future projection"
     : event.semanticKind === "event"
@@ -60,12 +74,12 @@ export function EventMarker3D({ event, x, y, isPersonal, isProjection }: EventMa
 
   // Connector line from sphere down to axis (computed in local space)
   const connectorPoints = useMemo<[number, number, number][]>(
-    () => [[0, 0, 0], [0, -y, 0]],
-    [y],
+    () => [[0, 0, 0], [0, axisY - y, 0]],
+    [axisY, y],
   );
 
   // Tooltip position: above sphere when event is above axis, below when below
-  const labelOffsetY = y > 0 ? 0.55 : -0.55;
+  const labelOffsetY = y >= axisY ? 0.55 : -0.55;
 
   return (
     <group position={[x, y, 0]}>
@@ -75,7 +89,7 @@ export function EventMarker3D({ event, x, y, isPersonal, isProjection }: EventMa
         onPointerOver={e => { e.stopPropagation(); setHovered(true); }}
         onPointerOut={() => setHovered(false)}
       >
-        <sphereGeometry args={[1, 20, 20]} />
+        <sphereGeometry args={[1, segments, segments]} />
         <meshStandardMaterial
           color={color}
           emissive={color}

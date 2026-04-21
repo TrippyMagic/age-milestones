@@ -488,12 +488,20 @@ Rimuovere ogni affordance o linguaggio che suggerisca viste parallele o modalit�
 
 ---
 
-### Fase 11 — About FAQ + deep links “How it works” (stimata: 1 giorno)
+### ✅ Fase 11 — About FAQ + deep links “How it works” (Completata: 2026-04-21)
 
 **Obiettivo:** trasformare About in una documentazione orientata all'uso e collegare ogni area principale alla sua spiegazione dedicata.
 
+> **Stato:** Implementata.
+
+**Cosa implementato:**
+1. **About FAQ-based** — `src/pages/About.tsx` è stata ristrutturata in 4 sezioni canoniche deep-linkabili: `general`, `timeline`, `timescales`, `settings`.
+2. **Hash navigation affidabile** — aggiunti helper condivisi in `src/utils/aboutLinks.ts` e scroll controllato su `location.hash` dentro `About.tsx`, con offset gestito via `scroll-margin-top` per convivere con la navbar sticky.
+3. **CTA contestuali `How it works`** — aggiunti link contestuali in `Landing.tsx`, `Milestones.tsx`, `Timescales.tsx` e `Settings.tsx` che puntano direttamente alla FAQ rilevante.
+4. **Polish visuale** — `components.css` e `personalize.css` aggiornati per supportare la nuova IA dell'About (hero card, section nav, FAQ cards, contextual links) senza rompere il layout mobile-first.
+
 #### 11.1 — About page FAQ-based
-**File:** `src/pages/About.tsx`
+**File:** `src/pages/About.tsx`, `src/utils/aboutLinks.ts`, `src/css/components.css`, `src/css/personalize.css`
 **Cosa:** Ristrutturare in sezioni FAQ:
 1. General concept
 2. Timeline system
@@ -510,9 +518,18 @@ Rimuovere ogni affordance o linguaggio che suggerisca viste parallele o modalit�
 
 ---
 
-### Fase 12 — 3D Strategy Rationalization (stimata: 1-2 giorni)
+### ✅ Fase 12 — 3D Strategy Rationalization (Completata: 2026-04-21)
 
 **Obiettivo:** Definire il ruolo del 3D nel progetto e razionalizzare l'investimento.
+
+> **Stato:** Implementata.
+
+**Cosa implementato:**
+1. **3D come opt-in sperimentale ma più stabile** — mantenuto il rendering con `@react-three/fiber` + `@react-three/drei`, ma introdotto un profilo `low-power` per mobile e `prefers-reduced-motion`, senza aggiungere nuove librerie 3D.
+2. **Scene 3D lane-aware** — la scena usa ora due rail espliciti `Personal` / `Global` invece di mescolare tutti i marker sullo stesso asse Y; i connector dei marker puntano alla rail corretta.
+3. **Marker personali corretti** — milestone numeriche personali come `10,000 days`, `500 months`, `1 billion seconds` sono tornate nella `personal` lane in `Milestones.tsx`, evitando che spariscano quando la lane globale è nascosta.
+4. **Edge grouping nel 2D** — `buildRenderItems.ts` ora crea group bubble ai bordi per gli eventi fuori viewport, così a sinistra/destra estrema non si vede più solo il marker clamped più vicino ma il conteggio dei marker oltre il limite visibile.
+5. **2D/mobile hardening** — `Timeline.tsx` riduce i rerender frequenti (tick `now` meno aggressivo), gestisce `pointercancel/lostpointercapture`, stabilizza la selezione dei marker e usa `EventElement` memoizzato.
 
 #### Analisi critica
 
@@ -525,12 +542,12 @@ Rimuovere ogni affordance o linguaggio che suggerisca viste parallele o modalit�
 | Valore aggiunto | Basso: la visualizzazione 3D non aggiunge informazione rispetto al 2D |
 | Manutenzione | Alta: Three.js ecosystem è instabile, breaking changes frequenti |
 
-#### Decisione proposta
-- **Mantenere** il toggle 3D come "demo/toy" opt-in — non eliminarlo
-- **Non espandere** l'uso 3D oltre la timeline
-- **Investire** in 2D ricco: SVG per scale visualization, Canvas 2D per timeline ad alte prestazioni se necessario
-- **Documentare** che il 3D è un esperimento, non il paradigma primario
-- Valutare rimozione di `@react-three/rapier` (non usato)
+#### Decisione finale
+- **Mantenere** il 3D come opt-in sperimentale, non come surface primaria
+- **Non introdurre** nuove librerie 3D: lo stack attuale (`@react-three/fiber` + `@react-three/drei`) è sufficiente se configurato meglio
+- **Usare profili qualità** (`balanced` / `low-power`) per stabilità mobile invece di espandere la complessità del motore
+- **Continuare a investire nel 2D** come esperienza principale, con grouping edge-aware e lane semantics più accurate
+- **Documentare** esplicitamente che il 3D resta secondario rispetto alla timeline 2D
 
 ---
 
@@ -610,7 +627,7 @@ Il progetto è stato rinominato **Kronoscope** (Fase 0). Il nome evoca:
 ### 5.5 — Checklist implementativa finale
 
 - [x] Inserire `projected-events.json` con shape coerente al dataset storico
-- [ ] Ridurre il clustering automatico a collision management zoom-aware
+- [x] Ridurre il clustering automatico a collision management zoom-aware
 - [x] Migrare la timeline a due lane: Personal / Global
 - [ ] Rendere il time grid realmente adattivo allo zoom
 - [ ] Rimuovere l'hover date preview continua
@@ -621,8 +638,8 @@ Il progetto è stato rinominato **Kronoscope** (Fase 0). Il nome evoca:
 - [x] Rinominare Personalize in Settings
 - [x] Spostare completamente la gestione DOB in Settings
 - [x] Aggiungere feedback rosso/giallo per missing DOB e dati opzionali assenti
-- [ ] Convertire About in FAQ con anchor link per Timeline / Timescales / Settings
-- [ ] Rivalutare il 3D solo dopo la stabilizzazione del 2D
+- [x] Convertire About in FAQ con anchor link per Timeline / Timescales / Settings
+- [x] Rivalutare il 3D solo dopo la stabilizzazione del 2D
 
 ---
 
@@ -641,8 +658,8 @@ Il progetto è stato rinominato **Kronoscope** (Fase 0). Il nome evoca:
 | Fase 8 — Timeline UX Cleanup + Mobile Stability | ✅ Completata | Fase 6, Fase 7 |
 | Fase 9 — Settings Refactor + DOB Governance | ✅ Completata | Fase 3, Fase 8 |
 | Fase 10 — DOB Validation UX + Access Guardrails | ✅ Completata | Fase 9 |
-| Fase 11 — About FAQ + Deep Links | 🔲 Da fare | Fase 9 |
-| Fase 12 — 3D Strategy | 🔲 Da fare | Fase 6, Fase 8 |
+| Fase 11 — About FAQ + Deep Links | ✅ Completata | Fase 9 |
+| Fase 12 — 3D Strategy | ✅ Completata | Fase 6, Fase 8 |
 
 ---
 

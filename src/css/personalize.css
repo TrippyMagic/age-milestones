@@ -204,7 +204,7 @@
    About page
 ----------------------------------------------------------- */
 .about-page {
-  max-width: 680px;
+  max-width: 880px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;

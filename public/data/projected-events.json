@@ -1,10 +1,10 @@
 [
   {
-    "id": "artemis-iii",
-    "label": "Artemis III Moon landing",
-    "date": "2027-12-01",
+    "id": "artemis-iv",
+    "label": "Artemis IV Moon landing",
+    "date": "2028-12-01",
     "category": "space",
-    "description": "NASA's planned Artemis III mission aims to return astronauts to the lunar surface.",
+    "description": "NASA's planned Artemis IV mission aims to return astronauts to the lunar surface.",
     "placement": "above",
     "projectionType": "scheduled",
     "certainty": "medium"
@@ -20,12 +20,22 @@
     "certainty": "high"
   },
   {
+    "id": "unix-2billions",
+    "label": "Unix timestamp reaches 2 billion seconds",
+    "date": "2033-05-18",
+    "category": "technological",
+    "description": "Unix timestamp counter will reach 2 billion seconds since the current epoch, it has no known critical implications.",
+    "placement": "above",
+    "projectionType": "scheduled",
+    "certainty": "high"
+  },
+  {
     "id": "2038-problem",
     "label": "Year 2038 pressure point",
     "date": "2038-01-19",
     "category": "technological",
     "description": "Legacy 32-bit Unix systems may fail without mitigation as signed timestamps overflow.",
-    "placement": "above",
+    "placement": "below",
     "projectionType": "forecast",
     "certainty": "medium"
   },
@@ -35,7 +45,7 @@
     "date": "2039-12-01",
     "category": "scientific",
     "description": "A broad planning window often associated with ITER's long-term fusion demonstration ambitions.",
-    "placement": "below",
+    "placement": "above",
     "projectionType": "forecast",
     "certainty": "low"
   },
@@ -45,7 +55,7 @@
     "date": "2069-07-20",
     "category": "cultural",
     "description": "One hundred years since Apollo 11, likely to become a major global remembrance milestone.",
-    "placement": "above",
+    "placement": "below",
     "projectionType": "scheduled",
     "certainty": "high"
   },
@@ -55,7 +65,7 @@
     "date": "2061-07-28",
     "category": "space",
     "description": "The next perihelion of Halley's Comet is astronomically predicted and likely to dominate skywatching coverage.",
-    "placement": "below",
+    "placement": "above",
     "projectionType": "astronomical",
     "certainty": "high"
   }

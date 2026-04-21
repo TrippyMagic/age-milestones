@@ -2,7 +2,7 @@
  * src/components/timeline/EventElement.tsx
  * Renders a single timeline event marker + hover label.
  */
-import type { CSSProperties } from "react";
+import { memo, type CSSProperties } from "react";
 import type { Range } from "../../utils/scaleTransform";
 import type { TimelineEvent, Accent } from "./types";
 import { accentColors } from "./types";
@@ -64,7 +64,7 @@ const getSemanticLabel = (event: TimelineEvent): string => {
   }
 };
 
-export function EventElement({
+export const EventElement = memo(function EventElement({
   event,
   leftPercent,
   variant,
@@ -151,4 +151,4 @@ export function EventElement({
       </div>
     </div>
   );
-}
+});

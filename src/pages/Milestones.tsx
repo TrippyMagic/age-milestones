@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 
 import Timeline, { type TimelineEvent } from "../components/Timeline";
@@ -17,6 +17,7 @@ import { WEB_GL_SUPPORTED } from "../utils/webgl";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { LANE_META, type TimelineLane } from "../components/timeline/types";
 import { SectionErrorBoundary } from "../components/SectionErrorBoundary";
+import { getAboutSectionHref } from "../utils/aboutLinks";
 
 const FUTURE_WINDOW_YEARS = 40;
 const LOOKBACK_YEARS = 20;
@@ -114,8 +115,8 @@ const buildTimelineData = (birthDate: Date, birthTime: string): TimelineData | n
       subLabel: formatWithWeekday(tenThousandDays),
       value: tenThousandDays.valueOf(),
       placement: "below",
-      lane: "global",
-      semanticKind: "marker",
+      lane: "personal",
+      semanticKind: "personal",
       temporalStatus: getTemporalStatus(tenThousandDays.valueOf(), nowValue),
       accent: "default",
     },
@@ -125,8 +126,8 @@ const buildTimelineData = (birthDate: Date, birthTime: string): TimelineData | n
       subLabel: formatWithWeekday(billionSeconds, true),
       value: billionSeconds.valueOf(),
       placement: "above",
-      lane: "global",
-      semanticKind: "marker",
+      lane: "personal",
+      semanticKind: "personal",
       temporalStatus: getTemporalStatus(billionSeconds.valueOf(), nowValue),
       accent: "default",
     },
@@ -136,8 +137,8 @@ const buildTimelineData = (birthDate: Date, birthTime: string): TimelineData | n
       subLabel: formatWithWeekday(fiveHundredMonth, true),
       value: fiveHundredMonth.valueOf(),
       placement: "above",
-      lane: "global",
-      semanticKind: "marker",
+      lane: "personal",
+      semanticKind: "personal",
       temporalStatus: getTemporalStatus(fiveHundredMonth.valueOf(), nowValue),
       accent: "default",
     },
@@ -382,6 +383,9 @@ export default function Milestones() {
                 <p className="perspective-card__subtitle">
                   Switch the lens to reveal how your lifetime translates across different units.
                 </p>
+                <Link to={getAboutSectionHref("general")} className="help-link help-link--inline">
+                  How estimates and perspectives work
+                </Link>
                 <div className="perspective-card__table">
                   <SectionErrorBoundary
                     compact
@@ -404,6 +408,9 @@ export default function Milestones() {
                 <p className="timeline__section-description">
                   Pan across your personal lane and the wider global lane. Pinch or Ctrl+scroll to zoom.
                 </p>
+                <Link to={getAboutSectionHref("timeline")} className="help-link help-link--inline">
+                  How the time map works
+                </Link>
               </div>
 
               <button
