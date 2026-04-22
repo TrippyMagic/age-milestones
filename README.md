@@ -1,6 +1,6 @@
 # Kronoscope
 
-[Live Demo](https://age-milestones-live.vercel.app/)
+[Live Demo](https://kronoscope.vercel.app/)
 
 ## Project Purpose
 
@@ -19,8 +19,8 @@ Kronoscope is a React 19 + Vite application that helps you visualise your life f
 - **Headless tab migration started** — `Timescales` and the `GeoCosmicExplorer` sub-tabs now use the new `src/ui/Tabs` primitive backed by Radix Tabs
 - **Milestones perspectives tabs migrated** — the progressive-unlock tab system in `Milestones` now uses the same `src/ui/Tabs` layer while preserving onboarding, unlock state, and mobile collapse behavior
 - **Phase 1 UI migration completed** — active high-friction surfaces now run on `src/ui`, and the first safe cleanup of legacy tabs/banner CSS has started
-- **Phase 2 timeline slice 2** — the 2D timeline now uses `src/components/timeline-core/` for both scene data and interaction targets; the dense Global lane runs on a hybrid `Canvas + accessible overlay` path while the Personal lane remains on the DOM renderer for controlled parity
-- **Timeline integration coverage started** — the hybrid Global lane is now protected by `@testing-library/react` + `jsdom` tests for overlay activation, keyboard semantics, detail panel wiring, and bare-axis pointer selection
+- **Phase 2 timeline completed** — the 2D timeline now runs on `src/components/timeline-core/` scene + interaction contracts, a shared `Canvas + accessible overlay` renderer for both lanes, and canvas-native pointer hit-testing with keyboard-safe overlay controls
+- **Timeline integration coverage expanded** — the shared overlay/canvas path is protected by `@testing-library/react` + `jsdom` tests for personal/global activation, keyboard semantics, detail panel wiring, target hit-testing, and bare-axis pointer selection fallback
 - **DOB guardrails** — explicit blocking states when birth date is missing, plus reliability warnings when optional profile details are incomplete
 - **Optional 3D timeline** — WebGL-powered (Three.js, lazy-loaded), lane-aware, and automatically reduced to a low-power profile on mobile / reduced-motion devices
 - **Personal milestone markers stay personal** — markers such as `10,000 days old`, `500 months old`, and `1 billion seconds old` remain on the Personal lane instead of mixing with global events
@@ -58,7 +58,7 @@ npm test
 
 ### Verified baseline snapshot (2026-04-23)
 
-- `npm test -- --run` → **79 tests passed across 10 files**
+- `npm test -- --run` → **81 tests passed across 10 files**
 - `npm run build` → **production build succeeds**
 - `npm run lint` → **passes with 1 non-blocking warning** in `src/context/UserProfileContext.tsx`
 
@@ -76,7 +76,7 @@ Current implementation status:
 
 - phase 0 completed and documented
 - phase 1 completed with `src/ui` adopted across active form/banner/actions/tabs surfaces
-- phase 2 progressed through `src/components/timeline-core/`, `buildTimelineScene`, `interaction.ts`, and the first hybrid `Canvas + accessible overlay` path for the global timeline lane
+- phase 2 completed with `src/components/timeline-core/`, unified `TimelineSceneCanvas` + `TimelineInteractiveOverlay`, canvas-native pointer hit-testing, personal/global lane parity on the new overlay model, pruning of `SubTimeline`, and removal of legacy timeline `scaleMode`
 - `src/pages/Settings.tsx` and `src/components/BirthDatePicker.tsx` are the first migrated runtime surfaces
 - `src/pages/Timescales.tsx` and `src/components/timescales/GeoCosmicExplorer.tsx` are the first migrated tab systems
 - `src/pages/Milestones.tsx` now uses the same tabs system for the perspectives panel, including progressive unlock behavior

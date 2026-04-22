@@ -116,22 +116,6 @@ export type RenderGroup = {
 
 export type RenderItem = RenderSingle | RenderGroup;
 
-export type SubTimelineProps = {
-  axisWidth: number;
-  group: RenderGroup;
-  range: Range;
-  onClose: () => void;
-  now: number;
-  groupElement: HTMLButtonElement | null;
-};
-
-export type SubTick = {
-  id: string;
-  value: number;
-  leftPercent: number;
-  label: string;
-};
-
 export type DetailPanelItem = {
   id: string;
   label: string;
@@ -149,9 +133,4 @@ export type DetailPanelItem = {
 export const SLIDER_RESOLUTION             = 5_000;
 export const MIN_GROUPING_GAP_PX           = 6;
 export const MAX_GROUPING_GAP_PX           = 18;
-export const SUB_TIMELINE_MIN_WIDTH      = 320;
-export const SUB_TIMELINE_BUFFER_PX      = 10;
-export const SUB_TIMELINE_CONNECTOR_HEIGHT = 72;
-export const SUB_TIMELINE_MARGIN_RATIO   = 0.3;
-export const MIN_SUB_TIMELINE_SPAN       = 86_400_000; // 1 day in ms
 export const PAN_THRESHOLD_PX            = 5;

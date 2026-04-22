@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildTimelineScene,
-  TIMELINE_INTERNAL_SCALE_MODE,
   TIMELINE_LANE_ORDER,
 } from "../components/timeline-core";
 import type { TimelineEvent } from "../components/Timeline";
@@ -32,7 +31,6 @@ describe("buildTimelineScene", () => {
       focusValue: new Date("2000-06-01").getTime(),
     });
 
-    expect(scene.mode).toBe(TIMELINE_INTERNAL_SCALE_MODE);
     expect(scene.lanes.map(lane => lane.lane)).toEqual(TIMELINE_LANE_ORDER);
     expect(scene.lanes[0]?.items).toHaveLength(1);
     expect(scene.lanes[1]?.items).toHaveLength(1);
@@ -40,12 +38,15 @@ describe("buildTimelineScene", () => {
     expect(scene.lanes[1]?.interactiveTargets).toHaveLength(1);
 
     const personalItem = scene.lanes[0]?.items[0];
+    const personalTarget = scene.lanes[0]?.interactiveTargets[0];
     const globalItem = scene.lanes[1]?.items[0];
     const globalTarget = scene.lanes[1]?.interactiveTargets[0];
     expect(personalItem?.type).toBe("single");
     expect(globalItem?.type).toBe("single");
     if (personalItem?.type === "single") expect(personalItem.event.id).toBe("personal-a");
     if (globalItem?.type === "single") expect(globalItem.event.id).toBe("global-a");
+    expect(personalTarget?.kind).toBe("single");
+    expect(personalTarget?.selectionKey).toBe("personal-a");
     expect(globalTarget?.kind).toBe("single");
     expect(globalTarget?.selectionKey).toBe("global-a");
   });

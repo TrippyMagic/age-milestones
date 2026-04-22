@@ -1,7 +1,7 @@
 # DECISIONS — Refactor 4: UI Platform Stabilization & Timeline Systems
 
 **Data di apertura:** 2026-04-22  
-**Stato:** 🟡 In corso — Fase 0 completata, Fase 1 completata, Fase 2 slice 2 verificata
+**Stato:** 🟡 In corso — Fase 0 completata, Fase 1 completata, Fase 2 completata
 
 ---
 
@@ -647,6 +647,44 @@ Il runtime applica questo contratto **solo** alla lane `global` nella slice corr
 - se l’overlay accessibile non copre abbastanza bene discoverability/focus rispetto al markup precedente;
 - se il contratto `TimelineInteractiveTarget` risulta troppo debole per supportare la futura migrazione della lane `personal` o l’hit-testing evoluto;
 - se la coesistenza tra lane `personal` DOM e lane `global` overlay/canvas introduce divergenze UX troppo visibili.
+
+---
+
+## D-18 — Fase 2 chiusa: overlay model condiviso, hit-testing canvas-native e rimozione del legacy timeline
+
+**Data:** 2026-04-23  
+**Fase:** 2  
+**Stato:** implemented
+
+### Contesto
+Dopo la slice 2, la timeline aveva già il contratto `interaction` nel core e una lane `global` migrata a `canvas + overlay`, ma la lane `personal` restava su markup DOM storico, `scaleMode` continuava a sopravvivere come stato legacy nel runtime timeline e `SubTimeline` restava un ramo orfano ancora presente in repository/CSS.
+
+Per chiudere davvero la Fase 2 serviva un ultimo step coerente che completasse il nuovo model senza lasciare due renderer principali in parallelo.
+
+### Decisione
+La Fase 2 viene considerata chiusa con queste mosse coordinate:
+
+- entrambe le lane (`personal` e `global`) passano al renderer condiviso `TimelineSceneCanvas`;
+- l’accessibilità/focus/keyboard resta affidata a `TimelineInteractiveOverlay`, ora lane-agnostic;
+- la selezione pointer usa `resolveTimelineTargetAtPoint` nel core come hit-testing canvas-native geometry-based, prima del fallback al bare-axis selection;
+- `scaleMode` e `pref_scaleMode` vengono rimossi dal runtime timeline / `PreferencesContext`;
+- `SubTimeline` e il relativo ramo di tipi/CSS vengono rimossi dal percorso attivo e dal repository.
+
+### Alternative valutate
+- **Lasciare la lane `personal` sul DOM path ancora una slice**: più prudente, ma avrebbe lasciato incompleta la convergenza architetturale della Fase 2.
+- **Passare direttamente a scene picking per-pixel su canvas**: interessante come step futuro, ma non necessario per chiudere la fase in modo robusto e testabile.
+- **Rimuovere solo `scaleMode` / `SubTimeline` senza completare la migrazione della lane `personal`**: cleanup utile ma insufficiente rispetto agli obiettivi dichiarati della fase.
+
+### Impatto / conseguenze
+- la baseline attiva della timeline 2D usa ora un solo modello di rendering/interazione per entrambe le lane;
+- il costo DOM della timeline cala ulteriormente perché marker e gruppi non sono più componenti runtime attivi della surface 2D;
+- il core espone un contratto più credibile per evoluzioni future (culling più spinto, picking più sofisticato, allineamento 2D/3D/Timescales);
+- i residui legacy timeline più espliciti (`scaleMode`, `SubTimeline`) escono dal runtime attivo.
+
+### Trigger di revisione o rollback
+- se il modello geometry-based di hit-testing si dimostra insufficiente su dataset molto più densi o su affordance future più complesse;
+- se l’assenza del vecchio markup marker-by-marker fa emergere regressioni UX/accessibilità non intercettate dalla suite attuale;
+- se il cleanup di `EventElement.tsx` richiederà una decisione separata sul perimetro del pruning finale.
 
 ---
 

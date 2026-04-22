@@ -26,20 +26,16 @@ import {
 } from "../../utils/scaleTransform";
 import {
   buildTimelineScene,
-  TIMELINE_INTERNAL_SCALE_MODE,
-  toDetailPanelItem,
+  resolveTimelineTargetAtPoint,
   type TimelineInteractiveTarget,
   type TimelineSelectionPayload,
 } from "../timeline-core";
-import { EventElement } from "./EventElement";
 import { TimelineControls } from "./TimelineControls";
 import { TimelineDetailPanel } from "./TimelineDetailPanel";
-import { TimelineGlobalLaneCanvas } from "./TimelineGlobalLaneCanvas";
-import { TimelineGlobalLaneOverlay } from "./TimelineGlobalLaneOverlay";
-import { type DetailPanelItem, type Props, type TimelineEvent } from "./types";
+import { TimelineSceneCanvas } from "./TimelineSceneCanvas";
+import { TimelineInteractiveOverlay } from "./TimelineInteractiveOverlay";
+import { type DetailPanelItem, type Props } from "./types";
 import { SLIDER_RESOLUTION, PAN_THRESHOLD_PX } from "./types";
-
-const TIMELINE_NOW_TICK_MS = 60_000;
 
 const FALLBACK_VIEWPORT: Viewport = {
   center: 0,
@@ -72,16 +68,8 @@ export default function Timeline({ range, value, onChange, events, renderValue }
   const viewportRef = useRef<Viewport>(activeViewport ?? FALLBACK_VIEWPORT);
   viewportRef.current = activeViewport ?? FALLBACK_VIEWPORT;
 
-  const scaleModeRef = useRef(TIMELINE_INTERNAL_SCALE_MODE);
-
   const effectiveViewport = activeViewport ?? FALLBACK_VIEWPORT;
   const viewRange = useMemo(() => viewportToRange(effectiveViewport), [effectiveViewport]);
-
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const id = window.setInterval(() => setNow(Date.now()), TIMELINE_NOW_TICK_MS);
-    return () => window.clearInterval(id);
-  }, []);
 
   const [axisRef, axisSize] = useElementSize<HTMLDivElement>();
   const axisNodeRef = useRef<HTMLDivElement | null>(null);
@@ -96,15 +84,19 @@ export default function Timeline({ range, value, onChange, events, renderValue }
       range: viewRange,
       axisWidth: axisSize.width,
       focusValue: value,
-      mode: TIMELINE_INTERNAL_SCALE_MODE,
     }),
     [events, viewRange, axisSize.width, value],
   );
   const safeValue = scene.focusValue;
   const sliderValue = scene.focusRatio * SLIDER_RESOLUTION;
-  const globalLaneScene = scene.lanes.find(lane => lane.lane === "global");
+  const interactiveTargets = useMemo(
+    () => scene.lanes.flatMap(lane => lane.interactiveTargets),
+    [scene.lanes],
+  );
 
   const [selectedSelectionKey, setSelectedSelectionKey] = useState<string | null>(null);
+  const [hoveredSelectionKey, setHoveredSelectionKey] = useState<string | null>(null);
+  const [focusedSelectionKey, setFocusedSelectionKey] = useState<string | null>(null);
   const [selectedItems, setSelectedItems] = useState<DetailPanelItem[]>([]);
   const [isPanning, setIsPanning] = useState(false);
 
@@ -126,7 +118,6 @@ export default function Timeline({ range, value, onChange, events, renderValue }
   const { showPinchHint } = usePinchZoom({
     axisNodeRef,
     viewportRef,
-    scaleModeRef,
     setViewport,
     isPinchingRef,
     onPinchStart: () => {
@@ -139,7 +130,7 @@ export default function Timeline({ range, value, onChange, events, renderValue }
   const handleAxisPointerDown = useCallback((evt: ReactPointerEvent<HTMLDivElement>) => {
     if (!evt.isPrimary) return;
     const target = evt.target as HTMLElement;
-    if (target.closest("button") || target.closest(".timeline__event")) return;
+    if (target.closest(".timeline__ctrl-btn")) return;
     if (isPinchingRef.current || panStartRef.current !== null) return;
     evt.preventDefault();
     evt.currentTarget.setPointerCapture(evt.pointerId);
@@ -148,13 +139,38 @@ export default function Timeline({ range, value, onChange, events, renderValue }
     isPanningRef.current = false;
   }, []);
 
+  const resolveTargetFromPointer = useCallback((clientX: number, clientY: number): TimelineInteractiveTarget | null => {
+    const axis = axisNodeRef.current;
+    if (!axis) return null;
+
+    const rect = axis.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return null;
+
+    return resolveTimelineTargetAtPoint({
+      targets: interactiveTargets,
+      width: rect.width,
+      height: rect.height,
+      x: clientX - rect.left,
+      y: clientY - rect.top,
+      preferredSelectionKey: focusedSelectionKey ?? hoveredSelectionKey ?? selectedSelectionKey,
+    });
+  }, [focusedSelectionKey, hoveredSelectionKey, interactiveTargets, selectedSelectionKey]);
+
   const handleAxisPointerMove = useCallback((evt: ReactPointerEvent<HTMLDivElement>) => {
     if (!evt.isPrimary) return;
-    if (isPinchingRef.current || !panStartRef.current) return;
+    if (isPinchingRef.current) return;
+
+    if (!panStartRef.current) {
+      const nextTarget = resolveTargetFromPointer(evt.clientX, evt.clientY);
+      setHoveredSelectionKey(nextTarget?.selectionKey ?? null);
+      return;
+    }
+
     const dx = evt.clientX - panStartRef.current.clientX;
     if (!isPanningRef.current && Math.abs(dx) > PAN_THRESHOLD_PX) {
       isPanningRef.current = true;
       setIsPanning(true);
+      setHoveredSelectionKey(null);
     }
     if (!isPanningRef.current) return;
     const axis = axisNodeRef.current;
@@ -163,25 +179,7 @@ export default function Timeline({ range, value, onChange, events, renderValue }
     if (rect.width === 0) return;
     const msPerPx = panStartRef.current.spanAtStart / rect.width;
     setViewport(prev => ({ ...prev, center: panStartRef.current!.centerAtStart - dx * msPerPx }));
-  }, []);
-
-  const handleAxisPointerUp = useCallback((evt: ReactPointerEvent<HTMLDivElement>) => {
-    if (!evt.isPrimary) {
-      cancelPointerInteraction();
-      return;
-    }
-    evt.currentTarget.releasePointerCapture(evt.pointerId);
-    if (!isPanningRef.current && panStartRef.current) {
-      const axis = axisNodeRef.current;
-      if (axis) {
-        const rect = axis.getBoundingClientRect();
-        const relative = clamp((evt.clientX - rect.left) / rect.width, 0, 1);
-        const vp = viewportRef.current;
-          onChange(ratioToValue(relative, viewportToRange(vp), TIMELINE_INTERNAL_SCALE_MODE));
-      }
-    }
-    cancelPointerInteraction();
-  }, [cancelPointerInteraction, onChange]);
+  }, [resolveTargetFromPointer]);
 
   useEffect(() => {
     const axis = axisNodeRef.current;
@@ -210,12 +208,18 @@ export default function Timeline({ range, value, onChange, events, renderValue }
     cancelPointerInteraction();
     const ratio = Number(evt.target.value) / SLIDER_RESOLUTION;
     const vp = viewportRef.current;
-    onChange(ratioToValue(ratio, viewportToRange(vp), TIMELINE_INTERNAL_SCALE_MODE));
+    onChange(ratioToValue(ratio, viewportToRange(vp)));
   }, [cancelPointerInteraction, onChange]);
 
   const handleAxisPointerCancel = useCallback(() => {
     cancelPointerInteraction();
+    setHoveredSelectionKey(null);
   }, [cancelPointerInteraction]);
+
+  const handleAxisPointerLeave = useCallback(() => {
+    if (isPanningRef.current || panStartRef.current) return;
+    setHoveredSelectionKey(null);
+  }, []);
 
   const handleSingleSelect = useCallback((payload: TimelineSelectionPayload) => {
     setSelectedSelectionKey(payload.selectionKey);
@@ -230,14 +234,7 @@ export default function Timeline({ range, value, onChange, events, renderValue }
     });
   }, []);
 
-  const handleEventSelect = useCallback((event: TimelineEvent) => {
-    handleSingleSelect({
-      selectionKey: event.id,
-      detailItems: [toDetailPanelItem(event)],
-    });
-  }, [handleSingleSelect]);
-
-  const handleGlobalTargetActivate = useCallback((target: TimelineInteractiveTarget) => {
+  const handleTargetActivate = useCallback((target: TimelineInteractiveTarget) => {
     const payload = {
       selectionKey: target.selectionKey,
       detailItems: target.detailItems,
@@ -250,6 +247,29 @@ export default function Timeline({ range, value, onChange, events, renderValue }
 
     handleSingleSelect(payload);
   }, [handleGroupSelect, handleSingleSelect]);
+
+  const handleAxisPointerUp = useCallback((evt: ReactPointerEvent<HTMLDivElement>) => {
+    if (!evt.isPrimary) {
+      cancelPointerInteraction();
+      return;
+    }
+    evt.currentTarget.releasePointerCapture(evt.pointerId);
+    if (!isPanningRef.current && panStartRef.current) {
+      const hitTarget = resolveTargetFromPointer(evt.clientX, evt.clientY);
+      if (hitTarget) {
+        handleTargetActivate(hitTarget);
+      } else {
+        const axis = axisNodeRef.current;
+        if (axis) {
+          const rect = axis.getBoundingClientRect();
+          const relative = clamp((evt.clientX - rect.left) / rect.width, 0, 1);
+          const vp = viewportRef.current;
+          onChange(ratioToValue(relative, viewportToRange(vp)));
+        }
+      }
+    }
+    cancelPointerInteraction();
+  }, [cancelPointerInteraction, handleTargetActivate, onChange, resolveTargetFromPointer]);
 
   const valueNode = renderValue?.(safeValue);
   const showFallback = !activeViewport || viewRange.end <= viewRange.start;
@@ -288,11 +308,13 @@ export default function Timeline({ range, value, onChange, events, renderValue }
           className={[
             "timeline__axis",
             isPanning ? "timeline__axis--panning" : "",
+            !isPanning && hoveredSelectionKey ? "timeline__axis--over-target" : "",
           ].filter(Boolean).join(" ")}
           ref={setAxisRef}
           onPointerDown={handleAxisPointerDown}
           onPointerMove={handleAxisPointerMove}
           onPointerUp={handleAxisPointerUp}
+          onPointerLeave={handleAxisPointerLeave}
           onPointerCancel={handleAxisPointerCancel}
           onLostPointerCapture={handleAxisPointerCancel}
         >
@@ -307,23 +329,28 @@ export default function Timeline({ range, value, onChange, events, renderValue }
             })}
           </div>
 
-          {globalLaneScene && axisSize.width > 0 && axisSize.height > 0 && (
+          {interactiveTargets.length > 0 && axisSize.width > 0 && axisSize.height > 0 && (
             <>
-              <TimelineGlobalLaneCanvas
+              <TimelineSceneCanvas
                 width={axisSize.width}
                 height={axisSize.height}
-                laneTopPercent={globalLaneScene.topPercent}
-                targets={globalLaneScene.interactiveTargets}
-              />
-              <TimelineGlobalLaneOverlay
-                targets={globalLaneScene.interactiveTargets}
+                targets={interactiveTargets}
                 selectedSelectionKey={selectedSelectionKey}
-                onActivate={handleGlobalTargetActivate}
+                hoveredSelectionKey={hoveredSelectionKey}
+                focusedSelectionKey={focusedSelectionKey}
+              />
+              <TimelineInteractiveOverlay
+                targets={interactiveTargets}
+                selectedSelectionKey={selectedSelectionKey}
+                hoveredSelectionKey={hoveredSelectionKey}
+                focusedSelectionKey={focusedSelectionKey}
+                onActivate={handleTargetActivate}
+                onFocusTarget={target => setFocusedSelectionKey(target?.selectionKey ?? null)}
               />
             </>
           )}
 
-          {scene.lanes.map(({ lane, label, items, topPercent }) => {
+          {scene.lanes.map(({ lane, label, topPercent }) => {
             return (
               <div
                 key={lane}
@@ -332,61 +359,6 @@ export default function Timeline({ range, value, onChange, events, renderValue }
               >
                 <span className="timeline__lane-label">{label}</span>
                 <div className="timeline__line" />
-
-                {lane === "personal" && items.map(item => {
-                  if (item.type === "group") {
-                    const isActive = selectedSelectionKey === item.id;
-                    const detailItems = item.events.map(toDetailPanelItem);
-
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        className={[
-                          "timeline__group",
-                          isActive ? "timeline__group--active" : "",
-                          item.grouping === "edge-start" || item.grouping === "edge-end"
-                            ? "timeline__group--edge"
-                            : "",
-                          item.grouping === "edge-start" ? "timeline__group--edge-start" : "",
-                          item.grouping === "edge-end" ? "timeline__group--edge-end" : "",
-                        ].filter(Boolean).join(" ")}
-                        style={{ left: `${item.leftPercent}%` }}
-                        onClick={() => handleGroupSelect({ selectionKey: item.id, detailItems })}
-                        aria-pressed={isActive}
-                        aria-label={
-                          item.grouping === "edge-start"
-                            ? `${item.events.length} events exist before the visible range`
-                            : item.grouping === "edge-end"
-                            ? `${item.events.length} events exist after the visible range`
-                            : `${item.events.length} overlapping events`
-                        }
-                        title={
-                          item.grouping === "edge-start"
-                            ? `${item.events.length} marker${item.events.length === 1 ? "" : "s"} before this view`
-                            : item.grouping === "edge-end"
-                            ? `${item.events.length} marker${item.events.length === 1 ? "" : "s"} after this view`
-                            : `${item.events.length} overlapping marker${item.events.length === 1 ? "" : "s"}`
-                        }
-                      >
-                        <span className="timeline__group-count">{item.events.length}</span>
-                      </button>
-                    );
-                  }
-
-                  return (
-                    <EventElement
-                      key={item.event.id}
-                      event={item.event}
-                      leftPercent={item.leftPercent}
-                      variant="main"
-                      range={viewRange}
-                      now={now}
-                      selected={selectedSelectionKey === item.event.id}
-                      onSelect={handleEventSelect}
-                    />
-                  );
-                })}
               </div>
             );
           })}

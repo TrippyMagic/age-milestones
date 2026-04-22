@@ -4,7 +4,6 @@ import {
   toPercent,
   valueToRatio,
   type Range,
-  type ScaleMode,
   type TimelineTick,
 } from "../../utils/scaleTransform";
 import {
@@ -21,7 +20,6 @@ import {
 } from "./interaction";
 
 export const TIMELINE_LANE_ORDER: TimelineLane[] = [...ALL_TIMELINE_LANES];
-export const TIMELINE_INTERNAL_SCALE_MODE: ScaleMode = "linear";
 
 const DEFAULT_LANE_TOP_PERCENT = 30;
 const LANE_VERTICAL_STEP_PERCENT = 28;
@@ -43,7 +41,6 @@ export type TimelineSceneTick = TimelineTick & {
 
 export type TimelineScene = {
   range: Range;
-  mode: ScaleMode;
   focusValue: number;
   focusRatio: number;
   focusLeftPercent: number;
@@ -56,7 +53,6 @@ export type BuildTimelineSceneOptions = {
   range: Range;
   axisWidth: number;
   focusValue: number;
-  mode?: ScaleMode;
   laneOrder?: TimelineLane[];
 };
 
@@ -77,23 +73,21 @@ export const buildTimelineScene = ({
   range,
   axisWidth,
   focusValue,
-  mode = TIMELINE_INTERNAL_SCALE_MODE,
   laneOrder,
 }: BuildTimelineSceneOptions): TimelineScene => {
   const lanes = sanitizeLaneOrder(laneOrder);
   const sortedEvents = events.slice().sort((a, b) => a.value - b.value);
   const safeFocusValue = clamp(focusValue, range.start, range.end);
-  const focusRatio = valueToRatio(safeFocusValue, range, mode);
+  const focusRatio = valueToRatio(safeFocusValue, range);
 
   return {
     range,
-    mode,
     focusValue: safeFocusValue,
     focusRatio,
     focusLeftPercent: toPercent(focusRatio),
-    ticks: generateTicks(range, mode).map(tick => ({
+    ticks: generateTicks(range).map(tick => ({
       ...tick,
-      leftPercent: toPercent(valueToRatio(tick.value, range, mode)),
+      leftPercent: toPercent(valueToRatio(tick.value, range)),
     })),
     lanes: lanes.map((lane, index) => {
       const topPercent = getTimelineLaneTopPercent(index);
@@ -101,7 +95,6 @@ export const buildTimelineScene = ({
         sortedEvents.filter(event => (event.lane ?? "personal") === lane),
         range,
         axisWidth,
-        mode,
       );
 
       return {

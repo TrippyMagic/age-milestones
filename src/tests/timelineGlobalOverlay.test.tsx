@@ -52,6 +52,16 @@ const makeGlobalEvent = (overrides: Partial<TimelineEvent> = {}): TimelineEvent 
   ...overrides,
 });
 
+const makePersonalEvent = (overrides: Partial<TimelineEvent> = {}): TimelineEvent => ({
+  id: "mid-life",
+  label: "Mid-life checkpoint",
+  value: range.start + (range.end - range.start) / 2,
+  lane: "personal",
+  semanticKind: "personal",
+  subLabel: "Shared overlay model milestone.",
+  ...overrides,
+});
+
 beforeEach(() => {
   Object.defineProperty(HTMLElement.prototype, "setPointerCapture", {
     configurable: true,
@@ -74,9 +84,11 @@ beforeEach(() => {
       lineTo: vi.fn(),
       stroke: vi.fn(),
       fill: vi.fn(),
+      fillText: vi.fn(),
       arc: vi.fn(),
       quadraticCurveTo: vi.fn(),
       closePath: vi.fn(),
+      setLineDash: vi.fn(),
     })),
   });
 });
@@ -85,31 +97,31 @@ afterEach(() => {
   cleanup();
 });
 
-describe("Timeline global lane overlay", () => {
-  it("uses accessible overlay buttons for global targets and opens the detail panel without changing focus", () => {
+describe("Timeline interactive overlay", () => {
+  it("uses accessible overlay buttons for both lanes and opens the detail panel without DOM event markers", () => {
     const onChange = vi.fn();
     const { container } = render(
       <Timeline
         range={range}
         value={new Date("2000-06-01").getTime()}
         onChange={onChange}
-        events={[makeGlobalEvent()]}
+        events={[makePersonalEvent(), makeGlobalEvent()]}
       />,
     );
 
     expect(container.querySelectorAll(".timeline__event")).toHaveLength(0);
 
-    const target = screen.getByRole("button", { name: /moon landing/i });
+    const target = screen.getByRole("button", { name: /mid-life checkpoint/i });
     fireEvent.click(target);
 
     expect(onChange).not.toHaveBeenCalled();
     expect(target.getAttribute("aria-pressed")).toBe("true");
     const dialog = screen.getByRole("dialog", { name: /event details/i });
     expect(dialog).toBeTruthy();
-    expect(within(dialog).getByText("Moon landing")).toBeTruthy();
+    expect(within(dialog).getByText("Mid-life checkpoint")).toBeTruthy();
   });
 
-  it("supports keyboard activation for the global overlay buttons", () => {
+  it("supports keyboard activation for the shared overlay buttons", () => {
     render(
       <Timeline
         range={range}
@@ -127,7 +139,40 @@ describe("Timeline global lane overlay", () => {
     expect(within(dialog).getByText("Apollo")).toBeTruthy();
   });
 
-  it("keeps bare-axis pointer selection working after the overlay migration", () => {
+  it("activates personal targets through pointer hit-testing before falling back to bare-axis focus changes", () => {
+    const onChange = vi.fn();
+    const { container } = render(
+      <Timeline
+        range={range}
+        value={new Date("2000-06-01").getTime()}
+        onChange={onChange}
+        events={[makePersonalEvent()]}
+      />,
+    );
+
+    const axis = container.querySelector(".timeline__axis") as HTMLDivElement;
+    expect(axis).toBeTruthy();
+    axis.getBoundingClientRect = () => ({
+      width: 1000,
+      height: 360,
+      top: 0,
+      left: 100,
+      right: 1100,
+      bottom: 360,
+      x: 100,
+      y: 0,
+      toJSON: () => ({}),
+    });
+
+    fireEvent.pointerDown(axis, { isPrimary: true, pointerId: 1, clientX: 600, clientY: 108 });
+    fireEvent.pointerUp(axis, { isPrimary: true, pointerId: 1, clientX: 600, clientY: 108 });
+
+    expect(onChange).not.toHaveBeenCalled();
+    const dialog = screen.getByRole("dialog", { name: /event details/i });
+    expect(within(dialog).getByText("Mid-life checkpoint")).toBeTruthy();
+  });
+
+  it("keeps bare-axis pointer selection working when no interactive target is hit", () => {
     const onChange = vi.fn();
     const { container } = render(
       <Timeline
@@ -152,8 +197,8 @@ describe("Timeline global lane overlay", () => {
       toJSON: () => ({}),
     });
 
-    fireEvent.pointerDown(axis, { isPrimary: true, pointerId: 1, clientX: 600 });
-    fireEvent.pointerUp(axis, { isPrimary: true, pointerId: 1, clientX: 600 });
+    fireEvent.pointerDown(axis, { isPrimary: true, pointerId: 1, clientX: 120, clientY: 20 });
+    fireEvent.pointerUp(axis, { isPrimary: true, pointerId: 1, clientX: 120, clientY: 20 });
 
     expect(onChange).toHaveBeenCalledTimes(1);
   });

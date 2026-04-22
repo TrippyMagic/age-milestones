@@ -5,7 +5,7 @@
  *
  * Usage:
  *   const { showPinchHint } = usePinchZoom({
- *     axisNodeRef, viewportRef, scaleModeRef, setViewport,
+ *     axisNodeRef, viewportRef, setViewport,
  *     isPinchingRef, onPinchStart,
  *   });
  *
@@ -23,7 +23,6 @@ import {
   clamp,
   ratioToValue,
   viewportToRange,
-  type ScaleMode,
   type Viewport,
 } from "../utils/scaleTransform";
 
@@ -34,8 +33,6 @@ type PinchZoomOptions = {
   axisNodeRef:   MutableRefObject<HTMLDivElement | null>;
   /** Ref to the current viewport (avoids stale closure). */
   viewportRef:   MutableRefObject<Viewport>;
-  /** Ref to the current scale mode (avoids stale closure). */
-  scaleModeRef:  MutableRefObject<ScaleMode>;
   /** React state setter (function-updater form). */
   setViewport:   (updater: (prev: Viewport) => Viewport) => void;
   /**
@@ -55,7 +52,6 @@ type PinchZoomOptions = {
 export function usePinchZoom({
   axisNodeRef,
   viewportRef,
-  scaleModeRef,
   setViewport,
   isPinchingRef,
   onPinchStart,
@@ -127,7 +123,7 @@ export function usePinchZoom({
       const rect     = axis.getBoundingClientRect();
       const relative = clamp((midX - rect.left) / rect.width, 0, 1);
       const vp       = viewportRef.current;
-      const anchorMs = ratioToValue(relative, viewportToRange(vp), scaleModeRef.current);
+      const anchorMs = ratioToValue(relative, viewportToRange(vp));
 
       setViewport(prev => applyZoom(prev, factor, anchorMs));
 
@@ -155,7 +151,7 @@ export function usePinchZoom({
       axis.removeEventListener("touchcancel", onTouchEnd);
       if (hintTimerRef.current) clearTimeout(hintTimerRef.current);
     };
-    // All deps (axisNodeRef, viewportRef, scaleModeRef, setViewport, isPinchingRef)
+    // All deps (axisNodeRef, viewportRef, setViewport, isPinchingRef)
     // are stable React refs or the guaranteed-stable setState dispatcher.
     // Re-registering on every render would be wasteful — safe to omit from deps.
     // eslint-disable-next-line react-hooks/exhaustive-deps

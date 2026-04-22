@@ -13,6 +13,11 @@ import type {
 
 export const TIMELINE_SINGLE_TARGET_SIZE_PX = 28;
 export const TIMELINE_GROUP_TARGET_HEIGHT_PX = 32;
+export const TIMELINE_SINGLE_VISUAL_SIZE_PX = 12;
+export const TIMELINE_GROUP_VISUAL_HEIGHT_PX = 16;
+export const TIMELINE_GROUP_CENTER_OFFSET_PX = -28;
+
+type TimelineTargetGeometryShape = "circle" | "triangle" | "capsule";
 
 export type TimelineSelectionPayload = {
   selectionKey: string;
@@ -25,13 +30,30 @@ export type TimelineInteractiveTarget = TimelineSelectionPayload & {
   kind: "single" | "group";
   leftPercent: number;
   topPercent: number;
+   centerOffsetPx: number;
   widthPx: number;
   heightPx: number;
+   visualWidthPx: number;
+   visualHeightPx: number;
   count: number;
   color: string;
   ariaLabel: string;
   title: string;
+   semanticKind?: TimelineEvent["semanticKind"];
+   markerShape?: TimelineEvent["markerShape"];
   grouping?: RenderGroup["grouping"];
+};
+
+export type TimelineTargetGeometry = {
+  centerX: number;
+  centerY: number;
+  hitLeft: number;
+  hitTop: number;
+  hitRight: number;
+  hitBottom: number;
+  visualWidthPx: number;
+  visualHeightPx: number;
+  shape: TimelineTargetGeometryShape;
 };
 
 export type BuildTimelineInteractiveTargetsOptions = {
@@ -69,6 +91,99 @@ export const getTimelineSemanticLabel = (
 
 export const getTimelineGroupVisualWidthPx = (count: number): number =>
   Math.max(24, Math.min(54, 20 + count * 5));
+
+const getTimelineTargetShape = (target: TimelineInteractiveTarget): TimelineTargetGeometryShape => {
+  if (target.kind === "group") return "capsule";
+  return target.markerShape === "triangle" ? "triangle" : "circle";
+};
+
+export const getTimelineTargetGeometry = (
+  target: TimelineInteractiveTarget,
+  width: number,
+  height: number,
+): TimelineTargetGeometry => {
+  const centerX = (width * target.leftPercent) / 100;
+  const laneY = (height * target.topPercent) / 100;
+  const centerY = laneY + target.centerOffsetPx;
+  const halfHitWidth = target.widthPx / 2;
+  const halfHitHeight = target.heightPx / 2;
+
+  return {
+    centerX,
+    centerY,
+    hitLeft: centerX - halfHitWidth,
+    hitTop: centerY - halfHitHeight,
+    hitRight: centerX + halfHitWidth,
+    hitBottom: centerY + halfHitHeight,
+    visualWidthPx: target.visualWidthPx,
+    visualHeightPx: target.visualHeightPx,
+    shape: getTimelineTargetShape(target),
+  };
+};
+
+type ResolveTimelineTargetAtPointOptions = {
+  targets: TimelineInteractiveTarget[];
+  width: number;
+  height: number;
+  x: number;
+  y: number;
+  slopPx?: number;
+  preferredSelectionKey?: string | null;
+};
+
+const getTargetDistanceScore = (
+  target: TimelineInteractiveTarget,
+  geometry: TimelineTargetGeometry,
+  x: number,
+  y: number,
+  slopPx: number,
+): number | null => {
+  const dx = x - geometry.centerX;
+  const dy = y - geometry.centerY;
+
+  if (geometry.shape === "circle" || geometry.shape === "triangle") {
+    const radius = Math.max(target.widthPx, target.heightPx) / 2 + slopPx;
+    const distanceSq = dx * dx + dy * dy;
+    return distanceSq <= radius * radius ? distanceSq : null;
+  }
+
+  const expandedHalfWidth = target.widthPx / 2 + slopPx;
+  const expandedHalfHeight = target.heightPx / 2 + slopPx;
+  const outsideX = Math.max(Math.abs(dx) - expandedHalfWidth, 0);
+  const outsideY = Math.max(Math.abs(dy) - expandedHalfHeight, 0);
+  const distanceSq = outsideX * outsideX + outsideY * outsideY;
+  return distanceSq === 0 || distanceSq <= slopPx * slopPx ? distanceSq : null;
+};
+
+export const resolveTimelineTargetAtPoint = ({
+  targets,
+  width,
+  height,
+  x,
+  y,
+  slopPx = 8,
+  preferredSelectionKey = null,
+}: ResolveTimelineTargetAtPointOptions): TimelineInteractiveTarget | null => {
+  let bestTarget: TimelineInteractiveTarget | null = null;
+  let bestScore = Number.POSITIVE_INFINITY;
+
+  for (const target of targets) {
+    const geometry = getTimelineTargetGeometry(target, width, height);
+    const score = getTargetDistanceScore(target, geometry, x, y, slopPx);
+    if (score === null) continue;
+
+    const bias = preferredSelectionKey === target.selectionKey ? -0.25 : 0;
+    const areaBias = (target.widthPx * target.heightPx) / 10_000;
+    const nextScore = score + areaBias + bias;
+
+    if (nextScore < bestScore) {
+      bestScore = nextScore;
+      bestTarget = target;
+    }
+  }
+
+  return bestTarget;
+};
 
 export const resolveTimelineItemColor = (item: RenderItem): string => {
   if (item.type === "single") {
@@ -120,25 +235,38 @@ export const buildTimelineInteractiveTargets = ({
         kind: "single",
         leftPercent: item.leftPercent,
         topPercent,
+        centerOffsetPx: 0,
         widthPx: TIMELINE_SINGLE_TARGET_SIZE_PX,
         heightPx: TIMELINE_SINGLE_TARGET_SIZE_PX,
+        visualWidthPx: item.event.id === "birth"
+          ? TIMELINE_SINGLE_VISUAL_SIZE_PX + 4
+          : TIMELINE_SINGLE_VISUAL_SIZE_PX,
+        visualHeightPx: item.event.id === "birth"
+          ? TIMELINE_SINGLE_VISUAL_SIZE_PX + 4
+          : TIMELINE_SINGLE_VISUAL_SIZE_PX,
         count: 1,
         color: resolveTimelineItemColor(item),
         selectionKey: item.event.id,
         detailItems: [detailItem],
         ariaLabel: describeSingleAriaLabel(item.event),
         title: item.event.label,
+        semanticKind: item.event.semanticKind,
+        markerShape: item.event.markerShape ?? "dot",
       };
     }
 
+    const groupWidth = getTimelineGroupVisualWidthPx(item.events.length);
     return {
       id: item.id,
       lane,
       kind: "group",
       leftPercent: item.leftPercent,
       topPercent,
-      widthPx: getTimelineGroupVisualWidthPx(item.events.length),
+      centerOffsetPx: TIMELINE_GROUP_CENTER_OFFSET_PX,
+      widthPx: groupWidth + 10,
       heightPx: TIMELINE_GROUP_TARGET_HEIGHT_PX,
+      visualWidthPx: groupWidth,
+      visualHeightPx: TIMELINE_GROUP_VISUAL_HEIGHT_PX,
       count: item.events.length,
       color: resolveTimelineItemColor(item),
       selectionKey: item.id,

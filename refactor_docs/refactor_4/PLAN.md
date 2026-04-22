@@ -1,13 +1,13 @@
 # PLAN — Refactor 4: UI Platform Stabilization & Timeline Systems
 
 **Data:** 2026-04-23  
-**Stato:** 🟡 In corso — Fase 0 completata, Fase 1 completata, Fase 2 slice 2 avviata
+**Stato:** 🟡 In corso — Fase 0 completata, Fase 1 completata, Fase 2 completata
 
 ---
 
-## Snapshot esecutivo — aggiornamento Fase 2 slice 2
+## Snapshot esecutivo — aggiornamento Fase 2 completata
 
-Al 2026-04-23 la baseline di Refactor 4 è stata estesa fino all’**implementazione verificata della Fase 2 slice 2**.
+Al 2026-04-23 la baseline di Refactor 4 è stata estesa fino al **completamento verificato della Fase 2**.
 
 Output prodotti:
 
@@ -15,7 +15,7 @@ Output prodotti:
 - `refactor_docs/refactor_4/ARCHITECTURE_BASELINE.md`
 - aggiornamento di `DECISIONS.md`, `AGENTS.md` e `README.md`
 - introduzione del primo nucleo runtime di Fase 2 in `src/components/timeline-core/`
-- estensione del core con contratto di interazione/selection + test DOM della lane globale
+- estensione del core con contratto di interazione/selection + hit-testing canvas-native condiviso
 
 Risultati chiave:
 
@@ -31,9 +31,10 @@ Risultati chiave:
 - Fase 2 slice 1 avviata con estrazione di `buildRenderItems` nel nuovo `timeline-core`, introduzione del puro `buildTimelineScene` e primo canvas ibrido non-interattivo per la lane globale.
 - la timeline 2D mantiene ancora il layer DOM accessibile esistente per marker, gruppi e detail panel, ma la pipeline scene-based è ora parte del runtime attivo.
 - Fase 2 slice 2 completata con introduzione in `timeline-core` dei target interattivi, payload di selection/detail e prima de-DOM progressiva della lane `global` tramite overlay accessibile sopra il canvas.
-- la lane `global` non renderizza più marker/gruppi via `EventElement` nel runtime attivo: il visuale passa dal canvas, mentre focus/keyboard/detail panel passano dall’overlay HTML minimale.
-- introdotta la prima copertura DOM/integration della timeline tramite `@testing-library/react` + `jsdom` per proteggere overlay globale, keyboard activation e axis click invariants.
-- verifica post-slice eseguita con successo: `npm test -- --run` → 79 test passati su 10 file, `npm run build` ✅, `npm run lint` ⚠️ solo warning preesistente in `UserProfileContext.tsx`.
+- Fase 2 completata con migrazione della lane `personal` al nuovo overlay model, rinomina dei renderer attivi in `TimelineSceneCanvas` + `TimelineInteractiveOverlay`, introduzione di hit-testing canvas-native condiviso, pruning di `SubTimeline` e rimozione del legacy `scaleMode` dal runtime timeline.
+- il runtime 2D non renderizza più marker/gruppi via `EventElement`: il visuale passa dal canvas condiviso, mentre focus/keyboard/detail panel passano dall’overlay HTML minimale.
+- la copertura DOM/integration della timeline protegge ora overlay condiviso, keyboard activation, pointer hit-testing e axis click invariants.
+- verifica post-fase eseguita con successo: `npm test -- --run` → 81 test passati su 10 file, `npm run build` ✅, `npm run lint` ⚠️ solo warning preesistente in `UserProfileContext.tsx`.
 
 ---
 
@@ -119,10 +120,10 @@ La timeline attuale è molto migliorata semanticamente, ma resta il componente p
 
 - `src/components/timeline/Timeline.tsx` gestisce insieme viewport, input pointer, wheel zoom, pinch integration, selection state, lane rendering, ticks, focus indicator e detail panel.
 - `src/css/timeline.css` è ormai una superficie molto grande e ad alta complessità, con styling di frame, lanes, groups, controls, notes, fallbacks, responsive behavior e dettagli di stato.
-- `buildRenderItems.ts` è una buona base pura per grouping e posizionamento, ma il rendering finale è ancora fortemente legato al DOM.
-- Ogni marker / group bubble viene renderizzato come nodo React / DOM, il che rende costosa la crescita del sistema e fragile la gestione di collisioni, hit area e pan/zoom.
-- `PreferencesContext.tsx` conserva ancora `scaleMode`, anche se la UI pubblica del toggle log è stata rimossa: è un debito legacy.
-- `SubTimeline.tsx` esiste ancora ma non è più parte della surface attiva: è codice orfano.
+- `buildRenderItems.ts` è ormai un layer puro stabile dietro al nuovo renderer canvas condiviso.
+- marker e group bubble non sono più nodi DOM runtime della timeline attiva: il visuale passa dal canvas e l’accessibilità da un overlay minimale.
+- `PreferencesContext.tsx` non conserva più `scaleMode`: la timeline 2D attiva è linear-only senza persistenza legacy.
+- `SubTimeline.tsx` è stato rimosso dopo replacement del nuovo overlay model.
 
 #### Problemi strutturali aperti
 
@@ -168,11 +169,11 @@ Dalla codebase attuale risultano già verificabili alcuni candidati cleanup:
 - `src/components/BirthDateWizard.tsx`
 - `src/hooks/useBirthWizard.ts`
 - `src/components/common/MockCard.tsx`
-- `src/components/timeline/SubTimeline.tsx` (presente ma non più agganciato alla surface attiva)
+- `src/components/timeline/SubTimeline.tsx` (rimosso dopo replacement in Fase 2)
 
 #### Legacy / mixed status
 
-- `scaleMode` in `PreferencesContext.tsx`: persistenza legacy senza surface pubblica;
+- `EventElement.tsx`: non più usato dal renderer timeline attivo, ma ancora presente come cleanup debt esplicito;
 - `src/components/unused/`: non è eliminabile in blocco perché almeno una parte viene ancora toccata da `useMilestone.ts` via type/import da `constants.ts`;
 - CSS legato al wizard e a path storici va classificato file per file, non cancellato in massa.
 
@@ -626,7 +627,7 @@ Il cleanup non deve più essere un atto puntuale alla fine, ma una pipeline cont
 
 **Obiettivo:** ricostruire la timeline come engine + renderer ibrido, con parità funzionale minima e stabilità superiore.
 
-**Stato:** 🟡 avviata il 2026-04-22, slice 2 verificata il 2026-04-23 — foundation + interaction contract + global lane accessible overlay
+**Stato:** ✅ completata il 2026-04-23 — shared canvas/overlay renderer, canvas-native hit-testing, legacy timeline cleanup
 
 **Scope consigliato**
 - creare il nuovo `timeline-core`;
@@ -659,19 +660,26 @@ Il cleanup non deve più essere un atto puntuale alla fine, ma una pipeline cont
 - aggiunte dipendenze dev `@testing-library/react` e `jsdom` per avviare la copertura component-level della timeline;
 - aggiunti `src/tests/buildTimelineInteraction.test.ts` e `src/tests/timelineGlobalOverlay.test.tsx` per coprire hit-target contract, keyboard activation, detail panel e axis pointer path.
 
+**Deliverable prodotti infine (slice 3 / chiusura fase)**
+- migrata la lane `personal` al nuovo overlay model condiviso; il runtime attivo non usa più marker/group DOM per nessuna lane;
+- rinominati i renderer attivi in `src/components/timeline/TimelineSceneCanvas.tsx` e `src/components/timeline/TimelineInteractiveOverlay.tsx` per riflettere il ruolo lane-agnostic;
+- esteso `timeline-core/interaction.ts` con geometria visuale, target center offset e resolver `resolveTimelineTargetAtPoint` per hit-testing canvas-native con slop e priorità del target preferito;
+- rimossi `scaleMode` e `pref_scaleMode` dal runtime timeline / `PreferencesContext`;
+- rimosso `src/components/timeline/SubTimeline.tsx` e relativo ramo di tipi/CSS legacy;
+- rafforzata la suite con copertura della lane `personal` e del pointer hit-testing; baseline aggiornata a 81 test.
+
 **Boundary espliciti della slice 1**
 - nessuna rimozione ancora di `SubTimeline`, `scaleMode` legacy o markup DOM degli event marker;
 - nessun cambio ancora al contract pubblico di `Milestones` o alla semantica `Personal / Global`;
 - il canvas introdotto in questa slice è volutamente decorativo/scene-based, non ancora il renderer interattivo definitivo.
 
-**Boundary espliciti dopo la slice 2**
-- la lane `personal` resta sul path DOM completo (`EventElement` + group buttons) e non è ancora migrata al nuovo overlay model;
-- l’hit-testing del core è per ora geometry-based e focusato sui target della lane `global`, non ancora su culling avanzato o scene picking canvas-native;
+**Boundary espliciti a chiusura fase**
 - il detail panel continua a vivere fuori dal canvas ed è ancora alimentato da payload detail-side, non da un inspector engine separato;
-- `SubTimeline` e `scaleMode` restano debito esplicito, non toccato da questa slice.
+- `EventElement.tsx` resta nel repository come fallback/cleanup debt, ma non è più parte del renderer timeline attivo;
+- l’hit-testing attivo è geometry-based e canvas-native lato input model; non usa ancora scene picking per-pixel o un inspector engine separato.
 
 **Esito verificato**
-- `npm test -- --run` → ✅ 79 test passati su 10 file;
+- `npm test -- --run` → ✅ 81 test passati su 10 file;
 - `npm run build` → ✅ produzione compilata con successo;
 - `npm run lint` → ⚠️ solo 1 warning preesistente in `src/context/UserProfileContext.tsx`.
 
@@ -852,9 +860,9 @@ va registrata prima o contestualmente all’implementazione.
 - [x] Inventario legacy / orphan / active completato
 - [x] Layer `src/ui/` introdotto e adottato sulle surface critiche
 - [x] Settings e DOB flow stabilizzati con nuove primitive
-- [ ] Timeline 2D migrata a renderer Canvas/SVG
-- [ ] `scaleMode` legacy deprecato o rimosso dove non più utile
-- [ ] `SubTimeline` e altri orphan gestiti correttamente
+- [x] Timeline 2D migrata a renderer Canvas/SVG
+- [x] `scaleMode` legacy deprecato o rimosso dove non più utile
+- [x] `SubTimeline` e altri orphan gestiti correttamente
 - [ ] Timescales riallineato al nuovo model esplorativo
 - [ ] 3D riallineato al contratto eventi condiviso
 - [ ] Coverage integration/UI regression aggiunta

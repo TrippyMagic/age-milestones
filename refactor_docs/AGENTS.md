@@ -1,7 +1,7 @@
 # AGENTS.md — Kronoscope
 
 > Reference document for AI agents and contributors.
-> Last updated: 23 aprile 2026 — refactor_4 phase 2 slice 2 verified.
+> Last updated: 23 aprile 2026 — refactor_4 phase 2 completed and verified.
 
 ## Project overview
 
@@ -14,7 +14,7 @@ Kronoscope is a React 19 + TypeScript SPA built with Vite that lets users enter 
 > - `refactor_docs/refactor_4/AUDIT_SUMMARY.md` — phase 0 inventory, cleanup boundary, priorities
 > - `refactor_docs/refactor_4/ARCHITECTURE_BASELINE.md` — verified runtime architecture snapshot
 
-**Live demo:** <https://age-milestones-live.vercel.app/>
+**Live demo:** <https://kronoscope.vercel.app/>
 
 ---
 
@@ -32,8 +32,8 @@ Kronoscope is a React 19 + TypeScript SPA built with Vite that lets users enter 
 | 3D | `@react-three/fiber` v9, `@react-three/drei` v10 (lazy-loaded, excluded from main bundle) |
 | Analytics | `@vercel/analytics` v1 |
 | Linting | ESLint 9 flat config (`typescript-eslint`, `react-hooks`, `react-refresh`) |
-| Testing | Vitest v1 + `@testing-library/react` + `jsdom` (phase 2 slice 2 verified: 10 files / 79 tests) |
-| Styling | Plain CSS via `src/css/index.css` + 9 imported modules; `src/css/ui.css` is the active refactor_4 UI-system stylesheet and `timeline.css` now hosts both the hybrid canvas layer and the global-lane accessible overlay |
+| Testing | Vitest v1 + `@testing-library/react` + `jsdom` (phase 2 verified: 10 files / 81 tests) |
+| Styling | Plain CSS via `src/css/index.css` + 9 imported modules; `src/css/ui.css` is the active refactor_4 UI-system stylesheet and `timeline.css` now hosts the shared hybrid canvas layer plus the accessible overlay for both timeline lanes |
 
 ---
 
@@ -45,7 +45,7 @@ npm run dev          # start Vite dev server (HMR)
 npm run build        # tsc type-check + Vite production build → dist/
 npm run preview      # preview the production build locally
 npm run lint         # run ESLint across the project
-npm test             # run Vitest tests (phase 2 slice 2 verified: 79 tests across 10 files)
+  npm test             # run Vitest tests (phase 2 verified: 81 tests across 10 files)
 ```
 
 ---
@@ -113,7 +113,7 @@ kronoscope/
     │   └── wizard.css               # Birth date wizard
     ├── context/
     │   ├── BirthDateContext.tsx     # birthDate + birthTime + clearBirthDate (localStorage: "dob", "dobTime")
-    │   ├── PreferencesContext.tsx   # activeCategories, show3D, timescalesTab, visibleTimelineLanes + legacy scaleMode (pref_*)
+    │   ├── PreferencesContext.tsx   # activeCategories, show3D, timescalesTab, visibleTimelineLanes (pref_*)
     │   └── UserProfileContext.tsx   # optional personal metrics stored in localStorage ("user_profile")
     ├── hooks/
     │   ├── useBirthWizard.ts        # Open/close wizard + body scroll lock + save to context
@@ -147,11 +147,10 @@ kronoscope/
     │   │   ├── MockCard.tsx         # Placeholder card for WIP pages
     │   │   └── scaleHint.tsx        # "?" button that opens scaleOverlay
     │   ├── timeline/
-    │   │   ├── Timeline.tsx         # Viewport state, pan/zoom, pinch, grouping, selection, render orchestration
-    │   │   ├── TimelineGlobalLaneCanvas.tsx # First phase-2 hybrid canvas backdrop for the global lane
-    │   │   ├── TimelineGlobalLaneOverlay.tsx # Accessible HTML hit-target overlay for the global lane canvas
-    │   │   ├── EventElement.tsx     # Dot marker + hover label; uses event.color ?? accent
-    │   │   ├── SubTimeline.tsx      # Legacy/orphan grouped-events surface; not mounted in current runtime
+    │   │   ├── Timeline.tsx         # Viewport state, pan/zoom, unified target activation, render orchestration
+    │   │   ├── TimelineSceneCanvas.tsx # Shared phase-2 canvas renderer for personal + global lane targets
+    │   │   ├── TimelineInteractiveOverlay.tsx # Accessible keyboard/focus overlay above the shared canvas scene
+    │   │   ├── EventElement.tsx     # Legacy dot marker + hover label component; no longer used in active timeline runtime
     │   │   ├── TimelineControls.tsx # +/−/↺ zoom + reset + Ctrl+scroll hint label
     │   │   ├── TimelineDetailPanel.tsx # Active selected-item details panel (mobile sheet / desktop inline)
     │   │   ├── buildRenderItems.ts  # Compatibility re-export toward timeline-core/buildRenderItems
@@ -160,7 +159,7 @@ kronoscope/
     │   ├── timeline-core/
     │   │   ├── buildRenderItems.ts  # Extracted pure grouping/positioning logic for the new timeline core
     │   │   ├── buildTimelineScene.ts# Lane/tick/focus scene builder used by active runtime Timeline
-    │   │   ├── interaction.ts       # Selection payloads, interactive targets, geometry + aria metadata for hybrid lanes
+    │   │   ├── interaction.ts       # Selection payloads, interactive targets, geometry + hit-testing for the shared canvas scene
     │   │   └── index.ts             # Public barrel for phase-2 core helpers
     │   ├── timescales/
     │   │   ├── EraCard.tsx          # Era card with linear proportional bar
@@ -210,7 +209,7 @@ kronoscope/
 Three React Contexts (no external state library):
 
 - **`BirthDateContext`** — `birthDate`, `setBirthDate`, `birthTime`, `setBirthTime`. Persisted in `localStorage` (`"dob"`, `"dobTime"`).
-- **`PreferencesContext`** — `activeCategories`, `show3D`, `timescalesTab`, `visibleTimelineLanes`, plus legacy persisted `scaleMode`. Persisted with `pref_*` keys.
+- **`PreferencesContext`** — `activeCategories`, `show3D`, `timescalesTab`, `visibleTimelineLanes`. Persisted with `pref_*` keys.
 - **`UserProfileContext`** — optional personal metrics used to refine estimate ranges; persisted under `"user_profile"`.
 
 Providers wrap the router in `main.tsx`: `BirthDateProvider` → `PreferencesProvider` → `UserProfileProvider` → `BrowserRouter`.
@@ -244,19 +243,18 @@ Active runtime is now split between `src/components/timeline/` and the new `src/
 |---|---|
 | `timeline-core/buildTimelineScene.ts` | Pure scene builder: ticks, canonical lane order, lane tops, focus ratio, render items per lane |
 | `timeline-core/buildRenderItems.ts` | Pure grouping + left-percent positioning logic extracted from the legacy timeline folder |
-| `timeline-core/interaction.ts` | Pure interaction contract: selection payloads, target geometry, aria/title metadata, detail-item mapping |
-| `Timeline.tsx` | Viewport state, pan/zoom, pinch, detail panel orchestration, personal-lane DOM path + global hybrid wiring |
-| `TimelineGlobalLaneCanvas.tsx` | First hybrid canvas runtime layer for the dense global lane, rendered beneath DOM hit-targets |
-| `TimelineGlobalLaneOverlay.tsx` | Accessible overlay buttons for the global lane; keyboard/focus/select path above canvas |
+| `timeline-core/interaction.ts` | Pure interaction contract: selection payloads, target geometry, aria/title metadata, detail-item mapping, canvas hit-testing |
+| `Timeline.tsx` | Viewport state, pan/zoom, pinch, detail panel orchestration, pointer hit-testing fallback and unified overlay wiring |
+| `TimelineSceneCanvas.tsx` | Shared canvas runtime layer for both lanes, including hover/focus/select drawing |
+| `TimelineInteractiveOverlay.tsx` | Accessible overlay buttons for keyboard/focus semantics above the shared canvas scene |
 | `EventElement.tsx` | Single event dot + hover label; `--marker-color` = `event.color ?? accentColors[accent]` |
-| `SubTimeline.tsx` | Legacy/orphan grouped-events panel; not part of the active rendered surface |
 | `TimelineControls.tsx` | +/−/↺ zoom buttons and Ctrl+scroll hint label |
 | `TimelineDetailPanel.tsx` | Active selected-item details panel |
 | `buildRenderItems.ts` | Compatibility bridge to keep legacy imports stable while the engine moves into `timeline-core/` |
 
-**Scale mode status:** the public log toggle has been removed. `PreferencesContext` still persists `scaleMode` as legacy state, but the active timeline currently uses an internal linear mode and treats scale cleanup as refactor_4 debt.
+**Scale mode status:** the timeline-specific `scaleMode` state and persistence have been removed. The active 2D timeline is linear-only and no longer carries legacy timeline scale preferences.
 
-**Phase 2 slice 2 status:** the active 2D timeline now consumes scene + interaction data from `timeline-core`. The `global` lane uses a hybrid path (`TimelineGlobalLaneCanvas` + `TimelineGlobalLaneOverlay`), while the `personal` lane still uses the DOM marker path.
+**Phase 2 status:** the active 2D timeline now consumes scene + interaction data from `timeline-core` for both lanes. Personal and global markers/groups are rendered by the shared `TimelineSceneCanvas`, pointer selection uses core hit-testing, and keyboard/focus semantics are preserved by `TimelineInteractiveOverlay`.
 
 **Event dot colors:** `TimelineEvent` has an optional `color?: string` field. Historical events from `historical-events.json` receive `color: CATEGORY_META[category].color` in `Milestones.tsx`:
 - Historical → `#ef4444` (red)
@@ -321,16 +319,16 @@ Cleanup already started after replacement:
 
 ### Fase 2 current status
 
-Refactor 4 Fase 2 is active and verified through slice 2, but not yet complete.
+Refactor 4 Fase 2 is complete and verified.
 
 What now exists in the current timeline stack:
 
 - `Timeline` consumes `buildTimelineScene` from `timeline-core`
-- `timeline-core/interaction.ts` emits reusable selection payloads + interactive targets
-- `TimelineGlobalLaneCanvas` owns the global-lane visual backdrop
-- `TimelineGlobalLaneOverlay` owns keyboard/focus/click selection on the global lane
-- the `personal` lane intentionally remains on the DOM marker path in this slice
-- component-level tests now cover the global overlay path via `@testing-library/react` + `jsdom`
+- `timeline-core/interaction.ts` emits reusable selection payloads + interactive targets with geometry and hit-testing helpers
+- `TimelineSceneCanvas` owns visual rendering for personal + global targets
+- `TimelineInteractiveOverlay` owns keyboard/focus semantics above the shared canvas scene
+- pointer selection now resolves through core hit-testing before falling back to bare-axis focus changes
+- component-level tests cover the shared overlay path via `@testing-library/react` + `jsdom`
 
 ### Scale overlay
 
@@ -364,7 +362,7 @@ What now exists in the current timeline stack:
 - **`src/components/unused/`** excluded from TS compilation but still imported at runtime. Do not delete.
 - **Italian strings** only in wizard month names; rest of UI is English.
 - CSS follows BEM-like naming (`timeline__filter-section__label`, `ts-explorer__detail`).
-- **`localStorage` keys:** `"dob"`, `"dobTime"`, `"pref_scaleMode"`, `"pref_eventCategories"`, `"pref_show3D"`, `"pref_timescalesTab"`.
+- **`localStorage` keys:** `"dob"`, `"dobTime"`, `"pref_eventCategories"`, `"pref_show3D"`, `"pref_timescalesTab"`, `"pref_visibleTimelineLanes"`.
 
 ---
 
@@ -374,9 +372,9 @@ What now exists in the current timeline stack:
 |---|---|
 | `src/tests/aboutLinks.test.ts` | help-link targets for About deep links |
 | `src/tests/buildRenderItems.test.ts` | grouping + edge marker behavior |
-| `src/tests/buildTimelineInteraction.test.ts` | interaction target contract, selection payloads, aria metadata |
+| `src/tests/buildTimelineInteraction.test.ts` | interaction target contract, selection payloads, aria metadata, shared hit-testing geometry |
 | `src/tests/buildTimelineScene.test.ts` | scene builder lane split, focus clamping, grouping reuse |
-| `src/tests/timelineGlobalOverlay.test.tsx` | global overlay activation, detail panel wiring, axis click invariants |
+| `src/tests/timelineGlobalOverlay.test.tsx` | shared overlay activation, personal/global parity, pointer hit-testing, axis click invariants |
 | `src/tests/format.test.ts` | `formatNice`, `formatBig`, `formatSmall` |
 | `src/tests/globalLaneNotice.test.ts` | loading / empty / error semantics for the world lane |
 | `src/tests/profileCompleteness.test.ts` | Settings/profile completeness warnings |
@@ -405,7 +403,7 @@ Bundle sizes (gzip, approximate):
 
 1. **`src/components/unused/`** is excluded from TypeScript. The whole folder is not safe to delete in one shot because `constants.ts` still leaks via a `Unit` type import in `useMilestone.ts`.
 2. **`@react-three/*`** are actively used in `src/components/3d/`. They are lazy-loaded — do not move them into eager imports.
-3. **`framer-motion`** is actively used in `Timeline`, `TimelineDetailPanel`, `SubTimeline` and `scaleOverlay`.
+3. **`framer-motion`** is actively used in `Timeline`, `TimelineDetailPanel` and `scaleOverlay`.
 4. **BirthDateWizard** exists in the repo but is not part of the mounted runtime surface.
 5. **`/personalize`** is now a compatibility redirect to `/settings`, not an active product page.
 6. **`EventCategory` colors in `CATEGORY_META`** (`types/events.ts`) are the single source of truth for historical event dot colors AND filter chip colors. Keep them in sync.

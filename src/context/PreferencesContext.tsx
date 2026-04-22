@@ -1,6 +1,6 @@
 /**
  * src/context/PreferencesContext.tsx
- * Global user preferences — scale mode, event category filters,
+ * Global user preferences — event category filters,
  * 3D toggle, timescales tab.
  * Persisted in localStorage where applicable.
  */
@@ -11,7 +11,6 @@ import {
   type TimelineLane,
 } from "../components/timeline/types";
 
-export type ScaleMode = "linear" | "log";
 export type TimescalesTab = "overview" | "comparator" | "explorer";
 
 const ALL_CATEGORIES: EventCategory[] = [
@@ -22,7 +21,6 @@ const ALL_CATEGORIES: EventCategory[] = [
   "cultural",
 ];
 
-const LS_SCALE    = "pref_scaleMode";
 const LS_CATS     = "pref_eventCategories";
 const LS_3D       = "pref_show3D";
 const LS_TS_TAB   = "pref_timescalesTab";
@@ -44,10 +42,6 @@ const writeLS = (key: string, value: unknown) => {
 
 /* ── context shape ────────────────────────────────────────── */
 type PreferencesCtx = {
-  /* scale mode for timelines */
-  scaleMode: ScaleMode;
-  setScaleMode: (mode: ScaleMode) => void;
-
   /* which event categories are visible on the timeline */
   activeCategories: Set<EventCategory>;
   toggleCategory: (cat: EventCategory) => void;
@@ -70,10 +64,6 @@ const PreferencesCtx = createContext<PreferencesCtx | undefined>(undefined);
 
 /* ── provider ─────────────────────────────────────────────── */
 export function PreferencesProvider({ children }: { children: ReactNode }) {
-  const [scaleMode, setScaleModeState] = useState<ScaleMode>(
-    () => readLS<ScaleMode>(LS_SCALE, "linear")
-  );
-
   const [activeCategories, setActiveCategories] = useState<Set<EventCategory>>(
     () => {
       const saved = readLS<EventCategory[] | null>(LS_CATS, null);
@@ -97,11 +87,6 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
   );
 
   /* ── setters with persistence ───────────────────────────── */
-  const setScaleMode = (mode: ScaleMode) => {
-    setScaleModeState(mode);
-    writeLS(LS_SCALE, mode);
-  };
-
   const toggleCategory = (cat: EventCategory) => {
     setActiveCategories(prev => {
       const next = new Set(prev);
@@ -150,7 +135,6 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
   return (
     <PreferencesCtx.Provider
       value={{
-        scaleMode, setScaleMode,
         activeCategories, toggleCategory, resetCategories,
         show3D, setShow3D,
         timescalesTab, setTimescalesTab,
