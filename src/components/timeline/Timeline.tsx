@@ -15,28 +15,30 @@ import { usePinchZoom } from "../../hooks/usePinchZoom";
 import {
   viewportToRange,
   applyZoom,
-  generateTicks,
   createViewportFromRange,
   sanitizeViewport,
-  valueToRatio,
   ratioToValue,
-  toPercent,
   clamp,
   MIN_SPAN_MS,
   ZOOM_IN,
   ZOOM_OUT,
-  type ScaleMode,
   type Viewport,
 } from "../../utils/scaleTransform";
-import { buildRenderItems } from "./buildRenderItems";
+import {
+  buildTimelineScene,
+  TIMELINE_INTERNAL_SCALE_MODE,
+  toDetailPanelItem,
+  type TimelineInteractiveTarget,
+  type TimelineSelectionPayload,
+} from "../timeline-core";
 import { EventElement } from "./EventElement";
 import { TimelineControls } from "./TimelineControls";
 import { TimelineDetailPanel } from "./TimelineDetailPanel";
-import { LANE_META, type DetailPanelItem, type Props, type TimelineEvent, type TimelineLane } from "./types";
+import { TimelineGlobalLaneCanvas } from "./TimelineGlobalLaneCanvas";
+import { TimelineGlobalLaneOverlay } from "./TimelineGlobalLaneOverlay";
+import { type DetailPanelItem, type Props, type TimelineEvent } from "./types";
 import { SLIDER_RESOLUTION, PAN_THRESHOLD_PX } from "./types";
 
-const LANE_ORDER: TimelineLane[] = ["personal", "global"];
-const INTERNAL_SCALE_MODE: ScaleMode = "linear";
 const TIMELINE_NOW_TICK_MS = 60_000;
 
 const FALLBACK_VIEWPORT: Viewport = {
@@ -70,13 +72,10 @@ export default function Timeline({ range, value, onChange, events, renderValue }
   const viewportRef = useRef<Viewport>(activeViewport ?? FALLBACK_VIEWPORT);
   viewportRef.current = activeViewport ?? FALLBACK_VIEWPORT;
 
-  const scaleModeRef = useRef<ScaleMode>(INTERNAL_SCALE_MODE);
+  const scaleModeRef = useRef(TIMELINE_INTERNAL_SCALE_MODE);
 
   const effectiveViewport = activeViewport ?? FALLBACK_VIEWPORT;
   const viewRange = useMemo(() => viewportToRange(effectiveViewport), [effectiveViewport]);
-  const safeValue = clamp(value, viewRange.start, viewRange.end);
-  const valueRatio = valueToRatio(safeValue, viewRange, INTERNAL_SCALE_MODE);
-  const sliderValue = valueRatio * SLIDER_RESOLUTION;
 
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -91,28 +90,26 @@ export default function Timeline({ range, value, onChange, events, renderValue }
     axisRef(node);
   }, [axisRef]);
 
-  const sortedEvents = useMemo(() => events.slice().sort((a, b) => a.value - b.value), [events]);
-  const autoTicks = useMemo(() => generateTicks(viewRange, INTERNAL_SCALE_MODE), [viewRange]);
+  const scene = useMemo<ReturnType<typeof buildTimelineScene>>(
+    () => buildTimelineScene({
+      events,
+      range: viewRange,
+      axisWidth: axisSize.width,
+      focusValue: value,
+      mode: TIMELINE_INTERNAL_SCALE_MODE,
+    }),
+    [events, viewRange, axisSize.width, value],
+  );
+  const safeValue = scene.focusValue;
+  const sliderValue = scene.focusRatio * SLIDER_RESOLUTION;
+  const globalLaneScene = scene.lanes.find(lane => lane.lane === "global");
 
-  const renderItemsByLane = useMemo(() => {
-    const map: Record<TimelineLane, ReturnType<typeof buildRenderItems>> = {
-      personal: [], global: [],
-    };
-
-    for (const lane of LANE_ORDER) {
-      const laneEvents = sortedEvents.filter(event => (event.lane ?? "personal") === lane);
-      map[lane] = buildRenderItems(laneEvents, viewRange, axisSize.width, INTERNAL_SCALE_MODE);
-    }
-
-    return map;
-  }, [sortedEvents, viewRange, axisSize.width]);
-
-  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [selectedSelectionKey, setSelectedSelectionKey] = useState<string | null>(null);
   const [selectedItems, setSelectedItems] = useState<DetailPanelItem[]>([]);
   const [isPanning, setIsPanning] = useState(false);
 
   const clearSelection = useCallback(() => {
-    setSelectedGroupId(null);
+    setSelectedSelectionKey(null);
     setSelectedItems([]);
   }, []);
 
@@ -180,7 +177,7 @@ export default function Timeline({ range, value, onChange, events, renderValue }
         const rect = axis.getBoundingClientRect();
         const relative = clamp((evt.clientX - rect.left) / rect.width, 0, 1);
         const vp = viewportRef.current;
-        onChange(ratioToValue(relative, viewportToRange(vp), INTERNAL_SCALE_MODE));
+          onChange(ratioToValue(relative, viewportToRange(vp), TIMELINE_INTERNAL_SCALE_MODE));
       }
     }
     cancelPointerInteraction();
@@ -213,39 +210,46 @@ export default function Timeline({ range, value, onChange, events, renderValue }
     cancelPointerInteraction();
     const ratio = Number(evt.target.value) / SLIDER_RESOLUTION;
     const vp = viewportRef.current;
-    onChange(ratioToValue(ratio, viewportToRange(vp), INTERNAL_SCALE_MODE));
+    onChange(ratioToValue(ratio, viewportToRange(vp), TIMELINE_INTERNAL_SCALE_MODE));
   }, [cancelPointerInteraction, onChange]);
 
   const handleAxisPointerCancel = useCallback(() => {
     cancelPointerInteraction();
   }, [cancelPointerInteraction]);
 
-  const handleSingleSelect = useCallback((item: DetailPanelItem) => {
-    setSelectedGroupId(item.id);
-    setSelectedItems([item]);
+  const handleSingleSelect = useCallback((payload: TimelineSelectionPayload) => {
+    setSelectedSelectionKey(payload.selectionKey);
+    setSelectedItems(payload.detailItems);
   }, []);
 
-  const handleGroupSelect = useCallback((id: string, items: DetailPanelItem[]) => {
-    setSelectedGroupId(prev => {
-      const next = prev === id ? null : id;
-      setSelectedItems(next === null ? [] : items);
+  const handleGroupSelect = useCallback((payload: TimelineSelectionPayload) => {
+    setSelectedSelectionKey(prev => {
+      const next = prev === payload.selectionKey ? null : payload.selectionKey;
+      setSelectedItems(next === null ? [] : payload.detailItems);
       return next;
     });
   }, []);
 
   const handleEventSelect = useCallback((event: TimelineEvent) => {
     handleSingleSelect({
-      id: event.id,
-      label: event.label,
-      subLabel: event.subLabel,
-      value: event.value,
-      category: event.category,
-      semanticKind: event.semanticKind,
-      temporalStatus: event.temporalStatus,
-      projectionType: event.projectionType,
-      certainty: event.certainty,
+      selectionKey: event.id,
+      detailItems: [toDetailPanelItem(event)],
     });
   }, [handleSingleSelect]);
+
+  const handleGlobalTargetActivate = useCallback((target: TimelineInteractiveTarget) => {
+    const payload = {
+      selectionKey: target.selectionKey,
+      detailItems: target.detailItems,
+    } satisfies TimelineSelectionPayload;
+
+    if (target.kind === "group") {
+      handleGroupSelect(payload);
+      return;
+    }
+
+    handleSingleSelect(payload);
+  }, [handleGroupSelect, handleSingleSelect]);
 
   const valueNode = renderValue?.(safeValue);
   const showFallback = !activeViewport || viewRange.end <= viewRange.start;
@@ -293,10 +297,9 @@ export default function Timeline({ range, value, onChange, events, renderValue }
           onLostPointerCapture={handleAxisPointerCancel}
         >
           <div className="timeline__lane-ruler">
-            {autoTicks.map(tick => {
-              const left = toPercent(valueToRatio(tick.value, viewRange, INTERNAL_SCALE_MODE));
+            {scene.ticks.map(tick => {
               return (
-                <div key={tick.id} className="timeline__tick" style={{ left: `${left}%` }}>
+                <div key={tick.id} className="timeline__tick" style={{ left: `${tick.leftPercent}%` }}>
                   <span className="timeline__tick-line" />
                   <span className="timeline__tick-label">{tick.label}</span>
                 </div>
@@ -304,32 +307,36 @@ export default function Timeline({ range, value, onChange, events, renderValue }
             })}
           </div>
 
-          {LANE_ORDER.map((lane, idx) => {
-            const laneItems = renderItemsByLane[lane];
-            const laneTop = 30 + idx * 28;
+          {globalLaneScene && axisSize.width > 0 && axisSize.height > 0 && (
+            <>
+              <TimelineGlobalLaneCanvas
+                width={axisSize.width}
+                height={axisSize.height}
+                laneTopPercent={globalLaneScene.topPercent}
+                targets={globalLaneScene.interactiveTargets}
+              />
+              <TimelineGlobalLaneOverlay
+                targets={globalLaneScene.interactiveTargets}
+                selectedSelectionKey={selectedSelectionKey}
+                onActivate={handleGlobalTargetActivate}
+              />
+            </>
+          )}
+
+          {scene.lanes.map(({ lane, label, items, topPercent }) => {
             return (
               <div
                 key={lane}
                 className={`timeline__lane timeline__lane--${lane}`}
-                style={{ ["--timeline-line-top" as string]: `${laneTop}%` }}
+                style={{ ["--timeline-line-top" as string]: `${topPercent}%` }}
               >
-                <span className="timeline__lane-label">{LANE_META[lane].label}</span>
+                <span className="timeline__lane-label">{label}</span>
                 <div className="timeline__line" />
 
-                {laneItems.map(item => {
+                {lane === "personal" && items.map(item => {
                   if (item.type === "group") {
-                    const isActive = selectedGroupId === item.id;
-                    const detailItems = item.events.map(event => ({
-                      id: event.id,
-                      label: event.label,
-                      subLabel: event.subLabel,
-                      value: event.value,
-                        category: event.category,
-                        semanticKind: event.semanticKind,
-                        temporalStatus: event.temporalStatus,
-                        projectionType: event.projectionType,
-                        certainty: event.certainty,
-                    }));
+                    const isActive = selectedSelectionKey === item.id;
+                    const detailItems = item.events.map(toDetailPanelItem);
 
                     return (
                       <button
@@ -345,7 +352,7 @@ export default function Timeline({ range, value, onChange, events, renderValue }
                           item.grouping === "edge-end" ? "timeline__group--edge-end" : "",
                         ].filter(Boolean).join(" ")}
                         style={{ left: `${item.leftPercent}%` }}
-                        onClick={() => handleGroupSelect(item.id, detailItems)}
+                        onClick={() => handleGroupSelect({ selectionKey: item.id, detailItems })}
                         aria-pressed={isActive}
                         aria-label={
                           item.grouping === "edge-start"
@@ -375,7 +382,7 @@ export default function Timeline({ range, value, onChange, events, renderValue }
                       variant="main"
                       range={viewRange}
                       now={now}
-                      selected={selectedGroupId === item.event.id}
+                      selected={selectedSelectionKey === item.event.id}
                       onSelect={handleEventSelect}
                     />
                   );
@@ -386,7 +393,7 @@ export default function Timeline({ range, value, onChange, events, renderValue }
 
           <div
             className="timeline__focus"
-            style={{ left: `${toPercent(valueRatio)}%` } as CSSProperties}
+            style={{ left: `${scene.focusLeftPercent}%` } as CSSProperties}
             role="presentation"
             aria-hidden="true"
           >

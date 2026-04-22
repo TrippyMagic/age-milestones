@@ -331,6 +331,99 @@
   border: 1px solid rgba(129, 140, 248, 0.12);
 }
 
+.timeline__hybrid-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.92;
+}
+
+.timeline__global-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: var(--z-focus-groups);
+}
+
+.timeline__global-target {
+  position: absolute;
+  --timeline-target-color: var(--indigo-100);
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  pointer-events: auto;
+  cursor: pointer;
+  z-index: var(--z-focus-groups);
+}
+
+.timeline__global-target:focus-visible {
+  outline: none;
+}
+
+.timeline__global-target--single {
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+}
+
+.timeline__global-target--single::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+  border: 2px solid var(--timeline-target-color, var(--indigo-100));
+  background: rgba(15, 23, 42, 0.18);
+  box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.26);
+  opacity: 0;
+  transition: opacity .18s ease, transform .18s ease;
+}
+
+.timeline__global-target--single:hover::before,
+.timeline__global-target--single:focus-visible::before,
+.timeline__global-target--single.timeline__global-target--selected::before {
+  opacity: 1;
+}
+
+.timeline__global-target--single.timeline__global-target--selected::before {
+  transform: translate(-50%, -50%) scale(1.06);
+}
+
+.timeline__global-target--group {
+  transform: translate(-50%, calc(-100% - 12px));
+}
+
+.timeline__global-target-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 12px);
+  transform: translate(-50%, 8px);
+  padding: 6px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(129, 140, 248, 0.28);
+  background: rgba(15, 23, 42, 0.9);
+  color: var(--text-muted);
+  font-size: .72rem;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .18s ease, transform .18s ease;
+  box-shadow: 0 12px 28px rgba(2, 6, 23, 0.45);
+}
+
+.timeline__global-target:hover .timeline__global-target-tooltip,
+.timeline__global-target:focus-visible .timeline__global-target-tooltip,
+.timeline__global-target.timeline__global-target--selected .timeline__global-target-tooltip {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
 /* ── Group range highlight ─────────────────────────────────── */
 .timeline__group-range {
   /* ...existing properties... */
@@ -463,6 +556,7 @@
   pointer-events: auto;
   z-index: var(--z-events);
   --timeline-marker-size: 18px;
+  --marker-color: var(--indigo-300);
   cursor: pointer;
 }
 

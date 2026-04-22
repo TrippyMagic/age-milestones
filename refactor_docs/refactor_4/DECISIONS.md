@@ -1,7 +1,7 @@
 # DECISIONS — Refactor 4: UI Platform Stabilization & Timeline Systems
 
 **Data di apertura:** 2026-04-22  
-**Stato:** 🟡 In corso — Fase 0 completata
+**Stato:** 🟡 In corso — Fase 0 completata, Fase 1 completata, Fase 2 slice 2 verificata
 
 ---
 
@@ -563,6 +563,90 @@ Cleanup esplicitamente rinviato:
 ### Trigger di revisione o rollback
 - se emerge un consumer runtime non mappato dei selettori rimossi;
 - se il pruning successivo delle aree `unused` o wizard richiede di reintrodurre temporaneamente stili shared eliminati qui.
+
+---
+
+## D-16 — Fase 2 slice 1: timeline-core estratto prima del renderer interattivo completo
+
+**Data:** 2026-04-22  
+**Fase:** 2  
+**Stato:** implemented
+
+### Contesto
+La Fase 2 richiede di portare la timeline 2D verso un’architettura engine + renderer ibrido, ma un full swap immediato del renderer dei marker avrebbe alzato troppo il rischio su gesture, accessibilità, detail panel e parity con `Milestones`.
+
+Serviva una prima slice che:
+
+- introducesse davvero un `timeline-core` runtime;
+- toccasse il rendering reale con una surface Canvas/SVG;
+- mantenesse stabile il layer DOM attivo per selezione, focus e detail panel.
+
+### Decisione
+La Fase 2 parte con una slice foundation composta da due mosse coordinate:
+
+1. estrarre in `src/components/timeline-core/` il model layer puro iniziale (`buildRenderItems`, `buildTimelineScene`, lane ordering, focus/tick scene data);
+2. introdurre un primo renderer Canvas runtime limitato alla lane `global`, usato come backdrop scene-based sopra il frame della lane ma sotto il layer DOM interattivo/accessibile già esistente.
+
+`src/components/timeline/buildRenderItems.ts` resta come re-export compatibile per evitare churn sugli import mentre il core si stabilizza.
+
+### Alternative valutate
+- **Full swap immediato dei marker globali da DOM a Canvas**: troppo rischio per la prima slice, specialmente su hit-target, accessibilità e regressioni di selezione.
+- **Solo estrazione di funzioni pure senza toccare il runtime visuale**: utile ma insufficiente per considerare davvero avviata la Fase 2 renderer-oriented.
+- **Canvas su entrambe le lane fin da subito**: più coerente con l’end-state, ma eccessivo come primo step incrementale.
+
+### Impatto / conseguenze
+- il runtime della timeline ora dipende da un scene model esplicito e non solo da orchestration locale dentro `Timeline.tsx`;
+- esiste già una prima surface Canvas reale nel path attivo della timeline 2D;
+- accessibilità e parity funzionale restano protette dal mantenimento temporaneo del layer DOM per marker/gruppi/detail panel;
+- la prossima slice può concentrarsi su hit-testing, renderer più denso o de-DOM progressivo senza dover prima rifare l’estrazione del core.
+
+### Trigger di revisione o rollback
+- se il canvas backdrop introduce rumore visivo o costi di sync sproporzionati rispetto al valore ottenuto;
+- se il scene model estratto non riesce a diventare la base per culling/hit-testing/renderer successivi;
+- se emergono regressioni non accettabili in pan/zoom/mobile che richiedono di temporaneamente disattivare la nuova surface ibrida.
+
+---
+
+## D-17 — Fase 2 slice 2: contratto di interaction nel core e lane globale de-DOM con overlay accessibile
+
+**Data:** 2026-04-23  
+**Fase:** 2  
+**Stato:** implemented
+
+### Contesto
+Dopo la slice 1, la timeline aveva già un `timeline-core` runtime e un canvas backdrop per la lane `global`, ma la selezione continuava a dipendere completamente dal markup DOM legacy di marker e group bubbles. La prossima slice naturale richiedeva due passi insieme:
+
+1. rendere esplicito nel core il contratto di selection/hit-target;
+2. iniziare una vera de-DOM progressiva almeno sulla lane più densa (`global`) senza rompere detail panel, keyboard semantics o path di pan sull’asse.
+
+### Decisione
+La slice 2 introduce un layer `interaction` dentro `src/components/timeline-core/` con:
+
+- `TimelineSelectionPayload`
+- `TimelineInteractiveTarget`
+- mapping puro `RenderItem -> detailItems / aria metadata / geometry`
+
+Il runtime applica questo contratto **solo** alla lane `global` nella slice corrente:
+
+- il visuale della lane resta su Canvas (`TimelineGlobalLaneCanvas`)
+- l’interazione passa a un overlay HTML minimale (`TimelineGlobalLaneOverlay`)
+- la lane `personal` resta sul renderer DOM storico
+
+### Alternative valutate
+- **Portare subito entrambe le lane al nuovo overlay**: troppo churn in una singola slice e rischio eccessivo di regressioni su marker personali/highlight.
+- **Tenere la lane globale ancora DOM ma con payload core**: migliora il model layer ma non produce una vera riduzione di DOM nel runtime attivo.
+- **Passare direttamente a hit-testing canvas-native**: interessante come end-state, ma troppo presto senza prima stabilizzare un contratto di target/selection più semplice e testabile.
+
+### Impatto / conseguenze
+- il core ora espone target interattivi riusabili e non solo render items visuali;
+- la lane `global` riduce il markup attivo a bottoni overlay minimali invece di marker/tooltip DOM completi;
+- detail panel e keyboard activation restano funzionanti senza richiedere ancora scene picking canvas-native;
+- il progetto introduce anche il primo step concreto della testing strategy di fase avanzata con `@testing-library/react` + `jsdom` per la timeline.
+
+### Trigger di revisione o rollback
+- se l’overlay accessibile non copre abbastanza bene discoverability/focus rispetto al markup precedente;
+- se il contratto `TimelineInteractiveTarget` risulta troppo debole per supportare la futura migrazione della lane `personal` o l’hit-testing evoluto;
+- se la coesistenza tra lane `personal` DOM e lane `global` overlay/canvas introduce divergenze UX troppo visibili.
 
 ---
 
