@@ -3,6 +3,8 @@
 **Data:** 2026-04-20
 **Stato:** ✅ Completato
 
+> **Nota di continuità:** la baseline successiva è ora documentata in `refactor_docs/refactor_4/PLAN.md` e `refactor_docs/refactor_4/DECISIONS.md`.
+
 ---
 
 ## Executive Summary

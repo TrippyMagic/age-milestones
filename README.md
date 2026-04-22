@@ -49,3 +49,12 @@ Run the unit tests with:
 ```bash
 npm test
 ```
+
+## Architecture Roadmaps
+
+Current refactor planning documents live under `refactor_docs/`:
+
+- `refactor_docs/refactor_3/PLAN.md` — completed roadmap for the current product baseline
+- `refactor_docs/refactor_4/PLAN.md` — current structural refactor plan focused on UI system stabilization, timeline 2D redesign, Timescales convergence, and cleanup/testing hardening
+- `refactor_docs/refactor_4/DECISIONS.md` — decision log for the architectural choices introduced by Refactor 4
+

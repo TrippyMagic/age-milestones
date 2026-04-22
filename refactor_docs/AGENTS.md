@@ -1,11 +1,16 @@
-# AGENTS.md — Age Milestones
+# AGENTS.md — Kronoscope
 
 > Reference document for AI agents and contributors.
-> Last updated: 14 marzo 2026 — post-Phase 5 + Timeline polish.
+> Last updated: 22 aprile 2026 — post-refactor_3, with refactor_4 planning baseline added.
 
 ## Project overview
 
-Age Milestones is a React 19 + TypeScript SPA built with Vite that lets users enter their birth date (and optionally time) and explore their lifetime expressed through unusual units, perspectives, and timescales. The live deployment is on Vercel.
+Kronoscope is a React 19 + TypeScript SPA built with Vite that lets users enter their birth date (and optionally time) and explore their lifetime expressed through unusual units, perspectives, and timescales. The live deployment is on Vercel.
+
+> **Planning status note (2026-04-22):** parts of this document are historical and may lag behind the latest implementation details. The authoritative roadmap documents are:
+> - `refactor_docs/refactor_3/PLAN.md` — completed roadmap for the current product baseline
+> - `refactor_docs/refactor_4/PLAN.md` — current structural refactor baseline
+> - `refactor_docs/refactor_4/DECISIONS.md` — ADR / decision log for refactor_4
 
 **Live demo:** <https://age-milestones-live.vercel.app/>
 
@@ -45,7 +50,7 @@ npm test             # run Vitest unit tests (45 tests across 2 files)
 ## Project structure
 
 ```
-age-milestones/
+kronoscope/
 ├── AGENTS.md                        # This file
 ├── index.html                       # SPA entry point
 ├── vite.config.ts                   # Vite config (react plugin)
@@ -56,10 +61,16 @@ age-milestones/
 ├── package.json
 ├── README.md                        # User-facing quick start
 ├── refactor_docs/
-│   ├── DECISIONS.md                 # Architectural decisions log (D-01 … D-XX)
-│   ├── FINAL_REPORT.md              # Refactoring phase report (Phase 0–5)
-│   ├── PLAN.md                      # Implementation roadmap
-│   └── REFACTOR_IDEA.md             # Original refactoring proposal
+│   ├── DECISIONS.md                 # Architectural decisions log (historical root doc)
+│   ├── FINAL_REPORT.md              # Historical refactoring phase report
+│   ├── PLAN.md                      # Historical implementation roadmap
+│   ├── REFACTOR_IDEA.md             # Original refactoring proposal
+│   ├── refactor_3/
+│   │   ├── PLAN.md                  # Completed roadmap for the current product baseline
+│   │   └── DECISIONS.md             # Decisions log for refactor_3
+│   └── refactor_4/
+│       ├── PLAN.md                  # Current structural roadmap: UI system + timeline platform stabilization
+│       └── DECISIONS.md             # ADR log for refactor_4
 ├── public/
 │   ├── bg-time.png
 │   ├── default-favicon.png
