@@ -12,6 +12,7 @@ import { PHENOMENON_CATEGORY_META } from "../types/phenomena";
 import type { TimescalesTab } from "../context/PreferencesContext";
 import { SectionErrorBoundary } from "../components/SectionErrorBoundary";
 import { getAboutSectionHref } from "../utils/aboutLinks";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui";
 
 const ALL_CATS: PhenomenonCategory[] = [
   "quantum", "biological", "human", "geological", "cosmic",
@@ -39,50 +40,43 @@ export default function Timescales() {
       return next;
     });
 
+  const handleTabChange = (value: string) => {
+    if (value === "overview" || value === "comparator" || value === "explorer") {
+      setTimescalesTab(value);
+    }
+  };
+
   return (
     <>
       <Navbar />
 
       <main className="page timescales-page">
-        {/* ── Header card with tabs ── */}
-        <section className="perspective-card">
-          <div className="perspective-card__body">
-            <h1 className="perspective-card__title">
-              Explore{" "}
-              <span className="perspective-card__title-accent">Timescales</span>
-            </h1>
-            <p className="perspective-card__subtitle">
-              From the Planck time to the heat death of the universe —
-              every phenomenon in perspective.
-            </p>
-            <Link to={getAboutSectionHref("timescales")} className="help-link help-link--inline">
-              How this view works
-            </Link>
-          </div>
+        <Tabs value={timescalesTab} onValueChange={handleTabChange}>
+          <section className="perspective-card">
+            <div className="perspective-card__body">
+              <h1 className="perspective-card__title">
+                Explore{" "}
+                <span className="perspective-card__title-accent">Timescales</span>
+              </h1>
+              <p className="perspective-card__subtitle">
+                From the Planck time to the heat death of the universe —
+                every phenomenon in perspective.
+              </p>
+              <Link to={getAboutSectionHref("timescales")} className="help-link help-link--inline">
+                How this view works
+              </Link>
+            </div>
 
-          <div className="tabs timescales-tabs" role="tablist" aria-label="Timescales sections">
-            {(["overview", "comparator", "explorer"] as TimescalesTab[]).map(t => (
-              <button
-                key={t}
-                type="button"
-                className={`tab${timescalesTab === t ? " tab--active" : ""}`}
-                onClick={() => setTimescalesTab(t)}
-                role="tab"
-                aria-selected={timescalesTab === t}
-              >
-                {TAB_LABELS[t]}
-              </button>
-            ))}
-          </div>
-        </section>
+            <TabsList className="timescales-tabs" aria-label="Timescales sections">
+              {(["overview", "comparator", "explorer"] as TimescalesTab[]).map(t => (
+                <TabsTrigger key={t} value={t}>
+                  {TAB_LABELS[t]}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </section>
 
-        {/* ── Overview tab ── */}
-        {timescalesTab === "overview" && (
-          <section
-            className="card ts-section-card"
-            role="tabpanel"
-            aria-label="Overview panel"
-          >
+          <TabsContent value="overview" className="card ts-section-card" aria-label="Overview panel">
             {/* Category filters */}
             <div
               className="timeline__category-filters"
@@ -121,16 +115,9 @@ export default function Timescales() {
                 activeCategories={activeCats}
               />
             </SectionErrorBoundary>
-          </section>
-        )}
+          </TabsContent>
 
-        {/* ── Comparator tab ── */}
-        {timescalesTab === "comparator" && (
-          <section
-            className="card ts-section-card"
-            role="tabpanel"
-            aria-label="Comparator panel"
-          >
+          <TabsContent value="comparator" className="card ts-section-card" aria-label="Comparator panel">
             {error && (
               <p className="ts-overview__empty">
                 Failed to load phenomena: {error}
@@ -142,24 +129,17 @@ export default function Timescales() {
             >
               <PhenomenaComparator phenomena={phenomena} status={status} />
             </SectionErrorBoundary>
-          </section>
-        )}
+          </TabsContent>
 
-        {/* ── Explorer tab ── */}
-        {timescalesTab === "explorer" && (
-          <section
-            className="card ts-section-card"
-            role="tabpanel"
-            aria-label="Explorer panel"
-          >
+          <TabsContent value="explorer" className="card ts-section-card" aria-label="Explorer panel">
             <SectionErrorBoundary
               title="Explorer unavailable"
               message="The explorer panel hit a local rendering problem. Try opening it again."
             >
               <GeoCosmicExplorer />
             </SectionErrorBoundary>
-          </section>
-        )}
+          </TabsContent>
+        </Tabs>
       </main>
 
       <Footer />

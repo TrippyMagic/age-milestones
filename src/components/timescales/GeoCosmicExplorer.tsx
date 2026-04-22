@@ -19,6 +19,7 @@ import { EraCard } from "./EraCard";
 import { formatMya, formatMyaDuration } from "../../utils/formatDuration";
 import type { GeologicalUnit, CosmicMilestone } from "../../types/geological";
 import { RANK_LABELS } from "../../types/geological";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui";
 
 // ── Loading skeleton ───────────────────────────────────────────
 function ExplorerSkeleton() {
@@ -279,31 +280,23 @@ export function GeoCosmicExplorer() {
   }
 
   return (
-    <div className="ts-explorer-root">
-      {/* ── Sub-tab bar ── */}
-      <div className="ts-explorer__subtabs" role="tablist" aria-label="Explorer sections">
-        {(["geological", "cosmic"] as ExplorerSubTab[]).map(t => (
-          <button
-            key={t}
-            type="button"
-            role="tab"
-            aria-selected={subTab === t}
-            className={`ts-explorer__subtab${subTab === t ? " ts-explorer__subtab--active" : ""}`}
-            onClick={() => setSubTab(t)}
-          >
-            {t === "geological" ? "🌍 Geological" : "🌌 Cosmic"}
-          </button>
-        ))}
-      </div>
+    <Tabs value={subTab} onValueChange={(value) => value === "geological" || value === "cosmic" ? setSubTab(value) : undefined} className="ts-explorer-root">
+      <TabsList className="ts-explorer__subtabs" aria-label="Explorer sections">
+        <TabsTrigger className="ts-explorer__subtab" value="geological">
+          🌍 Geological
+        </TabsTrigger>
+        <TabsTrigger className="ts-explorer__subtab" value="cosmic">
+          🌌 Cosmic
+        </TabsTrigger>
+      </TabsList>
 
-      {/* ── Content ── */}
-      {subTab === "geological" && (
+      <TabsContent value="geological">
         <GeologicalExplorer geological={data.geological} />
-      )}
-      {subTab === "cosmic" && (
+      </TabsContent>
+      <TabsContent value="cosmic">
         <CosmicTimeline milestones={data.cosmic} />
-      )}
-    </div>
+      </TabsContent>
+    </Tabs>
   );
 }
 

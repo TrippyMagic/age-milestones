@@ -3,6 +3,7 @@
  * Simple inline birth-date + time selector. No modal, no steps.
  */
 import { useBirthDate } from "../context/BirthDateContext";
+import { Button, Field } from "../ui";
 
 const CURRENT_YEAR = new Date().getFullYear();
 const TODAY = new Date().toISOString().slice(0, 10);
@@ -35,43 +36,37 @@ export default function BirthDatePicker() {
 
   return (
     <div className="dob-picker">
-      <div className="dob-picker__field">
-        <label className="dob-picker__label" htmlFor="dob-date">
-          Date of birth
-        </label>
+      <Field label="Date of birth" htmlFor="dob-date" className="dob-picker__field">
         <input
           id="dob-date"
           type="date"
-          className="dob-picker__input"
+          className="ui-input"
           max={TODAY}
           min="1900-01-01"
           value={dateValue}
           onChange={handleDate}
         />
-      </div>
+      </Field>
 
-      <div className="dob-picker__field">
-        <label className="dob-picker__label" htmlFor="dob-time">
-          Time <span className="dob-picker__optional">(optional)</span>
-        </label>
+      <Field
+        label={<>Time <span className="dob-picker__optional">(optional)</span></>}
+        htmlFor="dob-time"
+        className="dob-picker__field"
+      >
         <input
           id="dob-time"
           type="time"
-          className="dob-picker__input"
+          className="ui-input"
           value={birthTime}
           onChange={handleTime}
         />
-      </div>
+      </Field>
 
       {birthDate && (
         <div className="dob-picker__actions">
-          <button
-            type="button"
-            className="dob-picker__clear"
-            onClick={clearBirthDate}
-          >
+          <Button variant="danger" onClick={clearBirthDate}>
             Clear birth date
-          </button>
+          </Button>
         </div>
       )}
     </div>

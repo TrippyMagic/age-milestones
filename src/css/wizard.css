@@ -46,7 +46,7 @@
   align-items: stretch;
 }
 
-.landing__buttons .button {
+.landing__buttons .ui-button {
   margin-top: 0;
   width: 100%;
   max-width: 100%;
@@ -59,7 +59,7 @@
     flex-wrap: wrap;
   }
 
-  .landing__buttons .button {
+  .landing__buttons .ui-button {
     flex: 1 1 12rem;
   }
 }

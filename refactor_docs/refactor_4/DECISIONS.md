@@ -1,7 +1,7 @@
 # DECISIONS — Refactor 4: UI Platform Stabilization & Timeline Systems
 
 **Data di apertura:** 2026-04-22  
-**Stato:** 🟡 In corso
+**Stato:** 🟡 In corso — Fase 0 completata
 
 ---
 
@@ -343,6 +343,226 @@ Non è prevista una nuova fase di ridefinizione strategica intermedia, salvo pro
 
 ### Trigger di revisione o rollback
 - solo in presenza di blocker architetturali nuovi e non previsti nel piano iniziale.
+
+---
+
+## D-10 — Fase 0: baseline documentale ufficiale su audit + architecture snapshot
+
+**Data:** 2026-04-22  
+**Fase:** 0  
+**Stato:** implemented
+
+### Contesto
+`PLAN.md` e `DECISIONS.md` definivano la direzione strategica del refactor_4, ma mancava ancora un output operativo che fissasse lo stato reale della codebase corrente: routing, providers, superfici attive, CSS globale critico, cleanup boundary e risultati di build/test.
+
+### Decisione
+La baseline esecutiva di Fase 0 viene formalizzata in due documenti aggiuntivi:
+
+- `AUDIT_SUMMARY.md`
+- `ARCHITECTURE_BASELINE.md`
+
+Questi documenti diventano il riferimento pratico per l’avvio della Fase 1, mentre `PLAN.md` continua a descrivere roadmap e `DECISIONS.md` continua a registrare le ADR.
+
+### Alternative valutate
+- **Tenere tutto dentro `PLAN.md`**: troppo denso, poco leggibile come inventario operativo.
+- **Aggiornare solo `AGENTS.md`**: utile per contributor/agent, ma insufficiente come audit formale del refactor.
+
+### Impatto / conseguenze
+- la Fase 1 parte da una baseline verificata e non da assunzioni storiche;
+- le differenze tra documentazione legacy e runtime attuale diventano esplicite;
+- backlog, cleanup boundary e priorità tecniche sono più facili da verificare.
+
+### Trigger di revisione o rollback
+- se i documenti baseline smettono di essere mantenuti allineati durante le fasi successive.
+
+---
+
+## D-11 — Cleanup boundary: nessuna rimozione upfront dei file mixed-status
+
+**Data:** 2026-04-22  
+**Fase:** 0  
+**Stato:** implemented
+
+### Contesto
+L’audit ha confermato orphan chiari (`BirthDateWizard`, `useBirthWizard`, `MockCard`, `SubTimeline`, `scaleHint`), ma ha anche identificato aree mixed-status che sembravano candidate al pruning e invece restano collegate al runtime o al type system: `src/components/unused/constants.ts`, `wizard.css`, `timeline.css`, `components.css`, `PreferencesContext.scaleMode`.
+
+### Decisione
+Il cleanup di Fase 0 si ferma alla classificazione e alla documentazione.  
+Nessun file mixed-status viene rimosso upfront.
+
+Le aree seguenti vengono esplicitamente marcate come **safe only after replacement**:
+
+- `PreferencesContext.scaleMode` + `pref_scaleMode`;
+- `src/components/unused/constants.ts` e relativo type import in `useMilestone.ts`;
+- blocchi `birth-wizard__*` in `wizard.css`;
+- blocchi `.timeline__subtimeline*` e tipi correlati;
+- qualsiasi stile condiviso in `components.css` che oggi serve anche surface attive.
+
+### Alternative valutate
+- **Pulizia aggressiva immediata**: riduce rumore subito, ma alza il rischio di regressioni silenziose.
+- **Congelare tutto senza classificare**: evita rischio nel breve, ma non crea un backlog eseguibile.
+
+### Impatto / conseguenze
+- il refactor resta incrementale e deployabile;
+- la Fase 1 può lavorare sulle primitive UI senza introdurre regressioni di cleanup;
+- la Fase 2 può rimuovere il legacy timeline solo dopo replacement misurabile.
+
+### Trigger di revisione o rollback
+- se emerge che un’area mixed-status è in realtà completamente orfana anche dopo verifica di replacement e test.
+
+---
+
+## D-12 — Fase 1 slice 1: primitive UI interne prima delle primitive headless
+
+**Data:** 2026-04-22  
+**Fase:** 1  
+**Stato:** implemented
+
+### Contesto
+`DECISIONS.md` ha già accettato l’adozione mirata di Radix UI per dialog, tabs, tooltip, popover e slot. Tuttavia la prima slice concreta della Fase 1 riguarda `Settings` e `BirthDatePicker`, cioè superfici soprattutto composte da layout, field wrappers, banner e azioni, senza overlay complessi o widget interattivi ad alto rischio.
+
+### Decisione
+La Fase 1 parte con un layer `src/ui/` **interamente interno** per le primitive non-headless:
+
+- `Button`
+- `Banner`
+- `Field`
+- `FormActions`
+- `Panel`
+- `Stack`
+- `Inline`
+
+L’integrazione di Radix UI viene rinviata alla slice successiva, quando saranno migrate superfici che ne richiedono davvero il valore: `Tabs`, `Dialog`, `Tooltip`, `Popover` e pattern sheet/overlay.
+
+### Alternative valutate
+- **Introdurre subito Radix anche per la prima slice**: coerente col piano di lungo periodo, ma non necessaria per `Settings` / DOB flow.
+- **Non introdurre ancora `src/ui/` e continuare con classi page-specific**: più economico nell’immediato, ma in conflitto con l’obiettivo della Fase 1.
+
+### Impatto / conseguenze
+- la migrazione parte con un perimetro piccolo e a basso rischio;
+- il progetto ottiene subito un primo layer `src/ui/` usato in runtime attivo;
+- si riduce la dipendenza dalle primitive legacy come `.button` e dai form styles page-driven;
+- l’adozione di una libreria headless resta confermata, ma solo quando porta un vantaggio netto.
+
+### Trigger di revisione o rollback
+- se le primitive interne iniziano a duplicare responsabilità che una libreria headless risolverebbe meglio già nella slice corrente;
+- se la futura migrazione di tabs/dialog/tooltip richiede un redesign incompatibile con le primitive introdotte qui.
+
+---
+
+## D-13 — Fase 1 slice 2: prima primitive headless con Radix Tabs su Timescales
+
+**Data:** 2026-04-22  
+**Fase:** 1  
+**Stato:** implemented
+
+### Contesto
+Dopo la slice 1, il layer `src/ui/` esiste già e copre layout, form actions e banner. La slice successiva doveva introdurre la prima primitive interattiva/headless con rischio accessibilità reale ma perimetro contenuto. Tra i tab system attivi, `Timescales` è risultato il target più adatto: top-level tabs persistiti, semantica semplice, minore complessità rispetto ai perspectives tabs di `Milestones`.
+
+### Decisione
+La prima adozione concreta di Radix UI in runtime attivo avviene tramite:
+
+- dipendenza `@radix-ui/react-tabs`
+- nuova primitive `src/ui/Tabs.tsx`
+
+La primitive viene adottata in:
+
+- `src/pages/Timescales.tsx` per i tab top-level `overview / comparator / explorer`
+- `src/components/timescales/GeoCosmicExplorer.tsx` per i sub-tab `geological / cosmic`
+
+### Alternative valutate
+- **Migrare prima i perspectives tabs di `Milestones`**: troppo rischio, a causa di lock/unlock, toast e comportamento mobile collassabile.
+- **Continuare con tabs custom DOM-only**: non allineato alla strategia headless definita in `D-02`.
+- **Migrare solo il tab system top-level di `Timescales`**: più piccolo come scope, ma meno utile come prova di riuso della primitive.
+
+### Impatto / conseguenze
+- il progetto ha ora una prima primitive headless/accessibile nel nuovo `src/ui/`;
+- `Timescales` smette di dipendere dai vecchi `.tabs/.tab` legacy per il wiring semantico;
+- la stessa primitive è già riusata in un secondo contesto attivo (`GeoCosmicExplorer`), riducendo il rischio che `src/ui/` resti un layer parziale.
+
+### Trigger di revisione o rollback
+- se emergono regressioni importanti nella persistenza di `timescalesTab`, nella navigazione tastiera o nel focus management dei panel;
+- se il costo di coesistenza con il CSS tabs legacy supera i benefici della migrazione incrementale.
+
+---
+
+## D-14 — Fase 1 slice 3: Milestones tabs con stato locked non-disabled e activation mode manuale
+
+**Data:** 2026-04-22  
+**Fase:** 1  
+**Stato:** implemented
+
+### Contesto
+Dopo la migrazione dei tab system di `Timescales`, il caso più complesso rimasto nella Fase 1 era il pannello perspectives di `Milestones`. A differenza di `Timescales`, questi tabs hanno unlock progressivo, copy teaser, hint iniziale, `toastMsg`, persistenza `pref_unlockedPerspectives` e un wrapper mobile collassabile.
+
+### Decisione
+I perspectives tabs di `Milestones` migrano anch’essi alla primitive `src/ui/Tabs`, ma con due vincoli espliciti:
+
+1. i tab locked **non** diventano `disabled`;
+2. il root tabs usa `activationMode="manual"`.
+
+In pratica:
+
+- i tab locked restano focusabili e cliccabili per preservare la discoverability della UX corrente;
+- l’unlock continua ad avvenire solo su attivazione esplicita (click / Enter / Space), non su semplice focus via frecce;
+- il toggle mobile del pannello perspectives resta fuori dal sistema tabs.
+
+### Alternative valutate
+- **Usare `disabled` sui tab locked**: più semplice tecnicamente, ma rompe la micro-onboarding UX attuale.
+- **Tenere markup custom solo per `Milestones`**: riduce rischio nel brevissimo termine, ma lascia il caso più delicato fuori dal nuovo layer.
+- **Usare activation automatica**: più standard per tabs semplici, ma pericolosa qui perché potrebbe sbloccare/attivare tab solo attraversandoli con la tastiera.
+
+### Impatto / conseguenze
+- `Milestones` entra nel nuovo sistema tabs senza perdere la UX progressiva già introdotta;
+- la stessa primitive `Tabs` copre ora casi semplici (`Timescales`) e casi con stato custom (`Milestones`);
+- il CSS legacy dei tabs può iniziare a essere de-enfatizzato, anche se non è ancora completamente rimovibile.
+
+### Trigger di revisione o rollback
+- se emergono regressioni su unlock involontario, persistenza `pref_unlockedPerspectives` o keyboard flow nel pannello perspectives;
+- se il caso `Milestones` richiede in futuro una primitive tabs specializzata separata dal wrapper generico.
+
+---
+
+## D-15 — Chiusura Fase 1: cleanup sicuro solo sui selettori runtime già sostituiti
+
+**Data:** 2026-04-22  
+**Fase:** 1  
+**Stato:** implemented
+
+### Contesto
+Dopo le slice 1–3 della Fase 1, il nuovo `src/ui/` copriva già i casi principali di form, banner, actions e tabs, ma restavano ancora alcuni consumer runtime legacy (`Landing`, banner DOB-gated di `Milestones`, `ErrorBoundary`) e diversi selettori CSS storici ormai sostituiti dal nuovo layer.
+
+### Decisione
+La slice 4 chiude la Fase 1 con due passi coordinati:
+
+1. migrare gli ultimi consumer runtime ad alta leva a `src/ui`;
+2. rimuovere **solo** i selettori legacy senza consumer runtime verificato.
+
+Cleanup considerato sicuro in questa chiusura:
+
+- selettori `.tabs/.tab*` legacy in `components.css`
+- selettori `.status-banner*` legacy in `components.css`
+- bridge locali ormai inutili verso `.button` nelle surface già migrate (`wizard.css`, `personalize.css`)
+- varianti tab legacy senza consumer in `timescales.css`
+
+Cleanup esplicitamente rinviato:
+
+- `.button*` base in `components.css` finché esiste codice legacy/orphan in `src/components/unused/`
+- `wizard` orphan styles non ancora separati completamente
+- `timeline.css`, `scaleMode`, `SubTimeline`, `unused/` e tutto ciò che appartiene alla Fase 2+ o al pruning finale
+
+### Alternative valutate
+- **Chiudere la Fase 1 senza cleanup**: più prudente, ma prolunga il doppio sistema oltre il necessario.
+- **Rimuovere subito anche `.button*` e altri selector shared**: troppo aggressivo rispetto allo stato mixed/legacy ancora presente nel repository.
+
+### Impatto / conseguenze
+- la Fase 1 si chiude con un nuovo layer UI già usato in tutte le surface ad alta frizione previste dal piano;
+- il costo cognitivo del legacy tabs/banner si riduce subito;
+- il passaggio alla Fase 2 avviene con meno CSS morto “attivo” nel percorso principale.
+
+### Trigger di revisione o rollback
+- se emerge un consumer runtime non mappato dei selettori rimossi;
+- se il pruning successivo delle aree `unused` o wizard richiede di reintrodurre temporaneamente stili shared eliminati qui.
 
 ---
 

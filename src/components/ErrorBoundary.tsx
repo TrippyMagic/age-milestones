@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
+import { Button } from "../ui";
 
 type Props = { children: ReactNode };
 type State = { error: Error | null };
@@ -24,13 +25,11 @@ export class ErrorBoundary extends Component<Props, State> {
         <div className="error-boundary">
           <h2 className="error-boundary__title">Something went wrong</h2>
           <p className="error-boundary__message">{this.state.error.message}</p>
-          <button
-            type="button"
-            className="button"
+          <Button
             onClick={() => { this.setState({ error: null }); window.location.href = "/"; }}
           >
             Go home
-          </button>
+          </Button>
         </div>
       );
     }

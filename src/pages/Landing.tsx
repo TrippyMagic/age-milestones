@@ -7,6 +7,7 @@ import { Title } from "../components/common/Headers.tsx";
 import { useBirthDate } from "../context/BirthDateContext";
 import { SectionErrorBoundary } from "../components/SectionErrorBoundary";
 import { getAboutSectionHref } from "../utils/aboutLinks";
+import { Banner, Button } from "../ui";
 
 export default function Landing() {
   const nav = useNavigate();
@@ -47,31 +48,29 @@ export default function Landing() {
                 <p className="muted">Enter your date of birth to begin</p>
                 <BirthDatePicker />
                 {!birthDate && (
-                  <div className="status-banner status-banner--danger" role="alert" aria-live="assertive">
-                    <h2 className="status-banner__title">Birth date missing</h2>
-                    <p className="status-banner__message">
+                  <Banner tone="danger" role="alert" aria-live="assertive" title="Birth date missing">
+                    <p>
                       Milestones and timeline views stay locked until you set a valid birth date.
                       You can do it here or manage it from Settings.
                     </p>
-                  </div>
+                  </Banner>
                 )}
                 {storedSummary && (
                   <p className="landing__summary">Current: {storedSummary}</p>
                 )}
                 <div className="landing__buttons">
-                  <button
-                    className="button"
+                  <Button
                     disabled={!birthDate}
                     onClick={() => nav("/milestones")}
                   >
                     Explore
-                  </button>
-                  <button
-                    className="button button--ghost"
-                      onClick={() => nav("/settings")}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => nav("/settings")}
                   >
-                      Settings
-                  </button>
+                    Settings
+                  </Button>
                 </div>
               </div>
             </section>

@@ -19,6 +19,7 @@ import { LANE_META, type TimelineLane } from "../components/timeline/types";
 import { SectionErrorBoundary } from "../components/SectionErrorBoundary";
 import { getAboutSectionHref } from "../utils/aboutLinks";
 import { resolveGlobalLaneNotice } from "../utils/globalLaneNotice";
+import { Banner, Button, FormActions, Tabs, TabsContent, TabsList, TabsTrigger } from "../ui";
 
 const FUTURE_WINDOW_YEARS = 40;
 const LOOKBACK_YEARS = 20;
@@ -194,7 +195,6 @@ export default function Milestones() {
 
   const allTabs = useMemo(() => Object.keys(TAB_ROWS) as Array<keyof typeof TAB_ROWS>, []);
   const safeTab = allTabs.includes(tab) ? tab : "Classic";
-  const rows = TAB_ROWS[safeTab];
 
   useEffect(() => {
     document.body.style.backgroundColor = "#111827";
@@ -317,7 +317,10 @@ export default function Milestones() {
     setTab(t);
   }, [unlockedTabs, unlockTab]);
 
-  const perspectiveLabel = safeTab.toLowerCase();
+  const handlePerspectiveTabChange = useCallback((value: string) => {
+    if (!allTabs.includes(value as keyof typeof TAB_ROWS)) return;
+    handleTabClick(value as keyof typeof TAB_ROWS);
+  }, [allTabs, handleTabClick]);
 
   return (
     <>
@@ -326,16 +329,15 @@ export default function Milestones() {
 
         {!birthDate && (
           <section className="card timeline-card">
-            <div className="status-banner status-banner--danger" role="alert" aria-live="assertive">
-              <h2 className="status-banner__title">Birth date required</h2>
-              <p className="status-banner__message">
+            <Banner tone="danger" role="alert" aria-live="assertive" title="Birth date required">
+              <p>
                 Milestones depends on your date of birth. Set it in Settings before exploring the timeline or age perspectives.
               </p>
-              <div className="status-banner__actions">
-                <button type="button" className="button" onClick={() => nav("/settings")}>Open Settings</button>
-                <button type="button" className="button button--ghost" onClick={() => nav("/")}>Go home</button>
-              </div>
-            </div>
+              <FormActions>
+                <Button onClick={() => nav("/settings")}>Open Settings</Button>
+                <Button variant="ghost" onClick={() => nav("/")}>Go home</Button>
+              </FormActions>
+            </Banner>
           </section>
         )}
 
@@ -356,61 +358,66 @@ export default function Milestones() {
 
           {perspOpen && (
             <section className="perspective-card">
-              <div className="tabs perspective-card__tabs" role="tablist" aria-label="Perspectives">
-                {allTabs.map(t => {
-                  const isLocked = !unlockedTabs.has(t);
-                  return (
-                    <button
-                      key={t}
-                      type="button"
-                      className={`tab ${t === safeTab ? "tab--active" : ""} ${isLocked ? "tab--locked" : ""}`}
-                      onClick={() => handleTabClick(t)}
-                      aria-pressed={t === safeTab}
-                      title={isLocked ? "Click to unlock this perspective" : undefined}
-                    >
-                      {isLocked && <span className="tab__lock" aria-hidden="true">🔒</span>}
-                      {t}
-                    </button>
-                  );
-                })}
-              </div>
+              <Tabs value={safeTab} onValueChange={handlePerspectiveTabChange} activationMode="manual">
+                <TabsList className="perspective-card__tabs" aria-label="Perspectives">
+                  {allTabs.map(t => {
+                    const isLocked = !unlockedTabs.has(t);
+                    return (
+                      <TabsTrigger
+                        key={t}
+                        value={t}
+                        className="perspective-card__tab-trigger"
+                        data-locked={isLocked ? "true" : undefined}
+                        title={isLocked ? "Click to unlock this perspective" : undefined}
+                      >
+                        {isLocked && <span className="ui-tabs__lock" aria-hidden="true">🔒</span>}
+                        {t}
+                      </TabsTrigger>
+                    );
+                  })}
+                </TabsList>
               
-              {/* Micro-onboarding toast */}
-              {toastMsg && (
-                <div className="perspective-card__toast" role="status" aria-live="polite">
-                  {toastMsg}
-                </div>
-              )}
+                {/* Micro-onboarding toast */}
+                {toastMsg && (
+                  <div className="perspective-card__toast" role="status" aria-live="polite">
+                    {toastMsg}
+                  </div>
+                )}
 
-              {/* Micro-hint when only Classic is unlocked */}
-              {unlockedTabs.size === 1 && unlockedTabs.has(ALWAYS_UNLOCKED) && !toastMsg && (
-                <p className="perspective-card__hint">
-                  Tap a locked tab to discover new perspectives
-                </p>
-              )}
+                {/* Micro-hint when only Classic is unlocked */}
+                {unlockedTabs.size === 1 && unlockedTabs.has(ALWAYS_UNLOCKED) && !toastMsg && (
+                  <p className="perspective-card__hint">
+                    Tap a locked tab to discover new perspectives
+                  </p>
+                )}
 
-              <div className="perspective-card__body">
-                <h2 className="perspective-card__title">
-                  Your age in{" "}
-                  <span className="perspective-card__title-accent">{perspectiveLabel}</span>{" "}
-                  perspective
-                </h2>
-                <p className="perspective-card__subtitle">
-                  Switch the lens to reveal how your lifetime translates across different units.
-                </p>
-                <Link to={getAboutSectionHref("general")} className="help-link help-link--inline">
-                  How estimates and perspectives work
-                </Link>
-                <div className="perspective-card__table">
-                  <SectionErrorBoundary
-                    compact
-                    title="Perspective unavailable"
-                    message="This perspective failed to render. Try switching tabs or reload the section."
-                  >
-                    <AgeTable rows={rows} />
-                  </SectionErrorBoundary>
-                </div>
-              </div>
+                {allTabs.map(t => (
+                  <TabsContent key={t} value={t} className="perspective-card__content">
+                    <div className="perspective-card__body">
+                      <h2 className="perspective-card__title">
+                        Your age in{" "}
+                        <span className="perspective-card__title-accent">{t.toLowerCase()}</span>{" "}
+                        perspective
+                      </h2>
+                      <p className="perspective-card__subtitle">
+                        Switch the lens to reveal how your lifetime translates across different units.
+                      </p>
+                      <Link to={getAboutSectionHref("general")} className="help-link help-link--inline">
+                        How estimates and perspectives work
+                      </Link>
+                      <div className="perspective-card__table">
+                        <SectionErrorBoundary
+                          compact
+                          title="Perspective unavailable"
+                          message="This perspective failed to render. Try switching tabs or reload the section."
+                        >
+                          <AgeTable rows={TAB_ROWS[t]} />
+                        </SectionErrorBoundary>
+                      </div>
+                    </div>
+                  </TabsContent>
+                ))}
+              </Tabs>
             </section>
           )}
         </div>}

@@ -1,16 +1,18 @@
 # AGENTS.md — Kronoscope
 
 > Reference document for AI agents and contributors.
-> Last updated: 22 aprile 2026 — post-refactor_3, with refactor_4 planning baseline added.
+> Last updated: 22 aprile 2026 — refactor_4 phase 0 audit baseline.
 
 ## Project overview
 
 Kronoscope is a React 19 + TypeScript SPA built with Vite that lets users enter their birth date (and optionally time) and explore their lifetime expressed through unusual units, perspectives, and timescales. The live deployment is on Vercel.
 
-> **Planning status note (2026-04-22):** parts of this document are historical and may lag behind the latest implementation details. The authoritative roadmap documents are:
+> **Planning status note (2026-04-22):** this file is now aligned to the Fase 0 audit, but some structural lists remain high-level summaries. The authoritative refactor_4 documents are:
 > - `refactor_docs/refactor_3/PLAN.md` — completed roadmap for the current product baseline
 > - `refactor_docs/refactor_4/PLAN.md` — current structural refactor baseline
 > - `refactor_docs/refactor_4/DECISIONS.md` — ADR / decision log for refactor_4
+> - `refactor_docs/refactor_4/AUDIT_SUMMARY.md` — phase 0 inventory, cleanup boundary, priorities
+> - `refactor_docs/refactor_4/ARCHITECTURE_BASELINE.md` — verified runtime architecture snapshot
 
 **Live demo:** <https://age-milestones-live.vercel.app/>
 
@@ -24,13 +26,14 @@ Kronoscope is a React 19 + TypeScript SPA built with Vite that lets users enter 
 | Language | TypeScript 5.7 (strict mode) |
 | Bundler / Dev server | Vite 6 with `@vitejs/plugin-react` |
 | Routing | `react-router-dom` v7 (BrowserRouter, declarative `<Routes>`) |
-| Date handling | `dayjs` (with `duration` and `utc` plugins), `date-fns` |
-| Animation | `framer-motion` v12 (declared, not yet used in active code) |
-| 3D | `@react-three/fiber` v9, `@react-three/drei` v10, `@react-three/rapier` v2 (lazy-loaded, excluded from main bundle) |
+| UI primitives | internal `src/ui/` layer + `@radix-ui/react-tabs` for headless tabs |
+| Date handling | `dayjs` (with `duration` and `utc` plugins) |
+| Animation | `framer-motion` v12 (actively used in timeline/detail/overlay transitions) |
+| 3D | `@react-three/fiber` v9, `@react-three/drei` v10 (lazy-loaded, excluded from main bundle) |
 | Analytics | `@vercel/analytics` v1 |
 | Linting | ESLint 9 flat config (`typescript-eslint`, `react-hooks`, `react-refresh`) |
-| Testing | Vitest v1 |
-| Styling | Plain CSS (no CSS-in-JS, no Tailwind; 8 thematic modules via `@import`) |
+| Testing | Vitest v1 (baseline verified: 7 files / 71 tests) |
+| Styling | Plain CSS via `src/css/index.css` + 9 imported modules; `src/css/ui.css` is the active refactor_4 UI-system stylesheet and the old tabs/status-banner selectors have already begun to be pruned |
 
 ---
 
@@ -42,12 +45,14 @@ npm run dev          # start Vite dev server (HMR)
 npm run build        # tsc type-check + Vite production build → dist/
 npm run preview      # preview the production build locally
 npm run lint         # run ESLint across the project
-npm test             # run Vitest unit tests (45 tests across 2 files)
+npm test             # run Vitest tests (baseline verified: 71 tests across 7 files)
 ```
 
 ---
 
 ## Project structure
+
+> **Audit note:** the tree below is a contributor-oriented summary, not a byte-perfect inventory. For the verified Fase 0 state, prefer `refactor_docs/refactor_4/ARCHITECTURE_BASELINE.md`.
 
 ```
 kronoscope/
@@ -70,7 +75,9 @@ kronoscope/
 │   │   └── DECISIONS.md             # Decisions log for refactor_3
 │   └── refactor_4/
 │       ├── PLAN.md                  # Current structural roadmap: UI system + timeline platform stabilization
-│       └── DECISIONS.md             # ADR log for refactor_4
+│       ├── DECISIONS.md             # ADR log for refactor_4
+│       ├── AUDIT_SUMMARY.md         # Phase 0 inventory + cleanup boundary
+│       └── ARCHITECTURE_BASELINE.md # Verified runtime architecture snapshot
 ├── public/
 │   ├── bg-time.png
 │   ├── default-favicon.png
@@ -82,8 +89,20 @@ kronoscope/
 └── src/
     ├── main.tsx                     # Providers (BirthDate + Preferences) + BrowserRouter + routes
     ├── vite-env.d.ts                # Vite client types
+    ├── ui/
+    │   ├── Button.tsx               # New UI-system button primitive (phase 1 slice 1)
+    │   ├── Banner.tsx               # Status/warning banner primitive
+    │   ├── Field.tsx                # Label + hint + control wrapper
+    │   ├── FormActions.tsx          # Shared action-row wrapper
+    │   ├── Inline.tsx               # Horizontal layout primitive
+    │   ├── Panel.tsx                # Shared surface/panel primitive
+    │   ├── Stack.tsx                # Vertical layout primitive
+    │   ├── Tabs.tsx                 # Headless tabs wrapper built on Radix Tabs
+    │   ├── cx.ts                    # Minimal className helper
+    │   └── index.ts                 # Public barrel for the UI slice
     ├── css/
     │   ├── index.css                # Global entry: @import all modules + reset + CSS tokens
+    │   ├── ui.css                   # New phase 1 primitive styles (ui-*)
     │   ├── components.css           # Shared UI: cards, buttons, tabs, age-table, chips
     │   ├── Landing.css              # Landing page specific styles
     │   ├── navbar.css               # Navbar + footer
@@ -93,8 +112,9 @@ kronoscope/
     │   ├── timescales.css           # Timescales page (overview, comparator, explorer)
     │   └── wizard.css               # Birth date wizard
     ├── context/
-    │   ├── BirthDateContext.tsx     # birthDate + birthTime (localStorage: "dob", "dobTime")
-    │   └── PreferencesContext.tsx   # scaleMode, activeCategories, show3D, timescalesTab (pref_*)
+    │   ├── BirthDateContext.tsx     # birthDate + birthTime + clearBirthDate (localStorage: "dob", "dobTime")
+    │   ├── PreferencesContext.tsx   # activeCategories, show3D, timescalesTab, visibleTimelineLanes + legacy scaleMode (pref_*)
+    │   └── UserProfileContext.tsx   # optional personal metrics stored in localStorage ("user_profile")
     ├── hooks/
     │   ├── useBirthWizard.ts        # Open/close wizard + body scroll lock + save to context
     │   ├── useElementSize.ts        # ResizeObserver element dimension hook
@@ -105,14 +125,16 @@ kronoscope/
     │   ├── useOutsideClick.ts       # Detect clicks outside a ref'd element
     │   └── useTimescalePhenomena.ts # Fetch + module-level cache for timescale-phenomena.json
     ├── pages/
-    │   ├── Landing.tsx              # Home: intro text + "Dive in" CTA → wizard
+    │   ├── Landing.tsx              # Home: intro text + inline BirthDatePicker + CTA to Milestones/Settings
     │   ├── Milestones.tsx           # Main page: AgeTable + Timeline (2D/3D) + category filters
     │   ├── Timescales.tsx           # ✅ Full: Overview + Comparator + Geo/Cosmic Explorer
-    │   ├── Personalize.tsx          # 🚧 Placeholder (3 × MockCard)
+    │   ├── Settings.tsx             # Canonical DOB/profile surface, now first consumer of src/ui primitives
+    │   ├── Personalize.tsx          # Legacy compatibility re-export to Settings; runtime route redirects to /settings
     │   └── About.tsx                # About page (landingIntro paragraphs)
     ├── components/
     │   ├── AgeTable.tsx             # Live-ticking table (1 s interval, all 6 perspectives)
-    │   ├── BirthDateWizard.tsx      # 4-step modal: year → month → day → hour
+    │   ├── BirthDatePicker.tsx      # Shared inline DOB/time picker; first shared form primitive consumer
+    │   ├── BirthDateWizard.tsx      # Legacy/orphan wizard component kept for audit/pruning, not mounted in runtime
     │   ├── scaleOverlay.tsx         # "But how much is it?" popup + dot-grid + equivalences
     │   ├── Timeline.tsx             # Backward-compat re-export barrel → timeline/Timeline
     │   ├── 3d/
@@ -125,10 +147,11 @@ kronoscope/
     │   │   ├── MockCard.tsx         # Placeholder card for WIP pages
     │   │   └── scaleHint.tsx        # "?" button that opens scaleOverlay
     │   ├── timeline/
-    │   │   ├── Timeline.tsx         # Viewport state, pan/zoom, hover, Ctrl+scroll, render
+    │   │   ├── Timeline.tsx         # Viewport state, pan/zoom, pinch, grouping, selection, render orchestration
     │   │   ├── EventElement.tsx     # Dot marker + hover label; uses event.color ?? accent
-    │   │   ├── SubTimeline.tsx      # Expandable grouped-events panel
-    │   │   ├── TimelineControls.tsx # +/−/↺ zoom, Lin/Log toggle, Ctrl+scroll hint label
+    │   │   ├── SubTimeline.tsx      # Legacy/orphan grouped-events surface; not mounted in current runtime
+    │   │   ├── TimelineControls.tsx # +/−/↺ zoom + reset + Ctrl+scroll hint label
+    │   │   ├── TimelineDetailPanel.tsx # Active selected-item details panel (mobile sheet / desktop inline)
     │   │   ├── buildRenderItems.ts  # Grouping + left-percent positioning logic
     │   │   ├── index.ts             # Public barrel (default + TimelineEvent + types)
     │   │   └── types.ts             # TimelineEvent (color?), Accent, RenderItem, consts
@@ -138,8 +161,8 @@ kronoscope/
     │   │   ├── PhenomenaComparator.tsx # Two-phenomenon comparison with absolute log bars
     │   │   ├── PhenomenaSearch.tsx  # Search + category-filter picker for phenomena
     │   │   └── TimescaleOverview.tsx# Vertical SVG log ruler, collision-aware labels
-    │   └── unused/                  # Excluded from TS compilation; still imported at runtime
-    │       ├── constants.ts         # TIME_UNITS, PRESETS, landingIntro (imported by Landing/About)
+        │   └── unused/                  # Excluded from TS compilation; only constants.ts still leaks via type import
+        │       ├── constants.ts         # Legacy constants; Unit type still imported by useMilestone.ts
     │       ├── MilestonePicker.tsx
     │       ├── MorePanel.tsx
     │       ├── ResultBlock.tsx
@@ -171,21 +194,27 @@ kronoscope/
 | `/` | Landing | ✅ Complete |
 | `/milestones` | Milestones | ✅ Complete (main feature) |
 | `/timescales` | Timescales | ✅ Complete (Overview + Comparator + Explorer) |
-| `/personalize` | Personalize | 🚧 Placeholder (3 × MockCard) |
+| `/settings` | Settings | ✅ Complete (canonical DOB/profile surface) |
+| `/personalize` | Redirect to `/settings` | ↪ Legacy compatibility path |
 | `/about` | About | ✅ Complete |
 
 ### State management
 
-Two React Contexts (no external state library):
+Three React Contexts (no external state library):
 
 - **`BirthDateContext`** — `birthDate`, `setBirthDate`, `birthTime`, `setBirthTime`. Persisted in `localStorage` (`"dob"`, `"dobTime"`).
-- **`PreferencesContext`** — `scaleMode` ("linear" | "log"), `activeCategories` (Set\<EventCategory\>), `show3D` (boolean), `timescalesTab` ("overview" | "comparator" | "explorer"). Persisted with `pref_*` keys.
+- **`PreferencesContext`** — `activeCategories`, `show3D`, `timescalesTab`, `visibleTimelineLanes`, plus legacy persisted `scaleMode`. Persisted with `pref_*` keys.
+- **`UserProfileContext`** — optional personal metrics used to refine estimate ranges; persisted under `"user_profile"`.
 
-Both providers wrap the router in `main.tsx`: `BirthDateProvider` → `PreferencesProvider` → `BrowserRouter`.
+Providers wrap the router in `main.tsx`: `BirthDateProvider` → `PreferencesProvider` → `UserProfileProvider` → `BrowserRouter`.
 
-### Birth date wizard
+### Birth date input system
 
-`BirthDateWizard` is a 4-step modal (year → month → day → hour). `useBirthWizard` manages open/close and body-scroll lock. Months are labelled in Italian.
+The active runtime uses `BirthDatePicker`, an inline date/time picker shared by `Landing` and `Settings`.
+
+As of refactor_4 Fase 1 slice 1, `BirthDatePicker` and `Settings` are the first runtime consumers of the new internal `src/ui/` layer.
+
+`BirthDateWizard` and `useBirthWizard` still exist in the repository but were classified as orphan/legacy during the refactor_4 Fase 0 audit and are not mounted by current routes.
 
 ### Perspectives & AgeTable
 
@@ -208,11 +237,12 @@ Decomposed into 5 sub-modules under `src/components/timeline/`:
 |---|---|
 | `Timeline.tsx` | Viewport state, pan/zoom, hover tooltip, Ctrl+scroll zoom, render orchestration |
 | `EventElement.tsx` | Single event dot + hover label; `--marker-color` = `event.color ?? accentColors[accent]` |
-| `SubTimeline.tsx` | Expandable panel for overlapping grouped events (outside-click to close) |
-| `TimelineControls.tsx` | +/−/↺ zoom buttons, Lin/Log toggle, Ctrl+scroll hint label |
+| `SubTimeline.tsx` | Legacy/orphan grouped-events panel; not part of the active rendered surface |
+| `TimelineControls.tsx` | +/−/↺ zoom buttons and Ctrl+scroll hint label |
+| `TimelineDetailPanel.tsx` | Active selected-item details panel |
 | `buildRenderItems.ts` | Event grouping logic + left-percent positioning |
 
-**Scale modes:** Linear (default) and Log — toggled via button, persisted in PreferencesContext. CSS transitions are applied only during the brief mode-switch window (`isScaleSwitching` state).
+**Scale mode status:** the public log toggle has been removed. `PreferencesContext` still persists `scaleMode` as legacy state, but the active timeline currently uses an internal linear mode and treats scale cleanup as refactor_4 debt.
 
 **Event dot colors:** `TimelineEvent` has an optional `color?: string` field. Historical events from `historical-events.json` receive `color: CATEGORY_META[category].color` in `Milestones.tsx`:
 - Historical → `#ef4444` (red)
@@ -239,7 +269,41 @@ Three tabs persisted in `PreferencesContext.timescalesTab`:
 | Compare | `PhenomenaComparator` | Pick two phenomena, see ratio + absolute log-scale bar positions |
 | Explorer | `GeoCosmicExplorer` | Two sub-tabs: breadcrumb geological drilldown (Eon→Era→Period→Epoch) + cosmic milestones timeline |
 
+As of refactor_4 Fase 1 slice 2, the top-level Timescales tabs are driven by the new `src/ui/Tabs` primitive backed by `@radix-ui/react-tabs`. `GeoCosmicExplorer` now reuses the same primitive for its local `Geological / Cosmic` sub-tabs.
+
 Data: `public/data/geological-eras.json` (hook: `useGeologicalEras`) and `public/data/timescale-phenomena.json` (hook: `useTimescalePhenomena`) — fetched once with module-level `_cache`.
+
+### Milestones perspectives tabs
+
+As of refactor_4 Fase 1 slice 3, the perspectives tabs in `src/pages/Milestones.tsx` also use `src/ui/Tabs`.
+
+Important behavior preserved during migration:
+
+- progressive unlock via `pref_unlockedPerspectives`
+- locked tabs remain discoverable and clickable
+- `activationMode="manual"` avoids accidental activation/unlock on keyboard focus alone
+- the mobile `perspectives-panel__toggle` remains outside the tabs primitive
+
+### Fase 1 completion status
+
+Refactor 4 Fase 1 is considered complete in the current codebase.
+
+What now runs through `src/ui` in active runtime surfaces:
+
+- `Settings`
+- `BirthDatePicker`
+- `Landing` actions and DOB warning banner
+- `Milestones` perspectives tabs
+- `Milestones` DOB-missing banner/actions
+- `Timescales` top-level tabs
+- `GeoCosmicExplorer` sub-tabs
+- `ErrorBoundary` fallback action
+
+Cleanup already started after replacement:
+
+- legacy `.tabs/.tab*` selectors removed from active shared CSS
+- legacy `.status-banner*` selectors removed from active shared CSS
+- local bridges from page CSS to `.button` reduced where surfaces now use `ui-button`
 
 ### Scale overlay
 
@@ -281,8 +345,13 @@ Data: `public/data/geological-eras.json` (hook: `useGeologicalEras`) and `public
 
 | File | What is tested |
 |---|---|
+| `src/tests/aboutLinks.test.ts` | help-link targets for About deep links |
+| `src/tests/buildRenderItems.test.ts` | grouping + edge marker behavior |
 | `src/tests/format.test.ts` | `formatNice`, `formatBig`, `formatSmall` |
-| `src/tests/scaleTransform.test.ts` | `clamp`, `toPercent`, `linearRatio/Value`, `logRatio/Value`, `valueToRatio`, `ratioToValue`, `applyZoom`, `viewportToRange`, `generateTicks` |
+| `src/tests/globalLaneNotice.test.ts` | loading / empty / error semantics for the world lane |
+| `src/tests/profileCompleteness.test.ts` | Settings/profile completeness warnings |
+| `src/tests/scaleTransform.test.ts` | math helpers, zoom, range and tick generation |
+| `src/tests/timelineSemantics.test.ts` | lane/semantic timeline invariants |
 
 ```bash
 npm test
@@ -293,25 +362,28 @@ npm test
 ## Deployment
 
 Deployed on **Vercel**. Build: `tsc -b && vite build` → `dist/` (static SPA).  
-`@vercel/analytics` active. `@vercel/speed-insights` declared but commented out in `main.tsx`.
+`@vercel/analytics` is active. `@vercel/speed-insights` is installed but not mounted in current runtime code.
 
 Bundle sizes (gzip, approximate):
-- Main: ~79 kB
+- Main JS: ~87 kB
+- Main CSS: ~14 kB
 - `three-vendor` (lazy, 3D only): ~307 kB
 
 ---
 
 ## Gotchas & notes
 
-1. **`src/components/unused/`** is excluded from TypeScript but still imported at runtime (`landingIntro`, `Unit` type). Deleting will break `Landing.tsx`, `About.tsx`, `useMilestone.ts`.
+1. **`src/components/unused/`** is excluded from TypeScript. The whole folder is not safe to delete in one shot because `constants.ts` still leaks via a `Unit` type import in `useMilestone.ts`.
 2. **`@react-three/*`** are actively used in `src/components/3d/`. They are lazy-loaded — do not move them into eager imports.
-3. **`date-fns`** is installed but not used in active code; `dayjs` is the primary date library.
-4. **`framer-motion`** is installed but not imported in active code — reserved for future animations.
-5. **`@react-three/rapier`** is installed but has no active usage.
-6. **BirthDateWizard** does not validate future dates — all validation is per-step only.
-7. **`Personalize`** is the only stub page remaining in the routing.
-8. **`EventCategory` colors in `CATEGORY_META`** (`types/events.ts`) are the single source of truth for historical event dot colors AND filter chip colors. Keep them in sync.
-9. **Ctrl+scroll hint** (`.timeline__ctrl-scroll-hint`) is hidden on `≤ 720px` — irrelevant on touch.
-10. **`scaleTransform.ts`** is the single source of truth for all timeline math (ratio, zoom, ticks). Never duplicate its logic.
+3. **`framer-motion`** is actively used in `Timeline`, `TimelineDetailPanel`, `SubTimeline` and `scaleOverlay`.
+4. **BirthDateWizard** exists in the repo but is not part of the mounted runtime surface.
+5. **`/personalize`** is now a compatibility redirect to `/settings`, not an active product page.
+6. **`EventCategory` colors in `CATEGORY_META`** (`types/events.ts`) are the single source of truth for historical event dot colors AND filter chip colors. Keep them in sync.
+7. **Ctrl+scroll hint** (`.timeline__ctrl-scroll-hint`) is hidden on `≤ 720px` — irrelevant on touch.
+8. **`scaleTransform.ts`** is the single source of truth for all timeline math (ratio, zoom, ticks). Never duplicate its logic.
+9. For new shared form/actions surfaces, prefer `src/ui/` primitives over legacy `.button` / page-scoped field wrappers. The old `.button` class still carries contextual spacing assumptions and should not be the default for refactor_4 work.
+10. For new tab systems, prefer `src/ui/Tabs` over legacy `.tabs/.tab` markup. The legacy classes may still style older surfaces, but new work should use the headless primitive first.
+11. In `Milestones`, locked perspectives are intentionally **not** disabled. That UX is deliberate: users must be able to discover and activate them to unlock the next perspective layer.
+12. `.button*` base styles still exist only because the `unused/` legacy branch has not been pruned yet. Treat them as cleanup debt, not as the preferred active runtime button system.
 
 

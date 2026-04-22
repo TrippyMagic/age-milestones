@@ -19,28 +19,6 @@
   gap: 20px;
 }
 
-/* -----------------------------------------------------------
-   Tab variants
------------------------------------------------------------ */
-.tab--disabled {
-  opacity: .45;
-  cursor: not-allowed;
-  pointer-events: none;
-  position: relative;
-}
-
-.tab__badge {
-  display: inline-block;
-  margin-left: 8px;
-  padding: 2px 7px;
-  border-radius: 999px;
-  background: rgba(148, 163, 184, 0.25);
-  font-size: .65rem;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  vertical-align: middle;
-}
 
 /* -----------------------------------------------------------
    Overview — SVG ruler
@@ -449,6 +427,7 @@
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  justify-content: flex-start;
 }
 
 .ts-explorer__subtab {
@@ -461,17 +440,21 @@
   font-weight: 500;
   cursor: pointer;
   transition: background .15s ease, border-color .15s ease, color .15s ease;
+  box-shadow: none;
 }
 
-.ts-explorer__subtab:hover {
+.ts-explorer__subtab:hover:not([data-state="active"]) {
   border-color: rgba(129, 140, 248, 0.55);
   color: var(--text-light);
+  transform: none;
 }
 
-.ts-explorer__subtab--active {
+.ts-explorer__subtab[data-state="active"] {
   background: rgba(79, 70, 229, 0.3);
   border-color: rgba(129, 140, 248, 0.65);
   color: var(--indigo-100);
+  box-shadow: none;
+  transform: none;
 }
 
 /* ── Geological explorer wrapper ──────────────────────────── */

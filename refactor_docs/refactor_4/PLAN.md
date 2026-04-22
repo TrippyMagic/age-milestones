@@ -1,7 +1,31 @@
 # PLAN — Refactor 4: UI Platform Stabilization & Timeline Systems
 
 **Data:** 2026-04-22  
-**Stato:** 🟡 Baseline approvata / pronta per implementazione
+**Stato:** 🟡 In corso — Fase 0 completata, Fase 1 completata, cleanup iniziale avviato
+
+---
+
+## Snapshot esecutivo — aggiornamento Fase 0
+
+Al 2026-04-22 la **Fase 0 è stata eseguita e verificata** contro la codebase reale.
+
+Output prodotti:
+
+- `refactor_docs/refactor_4/AUDIT_SUMMARY.md`
+- `refactor_docs/refactor_4/ARCHITECTURE_BASELINE.md`
+- aggiornamento di `DECISIONS.md`, `AGENTS.md` e `README.md`
+
+Risultati chiave:
+
+- inventario `active / legacy / orphan / candidate removal` completato;
+- baseline runtime verificata su routing, providers, timeline, Timescales e 3D;
+- conferma che `Settings` + `BirthDatePicker` sono la prima surface da migrare nel nuovo `src/ui/`;
+- conferma che `BirthDateWizard`, `useBirthWizard`, `MockCard`, `SubTimeline` e `scaleHint` sono orfani o legacy verificati;
+- build e test baseline eseguiti con successo, con un solo warning lint non bloccante.
+- Fase 1 slice 1 avviata con introduzione del layer `src/ui/` e migrazione iniziale di `Settings` + `BirthDatePicker`.
+- Fase 1 slice 2 completata con prima primitive headless (`Tabs`) e migrazione dei tab system di `Timescales` e `GeoCosmicExplorer`.
+- Fase 1 slice 3 completata con migrazione dei perspectives tabs di `Milestones`, inclusi unlock progressivo, toast e pannello mobile collapsible.
+- Fase 1 slice 4 completata con migrazione finale dei consumer runtime legacy (`Landing`, banner DOB-gated di `Milestones`, `ErrorBoundary`) e primo cleanup sicuro dei selettori tabs/status-banner non più usati.
 
 ---
 
@@ -499,12 +523,19 @@ Il cleanup non deve più essere un atto puntuale alla fine, ma una pipeline cont
 
 **Obiettivo:** stabilire l’inventario reale prima di migrare.
 
+**Stato:** ✅ completata il 2026-04-22
+
 **Deliverable attesi**
 - classificazione di componenti, hook, CSS e feature in: `active`, `legacy`, `orphan`, `candidate removal`;
 - mappa dei CSS globali e delle responsabilità duplicate;
 - baseline docs aggiornata (`PLAN.md`, `DECISIONS.md`, specs secondarie);
 - scelta finale delle primitive da introdurre per prime;
 - visual baseline su viewport chiave.
+
+**Deliverable prodotti**
+- `AUDIT_SUMMARY.md` con inventario verificato, backlog e cleanup boundary;
+- `ARCHITECTURE_BASELINE.md` con snapshot di runtime, routing, contexts, timeline, Timescales, 3D e CSS;
+- aggiornamento della baseline documentale in `PLAN.md`, `DECISIONS.md`, `refactor_docs/AGENTS.md` e `README.md`.
 
 **Aree da auditare per prime**
 - `src/css/index.css`, `components.css`, `timeline.css`, `personalize.css`;
@@ -517,11 +548,19 @@ Il cleanup non deve più essere un atto puntuale alla fine, ma una pipeline cont
 - backlog tecnico ordinato per severità e dipendenze;
 - elenco rimozioni “safe after replacement”.
 
+**Esito verificato**
+- build baseline: ✅ `npm run build`
+- test baseline: ✅ `npm test -- --run` → 71 test passati
+- lint baseline: ⚠️ 1 warning non bloccante in `UserProfileContext.tsx`
+- rimozioni confermate come non immediate: `scaleMode`, `src/components/unused/constants.ts`, blocchi misti in `wizard.css` e `timeline.css`
+
 ---
 
 ### Fase 1 — UI system migration
 
 **Obiettivo:** costruire il nuovo layer di primitive e usarlo sulle superfici più fragili.
+
+**Stato:** ✅ completata il 2026-04-22
 
 **Scope consigliato**
 - introdurre `src/ui/`;
@@ -536,11 +575,42 @@ Il cleanup non deve più essere un atto puntuale alla fine, ma una pipeline cont
 - DOB picker riallineato e meno dipendente da eccezioni locali;
 - filtri e actions più coerenti con un design system unico.
 
+**Deliverable prodotti finora (slice 1)**
+- introdotto `src/ui/` con primitive iniziali: `Button`, `Banner`, `Field`, `FormActions`, `Panel`, `Stack`, `Inline`;
+- introdotto `src/css/ui.css` come foglio di stile dedicato alle primitive del nuovo layer;
+- migrati `src/pages/Settings.tsx` e `src/components/BirthDatePicker.tsx` al nuovo layer UI;
+- mantenuta invariata la logica di routing, context e guardrail (`beforeunload`, blocco DOB mancante, reset profilo, clear DOB);
+- rinviata l’adozione di primitive headless per `Tabs` / `Dialog` / `Tooltip` alla slice successiva, dove il costo di integrazione sarà giustificato.
+
+**Deliverable prodotti finora (slice 2)**
+- introdotta `src/ui/Tabs.tsx` come prima primitive interattiva/headless del nuovo layer;
+- aggiunta la dipendenza `@radix-ui/react-tabs` per gestire tabs accessibili con keyboard navigation e wiring ARIA affidabile;
+- migrati i tab top-level di `src/pages/Timescales.tsx` al nuovo sistema `Tabs`;
+- migrati anche i sub-tab di `src/components/timescales/GeoCosmicExplorer.tsx`, così la primitive è già riusata in runtime attivo;
+- preservata la persistenza di `timescalesTab` in `PreferencesContext` e il comportamento locale dell’explorer.
+
+**Deliverable prodotti finora (slice 3)**
+- migrati i perspectives tabs di `src/pages/Milestones.tsx` al sistema `Tabs` del nuovo layer UI;
+- preservati `unlockedTabs`, `pref_unlockedPerspectives`, unlock progressivo, `toastMsg` e hint iniziale di onboarding;
+- adottata `activationMode="manual"` per evitare attivazioni involontarie dei tab locked via sola navigazione tastiera;
+- mantenuto invariato il comportamento del pannello collapsible mobile (`perspectives-panel__toggle`) e del rendering di `AgeTable`.
+
+**Deliverable prodotti finora (slice 4 / chiusura Fase 1)**
+- migrati anche `src/pages/Landing.tsx`, il banner DOB-gated di `src/pages/Milestones.tsx` e `src/components/ErrorBoundary.tsx` a `Banner`, `Button` e `FormActions` del nuovo layer UI;
+- eliminata la dipendenza runtime attiva dalle classi legacy `.tabs/.tab*` e `.status-banner*`;
+- avviato cleanup sicuro del CSS legacy con rimozione dei selettori tabs e status-banner non più consumati e pulizia dei bridge locali verso `.button` nelle surface migrate;
+- lasciati volutamente fuori dal cleanup immediato `timeline.css`, `wizard` orphan styles, `scaleMode`, `SubTimeline` e il ramo `unused/`, perché legati a fasi successive o a codice legacy non ancora rimosso.
+
 **Rischi principali**
 - convivere temporaneamente con il vecchio CSS.
 
 **Criterio di successo**
 - le superfici ad alta frizione (`Settings`, actions, banner, tabs) passano tutte attraverso il nuovo layer.
+
+**Esito verificato**
+- `Settings`, `BirthDatePicker`, `Landing`, `Milestones` banner/actions e i tab systems attivi (`Timescales`, `GeoCosmicExplorer`, `Milestones`) usano il nuovo layer `src/ui/`;
+- lint/test/build passano ancora dopo la migrazione, con il solo warning preesistente in `UserProfileContext.tsx`;
+- la Fase 2 può iniziare senza dipendere dal completamento del vecchio sistema tabs/banner.
 
 ---
 
@@ -736,9 +806,9 @@ va registrata prima o contestualmente all’implementazione.
 
 ## 9 — Checklist finale del refactor_4
 
-- [ ] Inventario legacy / orphan / active completato
-- [ ] Layer `src/ui/` introdotto e adottato sulle surface critiche
-- [ ] Settings e DOB flow stabilizzati con nuove primitive
+- [x] Inventario legacy / orphan / active completato
+- [x] Layer `src/ui/` introdotto e adottato sulle surface critiche
+- [x] Settings e DOB flow stabilizzati con nuove primitive
 - [ ] Timeline 2D migrata a renderer Canvas/SVG
 - [ ] `scaleMode` legacy deprecato o rimosso dove non più utile
 - [ ] `SubTimeline` e altri orphan gestiti correttamente

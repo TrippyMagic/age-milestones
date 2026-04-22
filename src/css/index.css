@@ -7,6 +7,7 @@
 
 /* ── Feature modules ──────────────────────────────────────── */
 @import "./components.css";
+@import "./ui.css";
 @import "./timeline.css";
 @import "./navbar.css";
 @import "./wizard.css";

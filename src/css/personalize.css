@@ -114,8 +114,7 @@
   justify-content: center;
 }
 
-.personalize__actions .button {
-  margin-top: 0;
+.personalize__actions .ui-button {
   flex: 1 1 12rem;
   min-width: 0;
   max-width: min(100%, 20rem);
@@ -126,9 +125,9 @@
     flex-direction: column;
   }
 
-  .personalize__actions .button {
+
+  .personalize__actions .ui-button {
     width: 100%;
-    min-width: 0;
   }
 
   .dob-picker {
@@ -143,7 +142,7 @@
     justify-content: stretch;
   }
 
-  .dob-picker__clear {
+  .dob-picker__actions .ui-button {
     width: 100%;
   }
 }
@@ -171,6 +170,14 @@
   gap: 6px;
   flex: 1 1 14rem;
   min-width: 0;
+}
+
+.dob-picker__field .ui-field__label {
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: .04em;
+  text-transform: uppercase;
 }
 
 .dob-picker__label {
@@ -201,6 +208,10 @@
   color-scheme: dark;
   box-shadow: inset 0 0 0 1px rgba(79, 70, 229, 0.2);
   transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.dob-picker .ui-input {
+  font-size: 1.1rem;
 }
 
 .dob-picker__input:focus {
