@@ -1,13 +1,13 @@
 # AGENTS.md — Kronoscope
 
 > Reference document for AI agents and contributors.
-> Last updated: 23 aprile 2026 — refactor_4 phase 2 completed and verified.
+> Last updated: 23 aprile 2026 — refactor_4 phase 4 slice 1 verified.
 
 ## Project overview
 
 Kronoscope is a React 19 + TypeScript SPA built with Vite that lets users enter their birth date (and optionally time) and explore their lifetime expressed through unusual units, perspectives, and timescales. The live deployment is on Vercel.
 
-> **Planning status note (2026-04-23):** this file is aligned to the Fase 0 audit baseline plus the verified Fase 2 slice 2 state, but some structural lists remain high-level summaries. The authoritative refactor_4 documents are:
+> **Planning status note (2026-04-23):** this file is aligned to the Fase 0 audit baseline plus the verified Fase 4 slice 1 state, but some structural lists remain high-level summaries. The authoritative refactor_4 documents are:
 > - `refactor_docs/refactor_3/PLAN.md` — completed roadmap for the current product baseline
 > - `refactor_docs/refactor_4/PLAN.md` — current structural refactor baseline
 > - `refactor_docs/refactor_4/DECISIONS.md` — ADR / decision log for refactor_4
@@ -32,7 +32,7 @@ Kronoscope is a React 19 + TypeScript SPA built with Vite that lets users enter 
 | 3D | `@react-three/fiber` v9, `@react-three/drei` v10 (lazy-loaded, excluded from main bundle) |
 | Analytics | `@vercel/analytics` v1 |
 | Linting | ESLint 9 flat config (`typescript-eslint`, `react-hooks`, `react-refresh`) |
-| Testing | Vitest v1 + `@testing-library/react` + `jsdom` (phase 2 verified: 10 files / 81 tests) |
+| Testing | Vitest v1 + `@testing-library/react` + `jsdom` (phase 4 slice 1 verified: 16 files / 109 tests) |
 | Styling | Plain CSS via `src/css/index.css` + 9 imported modules; `src/css/ui.css` is the active refactor_4 UI-system stylesheet and `timeline.css` now hosts the shared hybrid canvas layer plus the accessible overlay for both timeline lanes |
 
 ---
@@ -45,7 +45,7 @@ npm run dev          # start Vite dev server (HMR)
 npm run build        # tsc type-check + Vite production build → dist/
 npm run preview      # preview the production build locally
 npm run lint         # run ESLint across the project
-  npm test             # run Vitest tests (phase 2 verified: 81 tests across 10 files)
+npm test             # run Vitest tests (phase 4 slice 1 verified: 109 tests across 16 files)
 ```
 
 ---
@@ -118,7 +118,7 @@ kronoscope/
     ├── hooks/
     │   ├── useBirthWizard.ts        # Open/close wizard + body scroll lock + save to context
     │   ├── useElementSize.ts        # ResizeObserver element dimension hook
-    │   ├── useExplorerDrilldown.ts  # Breadcrumb stack navigation for GeoCosmicExplorer
+    │   ├── useExplorerDrilldown.ts  # Breadcrumb stack navigation for GeoCosmicExplorer (selection cleanup stays local; not unified with Timeline selection yet)
     │   ├── useGeologicalEras.ts     # Fetch + module-level cache for geological-eras.json
     │   ├── useHistoricalEvents.ts   # Fetch + module-level cache for historical-events.json
     │   ├── useMilestone.ts          # Milestone calculation logic (Milestones page)
@@ -133,7 +133,7 @@ kronoscope/
     │   └── About.tsx                # About page (landingIntro paragraphs)
     ├── components/
     │   ├── AgeTable.tsx             # Live-ticking table (1 s interval, all 6 perspectives)
-    │   ├── BirthDatePicker.tsx      # Shared inline DOB/time picker; first shared form primitive consumer
+    │   ├── BirthDatePicker.tsx      # Shared inline DOB/time picker with synced saved-state summary across Landing/Settings
     │   ├── BirthDateWizard.tsx      # Legacy/orphan wizard component kept for audit/pruning, not mounted in runtime
     │   ├── scaleOverlay.tsx         # "But how much is it?" popup + dot-grid + equivalences
     │   ├── Timeline.tsx             # Backward-compat re-export barrel → timeline/Timeline
@@ -158,21 +158,22 @@ kronoscope/
     │   │   └── types.ts             # TimelineEvent (color?), Accent, RenderItem, consts
     │   ├── timeline-core/
     │   │   ├── buildRenderItems.ts  # Extracted pure grouping/positioning logic for the new timeline core
+    │   │   ├── buildTimeline3DScene.ts # Pure 3D scene adapter: lane order, focus clamp, ticks and marker projection
     │   │   ├── buildTimelineScene.ts# Lane/tick/focus scene builder used by active runtime Timeline
     │   │   ├── interaction.ts       # Selection payloads, interactive targets, geometry + hit-testing for the shared canvas scene
     │   │   └── index.ts             # Public barrel for phase-2 core helpers
     │   ├── timescales/
     │   │   ├── EraCard.tsx          # Era card with linear proportional bar
-    │   │   ├── GeoCosmicExplorer.tsx# Geological drilldown + cosmic milestones sub-tabs
-    │   │   ├── PhenomenaComparator.tsx # Two-phenomenon comparison with absolute log bars
-    │   │   ├── PhenomenaSearch.tsx  # Search + category-filter picker for phenomena
-    │   │   └── TimescaleOverview.tsx# Vertical SVG log ruler, collision-aware labels
-        │   └── unused/                  # Excluded from TS compilation; only constants.ts still leaks via type import
-        │       ├── constants.ts         # Legacy constants; Unit type still imported by useMilestone.ts
-    │       ├── MilestonePicker.tsx
-    │       ├── MorePanel.tsx
-    │       ├── ResultBlock.tsx
-    │       └── TimezoneSelect.tsx
+    │   │   ├── GeoCosmicExplorer.tsx# Geological drilldown + cosmic milestones sub-tabs, now reusing shared absolute-log helper for cosmic bars
+    │   │   ├── PhenomenaComparator.tsx # Two-phenomenon comparison with duplicate-aware search, ratio status, and shared absolute-log bars
+    │   │   ├── PhenomenaSearch.tsx  # Accessible combobox/listbox picker for timescale phenomena
+    │   │   └── TimescaleOverview.tsx# Vertical SVG log ruler, collision-aware labels, shared absolute-log positioning
+    │   ├── unused/                  # Excluded from TS compilation; only constants.ts still leaks via type import
+    │   │   ├── constants.ts         # Legacy constants; Unit type still imported by useMilestone.ts
+    │   │   ├── MilestonePicker.tsx
+    │   │   ├── MorePanel.tsx
+    │   │   ├── ResultBlock.tsx
+    │   │   └── TimezoneSelect.tsx
     ├── types/
     │   ├── events.ts                # EventCategory, CATEGORY_META colors, HistoricalEvent types
     │   ├── geological.ts            # GeologicalUnit, CosmicMilestone, GeoExplorerData, RANK_LABELS
@@ -182,11 +183,14 @@ kronoscope/
     │   ├── formatDuration.ts        # formatDuration, formatMya, formatMyaDuration, formatRatioValue
     │   ├── perspectivesConstants.ts # TAB_ROWS: 6 perspective tab definitions
     │   ├── scaleConstants.ts        # SCALES, equivalence builders, KIND_BY_LABEL
-    │   ├── scaleTransform.ts        # Lin/log ratio math, applyZoom, viewportToRange, generateTicks
+    │   ├── scaleTransform.ts        # Timeline/date viewport math: lin/log ratio, applyZoom, viewportToRange, generateTicks
+    │   ├── temporalScale.ts         # Timescales absolute-log helpers: ratio/percent + log exponent formatting
     │   └── webgl.ts                 # WEB_GL_SUPPORTED — evaluated once at module load
     └── tests/
+        ├── buildTimeline3DScene.test.ts # Vitest: pure 3D adapter lane/tick/focus/marker math
         ├── format.test.ts           # Vitest: formatNice, formatBig, formatSmall
-        └── scaleTransform.test.ts   # Vitest: clamp, linearRatio, logRatio, applyZoom, ticks
+        ├── scaleTransform.test.ts   # Vitest: clamp, linearRatio, logRatio, applyZoom, ticks
+        └── temporalScale.test.ts    # Vitest: shared absolute-log helpers for Timescales
 ```
 
 ---
@@ -330,6 +334,43 @@ What now exists in the current timeline stack:
 - pointer selection now resolves through core hit-testing before falling back to bare-axis focus changes
 - component-level tests cover the shared overlay path via `@testing-library/react` + `jsdom`
 
+### Fase 3 current status
+
+Refactor 4 Fase 3 is complete and verified through slice 5.
+
+What now exists in the current Timescales stack:
+
+- `src/pages/Timescales.tsx` owns a dedicated overview shell with live filter summary, reset action and explicit loading/error guidance
+- `src/components/timescales/TimescaleOverview.tsx` supports pinned detail inspection for touch/keyboard users while preserving hover tooltip behavior
+- `src/components/timescales/GeoCosmicExplorer.tsx` now exposes a clearer geological summary/back flow, stronger breadcrumb semantics and a focus-safe detail panel
+- `src/components/timescales/PhenomenaComparator.tsx` now guides two-slot comparison with live status messaging and duplicate-aware selection guardrails
+- `src/components/timescales/PhenomenaSearch.tsx` now behaves as a keyboard-safe `combobox/listbox` with explicit empty-state and helper messaging
+- `src/utils/temporalScale.ts` now centralizes the shared absolute-log ratio/percent math and the minimal exponent formatter used by the active `Timescales` surfaces
+- `src/components/timescales/TimescaleOverview.tsx`, `PhenomenaComparator.tsx` and the cosmic path in `GeoCosmicExplorer.tsx` now consume the same absolute-log helpers instead of keeping local mapping duplicates
+- `src/css/timescales.css` now includes a mobile-first overview toolbar + detail card layer, plus comparator/search wrapping hardening below 480px
+- `src/hooks/useExplorerDrilldown.ts` resets stale selections when the visible level changes
+- `src/components/BirthDatePicker.tsx` now exposes a shared saved-date summary, uses a local-date max guard, and keeps Landing/Settings DOB feedback aligned
+- `src/components/common/Headers.tsx` now applies the Settings navigation guard even to the navbar brand link
+- `src/css/personalize.css`, `src/css/ui.css`, `src/css/timeline.css` and `src/css/components.css` now raise touch-target resilience for the remaining dense mobile controls
+- slice 5 explicitly does **not** unify `Timeline` selection contracts with `Timescales`; `selectionKey` convergence, toggle semantics and stale-selection cleanup remain documented future alignment goals only
+- `src/tests/timescalesOverview.test.tsx` protects summary/reset flows, pinned detail behavior and loading/error messaging
+- `src/tests/geoCosmicExplorer.test.tsx` protects loading/error, details toggle, drilldown, breadcrumb/back flow and geological/cosmic tab switching
+- `src/tests/phenomenaComparator.test.tsx` protects keyboard-driven search selection, duplicate exclusion, empty-state messaging and ratio panel wiring
+- `src/tests/temporalScale.test.ts` protects the new shared absolute-log helpers directly
+- `src/tests/settingsDobFlow.test.tsx` protects shared DOB persistence, Settings exit guardrails and the clear flow reused on Landing
+
+### Fase 4 current status
+
+Refactor 4 Fase 4 has started and is verified through slice 1.
+
+What now exists in the current 3D stack:
+
+- `src/components/timeline-core/buildTimeline3DScene.ts` now centralizes the pure 3D scene adapter for lane order, focus clamping, tick thinning, and marker projection
+- `src/components/3d/Timeline3D.tsx` now consumes adapter output instead of duplicating its own core scene math inline
+- `src/components/3d/Timeline3DWrapper.tsx` keeps the same lazy-loading, WebGL fallback, and `balanced / low-power` quality-profile gating
+- `src/tests/buildTimeline3DScene.test.ts` protects the kickoff adapter against regressions in lane order, focus bounds, axis projection, marker placement, and dense tick thinning
+- phase 4 slice 1 explicitly does **not** unify 2D/3D selection or focus semantics yet; `timeline-core/interaction.ts` remains 2D-first in the current baseline
+
 ### Scale overlay
 
 `scaleOverlay.tsx` — "But how much is it?" popup:
@@ -372,10 +413,16 @@ What now exists in the current timeline stack:
 |---|---|
 | `src/tests/aboutLinks.test.ts` | help-link targets for About deep links |
 | `src/tests/buildRenderItems.test.ts` | grouping + edge marker behavior |
+| `src/tests/buildTimeline3DScene.test.ts` | pure 3D scene adapter: lane order, focus clamp, axis projection, marker placement, tick thinning |
 | `src/tests/buildTimelineInteraction.test.ts` | interaction target contract, selection payloads, aria metadata, shared hit-testing geometry |
 | `src/tests/buildTimelineScene.test.ts` | scene builder lane split, focus clamping, grouping reuse |
+| `src/tests/geoCosmicExplorer.test.tsx` | Explorer loading/error states, detail toggle, breadcrumb/back flow, geological/cosmic switching |
+| `src/tests/phenomenaComparator.test.tsx` | Comparator keyboard search flow, duplicate exclusion, empty-state and ratio panel state |
+| `src/tests/settingsDobFlow.test.tsx` | Shared DOB persistence, Settings navbar guardrail and Landing clear-flow consistency |
+| `src/tests/timescalesOverview.test.tsx` | Timescales overview filter summary, pinned detail panel, loading/error shell states |
 | `src/tests/timelineGlobalOverlay.test.tsx` | shared overlay activation, personal/global parity, pointer hit-testing, axis click invariants |
 | `src/tests/format.test.ts` | `formatNice`, `formatBig`, `formatSmall` |
+| `src/tests/temporalScale.test.ts` | shared absolute-log ratio/percent helpers and log exponent formatting |
 | `src/tests/globalLaneNotice.test.ts` | loading / empty / error semantics for the world lane |
 | `src/tests/profileCompleteness.test.ts` | Settings/profile completeness warnings |
 | `src/tests/scaleTransform.test.ts` | math helpers, zoom, range and tick generation |
@@ -408,7 +455,7 @@ Bundle sizes (gzip, approximate):
 5. **`/personalize`** is now a compatibility redirect to `/settings`, not an active product page.
 6. **`EventCategory` colors in `CATEGORY_META`** (`types/events.ts`) are the single source of truth for historical event dot colors AND filter chip colors. Keep them in sync.
 7. **Ctrl+scroll hint** (`.timeline__ctrl-scroll-hint`) is hidden on `≤ 720px` — irrelevant on touch.
-8. **`scaleTransform.ts`** is the single source of truth for all timeline math (ratio, zoom, ticks). Never duplicate its logic.
+8. **`scaleTransform.ts`** is the single source of truth for timeline/date viewport math (ratio, zoom, ticks). For `Timescales` absolute-log math, use `src/utils/temporalScale.ts` instead of duplicating local mapping helpers.
 9. For new shared form/actions surfaces, prefer `src/ui/` primitives over legacy `.button` / page-scoped field wrappers. The old `.button` class still carries contextual spacing assumptions and should not be the default for refactor_4 work.
 10. For new tab systems, prefer `src/ui/Tabs` over legacy `.tabs/.tab` markup. The legacy classes may still style older surfaces, but new work should use the headless primitive first.
 11. In `Milestones`, locked perspectives are intentionally **not** disabled. That UX is deliberate: users must be able to discover and activate them to unlock the next perspective layer.

@@ -1,7 +1,7 @@
 # DECISIONS — Refactor 4: UI Platform Stabilization & Timeline Systems
 
 **Data di apertura:** 2026-04-22  
-**Stato:** 🟡 In corso — Fase 0 completata, Fase 1 completata, Fase 2 completata
+**Stato:** 🟡 In corso — Fase 0 completata, Fase 1 completata, Fase 2 completata, Fase 3 completata, Fase 4 slice 2 verificata
 
 ---
 
@@ -685,6 +685,306 @@ La Fase 2 viene considerata chiusa con queste mosse coordinate:
 - se il modello geometry-based di hit-testing si dimostra insufficiente su dataset molto più densi o su affordance future più complesse;
 - se l’assenza del vecchio markup marker-by-marker fa emergere regressioni UX/accessibilità non intercettate dalla suite attuale;
 - se il cleanup di `EventElement.tsx` richiederà una decisione separata sul perimetro del pruning finale.
+
+---
+
+## D-19 — Fase 3 slice 1: partire dalla Timescales overview con una vertical slice mobile-safe
+
+**Data:** 2026-04-23  
+**Fase:** 3  
+**Stato:** implemented
+
+### Contesto
+La Fase 3 apre il blocco `Timescales + UX improvements`, ma l’area era ancora poco protetta da test component-level e la surface `Overview` soffriva di alcuni limiti pratici: filtri senza summary/reset espliciti, messaggistica loading/error poco guidata e assenza di un path robusto per touch users, che non possono contare sul solo hover tooltip.
+
+Serviva una prima slice verticale abbastanza piccola da essere chiudibile in una sessione, ma abbastanza concreta da inaugurare davvero la Fase 3.
+
+### Decisione
+La Fase 3 parte dalla slice `Timescales Overview hardening` con queste mosse coordinate:
+
+- `src/pages/Timescales.tsx` introduce una shell overview dedicata con summary live, reset filtri e status messaging più esplicita;
+- `src/components/timescales/TimescaleOverview.tsx` aggiunge un detail panel pinned sotto il ruler logaritmico per click/focus/touch, mantenendo il tooltip hover;
+- `src/css/timescales.css` aggiunge il layer mobile-first necessario per toolbar overview e detail card;
+- `src/tests/timescalesOverview.test.tsx` inaugura la copertura page-level/RTL della surface `Timescales`.
+
+### Alternative valutate
+- **Partire da `GeoCosmicExplorer`**: valore alto, ma rischio maggiore su breadcrumb, drilldown e mobile semantics nella prima slice.
+- **Partire dal comparator**: utile per accessibilità, ma meno visibile come vertical slice e meno adatto ad aprire il blocco mobile-hardening.
+- **Partire subito da helper temporali condivisi**: strategicamente interessante, ma troppo ampia come prima mossa della fase.
+
+### Impatto / conseguenze
+- `Timescales` entra nella fase di hardening con una prima surface realmente migliorata e verificata;
+- la codebase ottiene il primo test RTL dedicato alla pagina `Timescales`;
+- il pattern `hover tooltip + pinned detail fallback` crea una base riutilizzabile per slice successive di `Explorer` e `Comparator`.
+
+### Trigger di revisione o rollback
+- se il detail panel pinned si dimostra insufficiente rispetto a future esigenze di inspector/navigation nella overview;
+- se l’hardening della sola overview non si traduce in una riduzione percepibile dei problemi mobile sulla pagina `Timescales`;
+- se le prossime slice mostrano la necessità di anticipare gli helper temporali condivisi rispetto alla roadmap attuale.
+
+---
+
+## D-20 — Fase 3 slice 2: hardening dell’Explorer prima del Comparator
+
+**Data:** 2026-04-23  
+**Fase:** 3  
+**Stato:** implemented
+
+### Contesto
+Dopo la slice 1, `Timescales` aveva già una overview più robusta, ma `GeoCosmicExplorer` restava la surface più fragile del blocco `Explorer`: breadcrumb poco espliciti, detail flow non ancora ottimizzato per touch/mobile, assenza di back flow chiaro e nessuna copertura RTL dedicata.
+
+Per mantenere la Fase 3 incrementale serviva una seconda slice verticale focalizzata sull’explorer, senza aprire ancora il fronte più ampio di comparator hardening o helper temporali condivisi.
+
+### Decisione
+La slice 2 della Fase 3 si concentra su `GeoCosmicExplorer` con queste mosse coordinate:
+
+- introdurre summary di livello, back flow esplicito e breadcrumb con semantica più forte (`aria-current`);
+- rendere il detail panel geologico focus-safe e semanticamente collegato ai dettagli toggle delle card (`aria-expanded` / `aria-controls`);
+- rendere `useExplorerDrilldown` più prevedibile eliminando selezioni stale quando cambia il livello visibile;
+- aggiungere copertura RTL dedicata per loading/error, detail toggle, drilldown/breadcrumb/back flow e switch geological/cosmic.
+
+### Alternative valutate
+- **Passare prima al Comparator**: utile per accessibilità/search UX, ma meno critico del flow geologico su mobile e meno allineato al problema di overflow/navigation aperto.
+- **Introdurre subito helper temporali condivisi**: strategicamente importante, ma troppo ampio come passo immediatamente successivo alla slice 1.
+- **Limitarsi a CSS-only mobile fixes**: più rapido, ma insufficiente senza consolidare stato, semantica e test.
+
+### Impatto / conseguenze
+- `GeoCosmicExplorer` diventa più robusto su touch/mobile e più leggibile anche come flow gerarchico;
+- la Fase 3 ottiene un secondo blocco di coverage component-level dedicato a `Timescales`;
+- il pattern summary/back/detail dell’explorer crea una base più solida per le slice successive del comparator e dell’hardening cross-page.
+
+### Trigger di revisione o rollback
+- se il flow geologico richiederà un inspector/navigation model ancora più ricco del panel attuale;
+- se le prossime regressioni mostreranno che il comparator andava priorizzato prima dell’explorer;
+- se la convergenza con helper temporali condivisi dovrà essere anticipata per evitare ulteriore duplicazione interna a `Timescales`.
+
+---
+
+## D-21 — Fase 3 slice 3: comparator hardening con combobox accessibile interno
+
+**Data:** 2026-04-23  
+**Fase:** 3  
+**Stato:** implemented
+
+### Contesto
+Dopo le slice 1–2, `Timescales` aveva già una overview più robusta e un explorer più coerente, ma il comparator restava il punto più fragile del blocco: `PhenomenaSearch` era un input con dropdown custom privo di semantics complete da combobox, senza keyboard flow affidabile, con stato selezionato/non selezionato poco sincronizzato e senza un messaggio esplicito quando l’altra selezione rendeva indisponibile un fenomeno.
+
+Serviva chiudere la slice 3 migliorando accessibilità, duplicate exclusion e comportamento mobile, ma senza introdurre un nuovo livello di dipendenze proprio per un solo pattern di search.
+
+### Decisione
+La slice 3 hardenizza `PhenomenaComparator` e `PhenomenaSearch` **senza aggiungere una nuova libreria combobox/headless**.
+
+La soluzione adottata resta interna al progetto e introduce:
+
+- semantics `combobox` / `listbox` / `option` esplicite;
+- keyboard flow completo (`ArrowUp/Down`, `Home/End`, `Enter`, `Escape`);
+- sync tra selezione corrente, query visualizzata e filtro debounced;
+- helper copy + empty state per chiarire duplicate exclusion e stato della ricerca;
+- status live nel comparator e wrapping mobile-first per dropdown e colonna `vs` sotto 480px.
+
+### Alternative valutate
+- **Aggiungere una libreria headless dedicata al combobox/autocomplete**: più standardizzata, ma non giustificata dal perimetro ridotto e dal costo di integrare un secondo sottosistema headless oltre a Radix Tabs.
+- **Lasciare il search custom quasi invariato e intervenire solo via CSS**: insufficiente per risolvere tastiera, focus flow e duplicate messaging.
+- **Sostituire il comparator con due select statiche**: più semplice, ma peggiora discoverability e scala peggio sul dataset dei fenomeni.
+
+### Impatto / conseguenze
+- il comparator ora ha un flow coerente per mouse, tastiera e screen reader senza nuove dipendenze runtime;
+- l’esclusione dei duplicati è esplicita sia nel filtro dei risultati sia nella messaggistica helper del picker opposto;
+- la suite RTL di `Timescales` cresce con copertura dedicata per keyboard selection, empty state e ratio panel del comparator;
+- la possibilità di introdurre in futuro una primitive headless dedicata resta aperta, ma non è più necessaria per chiudere la slice 3.
+
+### Trigger di revisione o rollback
+- se altri punti della codebase richiederanno lo stesso pattern e il mantenimento del combobox custom inizierà a duplicare troppo comportamento;
+- se il controllo interno mostrerà limiti significativi su screen reader specifici o su future feature come async search / multi-select;
+- se il cleanup finale di `Timescales` renderà più conveniente convergere verso una primitive headless condivisa anziché mantenere questo implementation detail locale.
+
+---
+
+## D-22 — Fase 3 slice 4: mobile hardening shared-first sul DOB flow e sui controlli densi
+
+**Data:** 2026-04-23  
+**Fase:** 3  
+**Stato:** implemented
+
+### Contesto
+Dopo le slice 1–3, `Timescales` era già stata hardenizzata, ma la roadmap di Fase 3 lasciava ancora aperta la consistenza mobile cross-page delle surface condivise più sensibili: `Settings`, `BirthDatePicker`, i guardrail di uscita quando manca la DOB e alcuni controlli densi come toolbar/toggle/filter chip.
+
+In più, il date input del picker usava un `max` basato su `toISOString()`, che può divergere dal giorno locale vicino alla mezzanotte e creare incoerenze pratiche proprio sui device mobili.
+
+### Decisione
+La slice 4 chiude il mobile hardening shared-first senza introdurre nuove librerie e con un perimetro mirato:
+
+- `BirthDatePicker` usa un limite data locale, espone un summary persistito condiviso e diventa la fonte coerente del feedback DOB su `Landing` e `Settings`;
+- il brand link del `Navbar` rispetta lo stesso `onNavigateAttempt` già usato dai link di menu, così il guardrail DOB di `Settings` vale su tutto il navbar;
+- `Settings` aggiunge input mode e copy di supporto per migliorare tastiera mobile e leggibilità dei blocchi più densi;
+- i CSS shared (`ui.css`, `personalize.css`, `timeline.css`, `components.css`) alzano leggermente touch targets e wrapping senza ridisegnare le primitive.
+
+### Alternative valutate
+- **Introdurre una nuova libreria form/mobile-specific**: non giustificata per una slice di hardening, dato che il layer `src/ui/` copre già il grosso della superficie.
+- **Rifare completamente il DOB flow con un pattern wizard/sheet**: troppo ampio rispetto all’obiettivo della slice e non necessario per chiudere la consistenza mobile.
+- **Limitarsi a fix CSS locali**: insufficiente, perché non avrebbe risolto il guardrail cross-page del navbar né il bug del `max` data locale.
+
+### Impatto / conseguenze
+- `Landing` e `Settings` ora condividono non solo il controllo DOB ma anche il suo feedback persistito;
+- i guardrail quando manca la DOB diventano più coerenti e meno aggirabili sul path reale di navigazione;
+- la suite RTL ottiene coverage specifica sul path `Settings ↔ BirthDatePicker ↔ Landing`, non solo sulle surface `Timescales`;
+- il progetto chiude gran parte del mobile hardening di Fase 3 senza aumentare il numero di dipendenze runtime.
+
+### Trigger di revisione o rollback
+- se emergeranno ancora problemi seri di editing DOB su Safari/iOS o su browser Android che richiedano una primitive date/time diversa;
+- se il summary condiviso del picker dovesse risultare troppo verboso o ridondante sulle surface future;
+- se i controlli densi timeline/age-table richiederanno un redesign strutturale invece del solo hardening di layout/touch target.
+
+---
+
+## D-23 — Fase 3 slice 5: helper temporali condivisi limitati alla scala assoluta, non alla selection
+
+**Data:** 2026-04-23  
+**Fase:** 3  
+**Stato:** implemented
+
+### Contesto
+Dopo le slice 1–4, la duplicazione reale e a basso rischio in `Timescales` era concentrata soprattutto nel mapping absolute-log e in alcuni formatter minimi di scala:
+
+- `TimescaleOverview.tsx` duplicava il posizionamento logaritmico verticale e il fallback delle tick label esponenziali;
+- `PhenomenaComparator.tsx` duplicava il calcolo percentuale delle barre sull’intera scala assoluta;
+- `GeoCosmicExplorer.tsx` duplicava una variante quasi identica dello stesso mapping, ma con range/offset diversi per la scala cosmica.
+
+Allo stesso tempo, la selection della timeline (`selectionKey`, `detailItems`, gruppi, hover/focus/pan, toggle semantics) restava su un contratto diverso e più delicato. Unificarla nella stessa slice avrebbe alzato il rischio senza un valore immediato paragonabile.
+
+### Decisione
+La slice 5 introduce un nuovo helper puro dedicato in `src/utils/temporalScale.ts`, separato da `scaleTransform.ts`, e limita la convergenza a:
+
+- `absoluteLogRatio`
+- `absoluteLogPercent`
+- `roundedLogExponent`
+- `formatLogExponentLabel`
+
+I consumer migrati subito sono solo quelli con shape davvero simile:
+
+- `src/components/timescales/TimescaleOverview.tsx`
+- `src/components/timescales/PhenomenaComparator.tsx`
+- `src/components/timescales/GeoCosmicExplorer.tsx`
+
+Restano fuori scope in questa decisione:
+
+- `Timeline.tsx` (`handleSingleSelect`, `handleGroupSelect`)
+- `timeline-core/interaction.ts` e `TimelineSelectionPayload`
+- una convergenza forzata del dual-slot model del comparator verso il selection contract della timeline
+- helper geologici lineari come `EraCard.linearBarPct`
+
+### Alternative valutate
+- **Option A — helper math/scale soltanto ora**: scelta adottata, perché colpisce duplicazioni concrete e mantiene basso il rischio.
+- **Option B — includere già duration helpers geologici**: utile ma secondario, rinviato per non mescolare scala assoluta logaritmica e durata relativa lineare nella stessa estrazione.
+- **Option C — tentare unification completa della selection**: esclusa in questa slice perché il contratto runtime della timeline è più ricco e ancora troppo diverso.
+
+### Impatto / conseguenze
+- il math absolute-log di `Timescales` ora converge su helper condivisi e testabili senza trascinare dentro la logica di viewport/date della timeline;
+- il naming desiderato per future convergenze (`selectionKey`, toggle semantics, stale-selection cleanup) viene chiarito nei documenti, ma il runtime non cambia contratto prematuramente;
+- la copertura cresce con una nuova suite pura (`src/tests/temporalScale.test.ts`) e con regressioni RTL mirate su overview/comparator/explorer.
+
+### Trigger di revisione o rollback
+- se i futuri consumer dimostrano che `temporalScale.ts` sta assorbendo responsabilità di viewport/date math che dovrebbero restare in `scaleTransform.ts`;
+- se emergono nuovi casi di duplicazione lineare/geologica sufficienti da giustificare una seconda estrazione distinta;
+- se una futura convergenza della selection richiederà un ADR separato perché il contratto timeline non è più abbastanza diverso da quello di `Timescales`.
+
+---
+
+## D-24 — Fase 4 slice 1: adapter puro per la scena 3D prima di selection/focus sync
+
+**Data:** 2026-04-23  
+**Fase:** 4  
+**Stato:** implemented
+
+### Contesto
+Con la Fase 3 chiusa alla slice 5, non risultano altre slice `Timescales + UX improvements` ancora pianificate. Il passo successivo naturale è quindi l’avvio della Fase 4, ma serviva una prima slice a basso rischio per il 3D.
+
+Il problema più concreto era che `src/components/3d/Timeline3D.tsx` manteneva ancora in locale il proprio math di scena principale:
+
+- proiezione temporale lungo l’asse X;
+- ordine/label delle lane;
+- clamp del focus;
+- generazione + thinning dei tick;
+- placement dei marker sopra/sotto la rail.
+
+Questo rendeva il 3D ancora troppo “special case”, pur usando già `TimelineEvent` condivisi con il 2D.
+
+### Decisione
+La slice 1 della Fase 4 estrae un adapter puro `buildTimeline3DScene` dentro `src/components/timeline-core/` e limita la convergenza a:
+
+- lane order / lane labels condivisi;
+- focus clamping del scene model 3D;
+- tick generation + thinning;
+- marker projection (`x`, `axisY`, `y`) per il renderer R3F.
+
+`Timeline3D.tsx` viene ridotto a renderer della scena costruita dal nuovo adapter.
+
+Restano deliberatamente fuori scope:
+
+- `selectionKey` condiviso tra 2D e 3D;
+- hover/focus/detail model comune con `timeline-core/interaction.ts`;
+- cambiamenti ai quality profiles o al lazy wrapper `Timeline3DWrapper.tsx`.
+
+### Alternative valutate
+- **Partire da focus/selection sync 2D↔3D**: troppo fragile per una slice iniziale del 3D, perché il contract di interazione del 2D è più ricco e ancora specifico.
+- **Lasciare tutto in `Timeline3D.tsx` e aggiornare solo i documenti**: insufficiente, perché non riduce il debito architetturale reale del 3D.
+- **Spostare subito tutto il 3D in un nuovo stack/engine**: esplicitamente fuori piano e non giustificato.
+
+### Impatto / conseguenze
+- il 3D inizia a consumare un vero model layer puro invece di duplicare il math di scena nel renderer;
+- la suite ottiene `src/tests/buildTimeline3DScene.test.ts` come guardrail dedicato al kickoff della Fase 4;
+- l’allineamento con il 2D cresce senza forzare ancora un contratto condiviso di selection o inspector.
+
+### Trigger di revisione o rollback
+- se il prossimo step del 3D richiederà un adapter ancora più esplicito per grouping/culling o un location diversa da `timeline-core/`;
+- se emergerà che il renderer 3D deve divergere intenzionalmente dal tick/lane contract comune per motivi UX/performance;
+- se una futura sincronizzazione 2D↔3D di selection/focus richiederà un ADR dedicato perché il contract `interaction` attuale resta troppo 2D-specifico.
+
+---
+
+## D-25 — Fase 4 slice 2: policy runtime 3D condivisa prima di focus/selection convergence
+
+**Data:** 2026-04-23  
+**Fase:** 4  
+**Stato:** implemented
+
+### Contesto
+Dopo la slice 1, il math della scena 3D era già stato estratto nel `timeline-core`, ma il runtime contract del 3D restava ancora frammentato tra file diversi:
+
+- `Timeline3DWrapper.tsx` decideva inline quality profile e fallback WebGL;
+- `Timeline3D.tsx` manteneva inline i budget di rendering (`camera`, `dpr`, `stars`, `gl`, `performance`, hint copy);
+- `Milestones.tsx` duplicava copy/disabled/title del toggle 3D sperimentale.
+
+Questo manteneva il 3D come sistema ancora troppo “page + renderer specific” invece che come runtime con policy esplicita e testabile.
+
+### Decisione
+La slice 2 introduce `src/components/3d/runtimePolicy.ts` come modulo puro dedicato alla policy runtime del 3D e centralizza:
+
+- `resolveTimeline3DQualityProfile`
+- `resolveTimeline3DAvailability`
+- `resolveTimeline3DToggleState`
+- `getTimeline3DProfileConfig`
+
+Il wiring attivo viene riallineato così:
+
+- `Timeline3DWrapper.tsx` usa availability + quality-profile resolution condivisi;
+- `Timeline3D.tsx` consuma la profile config per budget, hint e camera/runtime setup;
+- `Milestones.tsx` usa il toggle-state condiviso per copy e gating del bottone 3D.
+
+### Alternative valutate
+- **Passare direttamente a focus/selection sync 2D↔3D**: ancora troppo presto, perché il contract `interaction` del 2D resta più ricco e specifico.
+- **Lasciare la policy distribuita e coprire solo con test i file esistenti**: riduce il rischio nel brevissimo termine, ma non migliora davvero la leggibilità architetturale del runtime 3D.
+- **Spostare subito anche la policy 3D dentro `timeline-core/`**: non scelto ora, perché la slice resta specifica del runtime 3D e non ha ancora consumer non-R3F abbastanza forti da giustificare il move.
+
+### Impatto / conseguenze
+- il 3D ha ora un boundary più chiaro tra scene math (`timeline-core`) e runtime policy (`components/3d/runtimePolicy.ts`);
+- il wrapper, il renderer e la pagina `Milestones` condividono lo stesso contract puro per availability/copy/budgets;
+- la suite cresce con `src/tests/timeline3DRuntime.test.ts` e `src/tests/timeline3DWrapper.test.tsx`, aggiungendo copertura sul runtime del 3D senza toccare ancora selection/focus sync.
+
+### Trigger di revisione o rollback
+- se emergeranno altri consumer 3D abbastanza generici da rendere `runtimePolicy.ts` un candidato migliore per `timeline-core/` o un adapter layer dedicato;
+- se la prossima slice richiederà una state machine/runtime controller più ricca del semplice toggle `show3D` in `PreferencesContext`;
+- se la futura convergenza 2D↔3D di focus/selection dimostrerà che parte della policy qui estratta deve essere rifusa in un contract cross-runtime più ampio.
 
 ---
 

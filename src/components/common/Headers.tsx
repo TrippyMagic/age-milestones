@@ -68,9 +68,21 @@ export function Navbar({ onNavigateAttempt }: NavbarProps) {
     setOpen(false);
   };
 
+  const handleBrandClick = (evt: ReactMouseEvent<HTMLAnchorElement>) => {
+    if (onNavigateAttempt && !onNavigateAttempt("/")) {
+      evt.preventDefault();
+    }
+    setOpen(false);
+  };
+
   return (
     <header className="app-navbar">
-      <Link to="/" className="app-navbar__brand" aria-label="Go to landing page">
+      <Link
+        to="/"
+        className="app-navbar__brand"
+        aria-label="Go to landing page"
+        onClick={handleBrandClick}
+      >
         <span className="app-navbar__brand-mark" aria-hidden="true" />
         <Title variant="navbar" />
       </Link>

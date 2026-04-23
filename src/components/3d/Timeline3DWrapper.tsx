@@ -10,10 +10,14 @@
  *  4. Show a graceful fallback when WebGL is not supported.
  */
 import { lazy, Suspense } from "react";
-import type { TimelineEvent } from "../timeline/types";
+import type { TimelineEvent } from "../Timeline";
 import type { Range } from "../../utils/scaleTransform";
 import { WEB_GL_SUPPORTED } from "../../utils/webgl";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
+import {
+  resolveTimeline3DAvailability,
+  resolveTimeline3DQualityProfile,
+} from "./runtimePolicy";
 
 // ── Lazy import ────────────────────────────────────────────────
 const Timeline3DLazy = lazy(() => import("./Timeline3D"));
@@ -28,14 +32,10 @@ function LoadingFallback() {
   );
 }
 
-function NoWebGLFallback() {
+function NoWebGLFallback({ message }: { message: string }) {
   return (
     <div className="timeline-3d timeline-3d--no-webgl" role="alert">
-      <p className="timeline-3d__no-webgl-msg">
-        ⚠️ WebGL is not available in this browser.
-        <br />
-        The 3D timeline requires WebGL to render.
-      </p>
+      <p className="timeline-3d__no-webgl-msg">{message}</p>
     </div>
   );
 }
@@ -51,14 +51,16 @@ type WrapperProps = {
 export function Timeline3DWrapper(props: WrapperProps) {
   const isMobile = useMediaQuery("(max-width:719px)");
   const prefersReducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
+  const availability = resolveTimeline3DAvailability(WEB_GL_SUPPORTED);
+  const qualityProfile = resolveTimeline3DQualityProfile({ isMobile, prefersReducedMotion });
 
-  if (!WEB_GL_SUPPORTED) return <NoWebGLFallback />;
+  if (!availability.supported) return <NoWebGLFallback message={availability.fallbackMessage} />;
 
   return (
     <Suspense fallback={<LoadingFallback />}>
       <Timeline3DLazy
         {...props}
-        qualityProfile={isMobile || prefersReducedMotion ? "low-power" : "balanced"}
+        qualityProfile={qualityProfile}
       />
     </Suspense>
   );

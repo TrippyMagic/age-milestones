@@ -6,15 +6,25 @@ import { useBirthDate } from "../context/BirthDateContext";
 import { Button, Field } from "../ui";
 
 const CURRENT_YEAR = new Date().getFullYear();
-const TODAY = new Date().toISOString().slice(0, 10);
 
 const toDateStr = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+const formatSavedBirthDate = (birthDate: Date, birthTime: string) => {
+  const formattedDate = birthDate.toLocaleDateString(undefined, {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+  return `${formattedDate} • ${birthTime}`;
+};
 
 export default function BirthDatePicker() {
   const { birthDate, setBirthDate, birthTime, setBirthTime, clearBirthDate } = useBirthDate();
 
   const dateValue = birthDate ? toDateStr(birthDate) : "";
+  const today = toDateStr(new Date());
+  const summary = birthDate ? formatSavedBirthDate(birthDate, birthTime) : null;
 
   const handleDate = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -41,10 +51,12 @@ export default function BirthDatePicker() {
           id="dob-date"
           type="date"
           className="ui-input"
-          max={TODAY}
+          max={today}
           min="1900-01-01"
           value={dateValue}
           onChange={handleDate}
+          autoComplete="bday"
+          aria-describedby={summary ? "dob-picker-summary" : undefined}
         />
       </Field>
 
@@ -59,8 +71,18 @@ export default function BirthDatePicker() {
           className="ui-input"
           value={birthTime}
           onChange={handleTime}
+          aria-describedby={summary ? "dob-picker-summary" : undefined}
         />
       </Field>
+
+      {summary && (
+        <div className="dob-picker__meta" id="dob-picker-summary" role="status" aria-live="polite">
+          <p className="dob-picker__summary">Saved birth date: {summary}</p>
+          <p className="dob-picker__meta-note">
+            This shared picker stays in sync across Landing, Settings, and Milestones.
+          </p>
+        </div>
+      )}
 
       {birthDate && (
         <div className="dob-picker__actions">

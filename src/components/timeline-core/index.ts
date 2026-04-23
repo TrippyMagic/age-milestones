@@ -7,6 +7,19 @@ export {
   type TimelineSceneLane,
   type TimelineSceneTick,
 } from "./buildTimelineScene";
+export {
+  buildTimeline3DScene,
+  TIMELINE_3D_AXIS_MAX_X,
+  TIMELINE_3D_AXIS_MIN_X,
+  TIMELINE_3D_LANE_OFFSET_Y,
+  TIMELINE_3D_LANE_Y,
+  toTimeline3DX,
+  type BuildTimeline3DSceneOptions,
+  type Timeline3DScene,
+  type Timeline3DSceneLane,
+  type Timeline3DSceneMarker,
+  type Timeline3DSceneTick,
+} from "./buildTimeline3DScene";
 export { buildRenderItems } from "./buildRenderItems";
 export {
   buildTimelineInteractiveTargets,

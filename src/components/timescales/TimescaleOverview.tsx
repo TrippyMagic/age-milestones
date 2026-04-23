@@ -5,9 +5,14 @@
  * Dots are always visible; labels appear where space permits (collision avoidance).
  * Hovering any dot shows a tooltip with full details.
  */
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useElementSize } from "../../hooks/useElementSize";
 import { formatDuration } from "../../utils/formatDuration";
+import {
+  absoluteLogRatio,
+  formatLogExponentLabel,
+  roundedLogExponent,
+} from "../../utils/temporalScale";
 import type { TimescalePhenomenon, PhenomenonCategory } from "../../types/phenomena";
 import {
   PHENOMENON_CATEGORY_META,
@@ -30,8 +35,13 @@ const LOG_TICK_LABELS: Record<number, string> = {
   [17]: "~3 Gyr", [18]: "~32 Gyr", [21]: "~1 Tyr",
 };
 
+const PHENOMENA_ABSOLUTE_LOG_SCALE = {
+  minLog: PHENOMENA_LOG_MIN,
+  maxLog: PHENOMENA_LOG_MAX,
+} as const;
+
 const tickLabel = (power: number): string =>
-  LOG_TICK_LABELS[power] ?? `10^${power} s`;
+  LOG_TICK_LABELS[power] ?? formatLogExponentLabel(power, "s");
 
 // ── Loading skeleton ──────────────────────────────────────────
 function LoadingSkeleton() {
@@ -52,9 +62,10 @@ type OverviewProps = {
 };
 
 export function TimescaleOverview({ phenomena, status, activeCategories }: OverviewProps) {
-  const [containerRef, containerSize] = useElementSize<HTMLDivElement>();
+  const [vizRef, vizSize] = useElementSize<HTMLDivElement>();
   const svgRef   = useRef<SVGSVGElement>(null);
   const [hovered, setHovered] = useState<TimescalePhenomenon | null>(null);
+  const [selected, setSelected] = useState<TimescalePhenomenon | null>(null);
   const [mouse,   setMouse]   = useState({ x: 0, y: 0 });
 
   // Filter by active categories
@@ -63,18 +74,31 @@ export function TimescaleOverview({ phenomena, status, activeCategories }: Overv
     [phenomena, activeCategories],
   );
 
-  const w = containerSize.width  || 480;
-  const h = containerSize.height || 720;
+  const w = vizSize.width  || 480;
+  const h = vizSize.height || 720;
 
   const trackX   = w * TRACK_X_RATIO;
   const usableH  = h - 2 * PAD_V;
 
   // Map log value to SVG y: logMax → top, logMin → bottom
   const getY = useCallback((dur: number): number => {
-    const log = Math.log10(dur);
-    const ratio = (PHENOMENA_LOG_MAX - log) / (PHENOMENA_LOG_MAX - PHENOMENA_LOG_MIN);
+    const ratio = absoluteLogRatio(dur, {
+      ...PHENOMENA_ABSOLUTE_LOG_SCALE,
+      invert: true,
+    });
     return PAD_V + ratio * usableH;
   }, [usableH]);
+
+  const renderDurationExponent = useCallback((durationSeconds: number, className: string) => {
+    const exponent = roundedLogExponent(durationSeconds);
+    if (exponent === null) return null;
+
+    return (
+      <span className={className} aria-label={formatLogExponentLabel(exponent, "seconds")}>
+        {" "}(10<sup>{exponent}</sup> s)
+      </span>
+    );
+  }, []);
 
   // Sort all filtered phenomena by y (top → bottom)
   const sorted = useMemo(
@@ -113,9 +137,29 @@ export function TimescaleOverview({ phenomena, status, activeCategories }: Overv
     setMouse({ x: e.clientX - rect.left, y: e.clientY - rect.top });
   }, []);
 
+  useEffect(() => {
+    if (selected && !filtered.some(phenomenon => phenomenon.id === selected.id)) {
+      setSelected(null);
+    }
+    if (hovered && !filtered.some(phenomenon => phenomenon.id === hovered.id)) {
+      setHovered(null);
+    }
+  }, [filtered, hovered, selected]);
+
+  const inspected = selected ?? hovered;
+
+  const activatePhenomenon = useCallback((phenomenon: TimescalePhenomenon) => {
+    setSelected(prev => prev?.id === phenomenon.id ? null : phenomenon);
+  }, []);
+
+  const describePhenomenon = useCallback((phenomenon: TimescalePhenomenon): string => {
+    const category = PHENOMENON_CATEGORY_META[phenomenon.category].label;
+    return `${phenomenon.label}. ${category}. ${formatDuration(phenomenon.durationSeconds)}.`;
+  }, []);
+
   // ── Render ─────────────────────────────────────────────────
   return (
-    <div ref={containerRef} className="ts-overview__container">
+    <div className="ts-overview__container">
       {status === "loading" && <LoadingSkeleton />}
       {status === "error"   && (
         <p className="ts-overview__empty">Failed to load phenomena data.</p>
@@ -125,116 +169,188 @@ export function TimescaleOverview({ phenomena, status, activeCategories }: Overv
       )}
 
       {filtered.length > 0 && (
-        <svg
-          ref={svgRef}
-          width={w}
-          height={h}
-          viewBox={`0 0 ${w} ${h}`}
-          className="ts-overview__svg"
-          onMouseMove={handleMouseMove}
-          onMouseLeave={() => setHovered(null)}
-        >
-          {/* Central vertical track */}
-          <line
-            x1={trackX} y1={PAD_V}
-            x2={trackX} y2={h - PAD_V}
-            className="ts-overview__track"
-          />
+        <>
+          <div ref={vizRef} className="ts-overview__viz">
+            <svg
+              ref={svgRef}
+              width={w}
+              height={h}
+              viewBox={`0 0 ${w} ${h}`}
+              className="ts-overview__svg"
+              onMouseMove={handleMouseMove}
+              onMouseLeave={() => setHovered(null)}
+            >
+              {/* Central vertical track */}
+              <line
+                x1={trackX} y1={PAD_V}
+                x2={trackX} y2={h - PAD_V}
+                className="ts-overview__track"
+              />
 
-          {/* Power-of-10 reference ticks */}
-          {ticks.map(({ power, y }) => (
-            <g key={`tick-${power}`}>
-              <line x1={trackX - 10} y1={y} x2={trackX + 10} y2={y} className="ts-overview__tick-line" />
-              <text x={trackX - 14} y={y + 3.5} textAnchor="end" className="ts-overview__tick-label">
-                {tickLabel(power)}
-              </text>
-            </g>
-          ))}
-
-          {/* Phenomena */}
-          {positioned.map(p => {
-            const color  = PHENOMENON_CATEGORY_META[p.category].color;
-            const isHov  = hovered?.id === p.id;
-            const r      = p.showLabel ? 4.5 : 3;
-            const labelX = p.side === "right" ? trackX + 13 : trackX - 13;
-            const anchor = p.side === "right" ? "start" : "end";
-
-            return (
-              <g
-                key={p.id}
-                className="ts-overview__dot-group"
-                onMouseEnter={() => setHovered(p)}
-                style={{ cursor: "pointer" }}
-              >
-                {/* Connector from dot to label */}
-                {p.showLabel && (
-                  <line
-                    x1={p.side === "right" ? trackX + 5 : trackX - 5}
-                    y1={p.y}
-                    x2={p.side === "right" ? trackX + 11 : trackX - 11}
-                    y2={p.y}
-                    stroke={color} strokeOpacity={0.45} strokeWidth={1}
-                  />
-                )}
-
-                {/* Dot */}
-                <circle
-                  cx={trackX} cy={p.y}
-                  r={isHov ? r + 2 : r}
-                  fill={color}
-                  fillOpacity={isHov ? 1 : 0.8}
-                  style={{ transition: "r 0.1s, fill-opacity 0.1s" }}
-                />
-
-                {/* Label text */}
-                {p.showLabel && (
-                  <text
-                    x={labelX} y={p.y + 3.5}
-                    textAnchor={anchor}
-                    fill={color}
-                    className="ts-overview__label-text"
-                    opacity={isHov ? 1 : 0.88}
-                  >
-                    {p.label}
+              {/* Power-of-10 reference ticks */}
+              {ticks.map(({ power, y }) => (
+                <g key={`tick-${power}`}>
+                  <line x1={trackX - 10} y1={y} x2={trackX + 10} y2={y} className="ts-overview__tick-line" />
+                  <text x={trackX - 14} y={y + 3.5} textAnchor="end" className="ts-overview__tick-label">
+                    {tickLabel(power)}
                   </text>
-                )}
-              </g>
-            );
-          })}
-        </svg>
-      )}
+                </g>
+              ))}
 
-      {/* Hover tooltip */}
-      {hovered && (
-        <div
-          className="ts-overview__tooltip"
-          style={{
-            left: Math.min(mouse.x + 14, w - 230),
-            top:  Math.max(mouse.y - 70, 8),
-          }}
-        >
-          <span
-            className="ts-overview__tooltip-cat"
-            style={{ color: PHENOMENON_CATEGORY_META[hovered.category].color }}
-          >
-            {PHENOMENON_CATEGORY_META[hovered.category].label}
-          </span>
-          <span className="ts-overview__tooltip-label">{hovered.label}</span>
-          <span className="ts-overview__tooltip-duration">
-            {formatDuration(hovered.durationSeconds)}
-            <span className="ts-overview__tooltip-exp">
-              {" "}(10<sup>{Math.round(Math.log10(hovered.durationSeconds))}</sup> s)
-            </span>
-          </span>
-          {hovered.description && (
-            <span className="ts-overview__tooltip-desc">{hovered.description}</span>
+              {/* Phenomena */}
+              {positioned.map(p => {
+                const color = PHENOMENON_CATEGORY_META[p.category].color;
+                const isHovered = hovered?.id === p.id;
+                const isSelected = selected?.id === p.id;
+                const isActive = isHovered || isSelected;
+                const r = p.showLabel ? 4.5 : 3;
+                const labelX = p.side === "right" ? trackX + 13 : trackX - 13;
+                const anchor = p.side === "right" ? "start" : "end";
+
+                return (
+                  <g
+                    key={p.id}
+                    className="ts-overview__dot-group"
+                    role="button"
+                    tabIndex={0}
+                    aria-label={describePhenomenon(p)}
+                    aria-pressed={isSelected}
+                    onMouseEnter={() => setHovered(p)}
+                    onFocus={() => setHovered(p)}
+                    onClick={() => activatePhenomenon(p)}
+                    onKeyDown={event => {
+                      if (event.key !== "Enter" && event.key !== " ") return;
+                      event.preventDefault();
+                      activatePhenomenon(p);
+                    }}
+                    style={{ cursor: "pointer" }}
+                  >
+                    {p.showLabel && (
+                      <line
+                        x1={p.side === "right" ? trackX + 5 : trackX - 5}
+                        y1={p.y}
+                        x2={p.side === "right" ? trackX + 11 : trackX - 11}
+                        y2={p.y}
+                        stroke={color}
+                        strokeOpacity={isActive ? 0.72 : 0.45}
+                        strokeWidth={1}
+                      />
+                    )}
+
+                    {isSelected && (
+                      <circle
+                        cx={trackX}
+                        cy={p.y}
+                        r={r + 4}
+                        fill="transparent"
+                        stroke={color}
+                        strokeOpacity={0.55}
+                        strokeWidth={1.5}
+                      />
+                    )}
+
+                    <circle
+                      cx={trackX} cy={p.y}
+                      r={isActive ? r + 2 : r}
+                      fill={color}
+                      fillOpacity={isActive ? 1 : 0.8}
+                      style={{ transition: "r 0.1s, fill-opacity 0.1s" }}
+                    />
+
+                    {p.showLabel && (
+                      <text
+                        x={labelX} y={p.y + 3.5}
+                        textAnchor={anchor}
+                        fill={color}
+                        className="ts-overview__label-text"
+                        opacity={isActive ? 1 : 0.88}
+                      >
+                        {p.label}
+                      </text>
+                    )}
+                  </g>
+                );
+              })}
+            </svg>
+
+            {hovered && (
+              <div
+                className="ts-overview__tooltip"
+                style={{
+                  left: Math.min(mouse.x + 14, w - 230),
+                  top:  Math.max(mouse.y - 70, 8),
+                }}
+              >
+                <span
+                  className="ts-overview__tooltip-cat"
+                  style={{ color: PHENOMENON_CATEGORY_META[hovered.category].color }}
+                >
+                  {PHENOMENON_CATEGORY_META[hovered.category].label}
+                </span>
+                <span className="ts-overview__tooltip-label">{hovered.label}</span>
+                <span className="ts-overview__tooltip-duration">
+                  {formatDuration(hovered.durationSeconds)}
+                  {renderDurationExponent(hovered.durationSeconds, "ts-overview__tooltip-exp")}
+                </span>
+                {hovered.description && (
+                  <span className="ts-overview__tooltip-desc">{hovered.description}</span>
+                )}
+                {hovered.examples && (
+                  <span className="ts-overview__tooltip-examples">
+                    {hovered.examples.join(" · ")}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {inspected && (
+            <section
+              className="ts-overview__detail"
+              role="region"
+              aria-label={`Phenomenon details: ${inspected.label}`}
+            >
+              <div className="ts-overview__detail-header">
+                <div className="ts-overview__detail-copy">
+                  <span
+                    className="ts-overview__detail-cat"
+                    style={{ color: PHENOMENON_CATEGORY_META[inspected.category].color }}
+                  >
+                    {PHENOMENON_CATEGORY_META[inspected.category].label}
+                  </span>
+                  <h3 className="ts-overview__detail-title">{inspected.label}</h3>
+                </div>
+
+                {selected && (
+                  <button
+                    type="button"
+                    className="ts-overview__detail-clear"
+                    onClick={() => setSelected(null)}
+                  >
+                    Clear pinned detail
+                  </button>
+                )}
+              </div>
+
+              <p className="ts-overview__detail-duration">
+                {formatDuration(inspected.durationSeconds)}
+                {renderDurationExponent(inspected.durationSeconds, "ts-overview__detail-exp")}
+              </p>
+
+              {inspected.description && (
+                <p className="ts-overview__detail-desc">{inspected.description}</p>
+              )}
+
+              {inspected.examples && inspected.examples.length > 0 && (
+                <ul className="ts-overview__detail-examples">
+                  {inspected.examples.map(example => (
+                    <li key={example}>{example}</li>
+                  ))}
+                </ul>
+              )}
+            </section>
           )}
-          {hovered.examples && (
-            <span className="ts-overview__tooltip-examples">
-              {hovered.examples.join(" · ")}
-            </span>
-          )}
-        </div>
+        </>
       )}
     </div>
   );

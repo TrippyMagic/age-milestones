@@ -106,6 +106,7 @@
 .ui-select {
   width: 100%;
   box-sizing: border-box;
+  min-height: 46px;
   font-size: 1rem;
   padding: 12px 14px;
   border-radius: 14px;
@@ -159,6 +160,7 @@
 .ui-button {
   appearance: none;
   margin: 0;
+  min-height: 44px;
   padding: 12px 18px;
   border-radius: 16px;
   border: 1px solid transparent;
@@ -371,6 +373,10 @@
 }
 
 @media (max-width: 479px) {
+  .ui-inline[data-wrap="true"] {
+    width: 100%;
+  }
+
   .ui-form-actions {
     flex-direction: column;
   }

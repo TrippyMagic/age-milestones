@@ -1,13 +1,13 @@
 # PLAN — Refactor 4: UI Platform Stabilization & Timeline Systems
 
 **Data:** 2026-04-23  
-**Stato:** 🟡 In corso — Fase 0 completata, Fase 1 completata, Fase 2 completata
+**Stato:** 🟡 In corso — Fase 0 completata, Fase 1 completata, Fase 2 completata, Fase 3 completata, Fase 4 slice 2 verificata
 
 ---
 
-## Snapshot esecutivo — aggiornamento Fase 2 completata
+## Snapshot esecutivo — aggiornamento Fase 4 slice 2 verificata
 
-Al 2026-04-23 la baseline di Refactor 4 è stata estesa fino al **completamento verificato della Fase 2**.
+Al 2026-04-23 la baseline di Refactor 4 è stata estesa fino alla **slice 2 verificata della Fase 4**.
 
 Output prodotti:
 
@@ -35,6 +35,29 @@ Risultati chiave:
 - il runtime 2D non renderizza più marker/gruppi via `EventElement`: il visuale passa dal canvas condiviso, mentre focus/keyboard/detail panel passano dall’overlay HTML minimale.
 - la copertura DOM/integration della timeline protegge ora overlay condiviso, keyboard activation, pointer hit-testing e axis click invariants.
 - verifica post-fase eseguita con successo: `npm test -- --run` → 81 test passati su 10 file, `npm run build` ✅, `npm run lint` ⚠️ solo warning preesistente in `UserProfileContext.tsx`.
+- Fase 3 slice 1 avviata con hardening della `Timescales` overview: shell dedicata per summary/reset filtri, messaggistica loading/error esplicita, detail panel pinned touch-safe sotto il ruler logaritmico e nuova copertura RTL del flusso overview.
+- verifica slice 1 eseguita con successo: `npm test -- --run` → 85 test passati su 11 file, `npm run build` ✅, `npm run lint` ⚠️ solo warning preesistente in `UserProfileContext.tsx`.
+- Fase 3 slice 2 completata con hardening di `GeoCosmicExplorer`: summary/back flow geologico, breadcrumb semantics più forti, detail panel focus-safe, drilldown più coerente e nuovi guardrail RTL dedicati.
+- verifica slice 2 eseguita con successo: `npm test -- --run` → 90 test passati su 12 file, `npm run build` ✅, `npm run lint` ⚠️ solo warning preesistente in `UserProfileContext.tsx`.
+- Fase 3 slice 3 completata con hardening di `PhenomenaComparator` / `PhenomenaSearch`: combobox accessibile custom, dropdown/focus/keyboard flow più robusto, empty state esplicito, esclusione duplicati cross-slot e wrapping mobile sotto 480px.
+- introdotto `src/tests/phenomenaComparator.test.tsx` per coprire selection via tastiera, duplicate exclusion, stato vuoto e wiring del comparison panel.
+- verifica slice 3 eseguita con successo: `npm test -- --run` → 93 test passati su 13 file, `npm run build` ✅, `npm run lint` ⚠️ solo warning preesistente in `UserProfileContext.tsx`.
+- Fase 3 slice 4 completata con hardening cross-page di `Settings` + `BirthDatePicker`: max date locale corretta, summary DOB condiviso tra Landing/Settings, guardrail navbar coerente quando manca il DOB e touch-target/layout più robusti per form e controlli densi.
+- introdotto `src/tests/settingsDobFlow.test.tsx` per coprire blocco navigazione da `Settings`, persistenza condivisa del DOB e clear flow coerente tra `Settings` e `Landing`.
+- verifica slice 4 eseguita con successo: `npm test -- --run` → 96 test passati su 14 file, `npm run build` ✅, `npm run lint` ⚠️ solo warning preesistente in `UserProfileContext.tsx`.
+- Fase 3 slice 5 completata con estrazione di helper temporali condivisi a basso rischio in `src/utils/temporalScale.ts`: absolute-log ratio/percent configurabile, formatter minimo dell’esponente log e migrazione dei consumer Timescales più omogenei (`TimescaleOverview`, `PhenomenaComparator`, `GeoCosmicExplorer`).
+- la convergenza forte della selection resta fuori scope: `Timeline.tsx`, `timeline-core/interaction.ts` e il dual-slot model del comparator non cambiano runtime contract in questa slice; l’allineamento desiderato su `selectionKey`, toggle semantics e stale-selection cleanup viene solo documentato.
+- introdotto `src/tests/temporalScale.test.ts` e ampliata la copertura RTL di `Timescales` per cleanup selezione overview, coerenza width/order del comparator e scala cosmica normalizzata dell’explorer.
+- verifica slice 5 eseguita con successo: `npm test -- --run` → 104 test passati su 15 file, `npm run build` ✅, `npm run lint` ⚠️ solo warning preesistente in `UserProfileContext.tsx`.
+- Fase 3 considerata completata: non risultano altre slice pianificate oltre alla 5, quindi l’evoluzione successiva passa al kickoff della Fase 4.
+- Fase 4 slice 1 completata con estrazione di `buildTimeline3DScene` nel `timeline-core`: il renderer 3D ora consuma un adapter puro per lane order, focus clamping, tick thinning e marker projection, invece di duplicare localmente il math della scena.
+- `src/components/3d/Timeline3D.tsx` è stato alleggerito fino a diventare soprattutto un renderer R3F della scena già costruita, mentre `Timeline3DWrapper.tsx` mantiene invariati lazy-loading, fallback WebGL e quality profiles.
+- introdotto `src/tests/buildTimeline3DScene.test.ts` per proteggere lane order condiviso, clamp del focus, bounds dell’asse 3D, placement marker e thinning dei tick.
+- verifica Fase 4 slice 1 eseguita con successo: `npm test -- --run` → 109 test passati su 16 file, `npm run build` ✅, `npm run lint` ⚠️ solo warning preesistente in `UserProfileContext.tsx`.
+- Fase 4 slice 2 completata con estrazione della policy runtime 3D in `src/components/3d/runtimePolicy.ts`: quality-profile resolution, renderer budgets, toggle copy e availability/fallback contract non vivono più inline tra wrapper, renderer e `Milestones`.
+- `src/components/3d/Timeline3DWrapper.tsx`, `src/components/3d/Timeline3D.tsx` e `src/pages/Milestones.tsx` ora consumano lo stesso contract puro per WebGL gating, qualità `balanced / low-power` e copy del toggle sperimentale.
+- introdotti `src/tests/timeline3DRuntime.test.ts` e `src/tests/timeline3DWrapper.test.tsx` per proteggere policy, fallback esplicito e wiring del profile nel lazy wrapper.
+- verifica Fase 4 slice 2 eseguita con successo: `npm test -- --run` → 116 test passati su 18 file, `npm run build` ✅, `npm run lint` ⚠️ solo warning preesistente in `UserProfileContext.tsx`.
 
 ---
 
@@ -692,6 +715,8 @@ Il cleanup non deve più essere un atto puntuale alla fine, ma una pipeline cont
 
 **Obiettivo:** riframmare Timescales e completare il mobile hardening trasversale.
 
+**Stato:** ✅ completata il 2026-04-23 — overview hardening + explorer detail/mobile semantics + comparator accessibility + cross-page mobile consistency + shared temporal helpers
+
 **Scope consigliato**
 - allineare `Overview` e `Explorer` al temporal engine condiviso dove utile;
 - consolidare filtri, detail patterns e semantics;
@@ -703,6 +728,58 @@ Il cleanup non deve più essere un atto puntuale alla fine, ma una pipeline cont
 - meno strumenti isolati, più “scene” esplorative;
 - chiusura dei principali bug mobili rimasti aperti.
 
+**Slice pianificate**
+- **Slice 1 — Overview hardening**: shell overview con summary/reset filtri, pinned detail panel per touch/keyboard, loading/error guidance, test RTL dedicati. ✅
+- **Slice 2 — Explorer detail + mobile semantics**: breadcrumb/detail panel/explore flow più robusti e senza overflow mobile. ✅
+- **Slice 3 — Comparator search/accessibility hardening**: search dropdown, keyboard flow, duplicate exclusion, wrapping sotto 480px. ✅
+- **Slice 4 — Cross-page mobile consistency**: hardening finale su `Settings`, DOB picker e controlli densi ancora sensibili. ✅
+- **Slice 5 — Shared temporal helpers**: convergenza più strategica del model temporale tra `Timeline` e `Timescales`. ✅
+
+**Deliverable prodotti finora (slice 1 / overview hardening)**
+- `src/pages/Timescales.tsx` ora espone una overview shell dedicata con summary live, reset filtri e guidance esplicita per loading/error/empty/touch users;
+- `src/components/timescales/TimescaleOverview.tsx` supporta selezione persistente di un fenomeno e detail panel pinned sotto il ruler logaritmico;
+- `src/css/timescales.css` è stata estesa con toolbar overview + detail card mobile-first;
+- introdotto `src/tests/timescalesOverview.test.tsx` per coprire summary/reset, detail panel pinned e stati loading/error.
+
+**Deliverable prodotti finora (slice 2 / explorer detail + mobile semantics)**
+- `src/components/timescales/GeoCosmicExplorer.tsx` ora espone summary di livello, back flow, breadcrumb con `aria-current`, detail panel focus-safe e empty state esplicito;
+- `src/components/timescales/EraCard.tsx` collega semanticamente il bottone details al pannello attivo via `aria-expanded`/`aria-controls` e rende più esplicita l’azione di drilldown;
+- `src/hooks/useExplorerDrilldown.ts` elimina selezioni stale quando il livello visibile cambia;
+- `src/css/timescales.css` è stata estesa con summary/back actions explorer, action targets mobile-friendly e wrapping resiliente per breadcrumb/meta/detail;
+- introdotto `src/tests/geoCosmicExplorer.test.tsx` per coprire loading/error, detail toggle, drilldown, breadcrumb/back flow e switch geological/cosmic.
+
+**Deliverable prodotti finora (slice 3 / comparator search + accessibility hardening)**
+- `src/components/timescales/PhenomenaSearch.tsx` ora espone semantics `combobox/listbox`, sync del valore selezionato, keyboard navigation (`ArrowUp/Down`, `Home/End`, `Enter`, `Escape`), cleanup del debounce e messaggistica empty-state/hint più esplicita;
+- `src/components/timescales/PhenomenaComparator.tsx` ora guida il flow con copy/status live, labels accessibili per i due picker e guardrail runtime contro selezioni duplicate tra slot;
+- `src/css/timescales.css` è stata estesa con stati attivo/current del dropdown, hint comparatore e wrapping resiliente per search items + colonna `vs` sotto 480px;
+- introdotto `src/tests/phenomenaComparator.test.tsx` per coprire keyboard-driven selection, duplicate exclusion, empty-state e stato di confronto annunciato.
+
+**Deliverable prodotti finora (slice 4 / cross-page mobile consistency)**
+- `src/components/BirthDatePicker.tsx` ora usa un `max` locale per il date input, espone un summary condiviso della DOB salvata e rende più esplicita la sync tra `Landing`, `Settings` e le view DOB-dependent;
+- `src/pages/Landing.tsx` rimuove il summary duplicato locale e converge sullo stesso feedback del picker condiviso;
+- `src/components/common/Headers.tsx` allinea il brand link del navbar al guardrail di `Settings`, così il blocco di uscita quando manca il DOB vale anche fuori dal menu dropdown;
+- `src/pages/Settings.tsx`, `src/css/personalize.css`, `src/css/ui.css`, `src/css/timeline.css` e `src/css/components.css` estendono input mode, summary form copy, stacking e touch targets per viewport stretti e controlli densi;
+- introdotto `src/tests/settingsDobFlow.test.tsx` per coprire persistenza DOB condivisa, clear flow e navigation guard coerente.
+
+**Deliverable prodotti infine (slice 5 / shared temporal helpers)**
+- introdotto `src/utils/temporalScale.ts` come helper puro dedicato alla scala temporale assoluta fuori da `scaleTransform.ts`, così il math di viewport/date della timeline resta separato dal math Timescales;
+- estratti `absoluteLogRatio`, `absoluteLogPercent`, `roundedLogExponent` e `formatLogExponentLabel` per convergere le duplicazioni reali di mapping/formatting a basso rischio;
+- migrati `src/components/timescales/TimescaleOverview.tsx`, `src/components/timescales/PhenomenaComparator.tsx` e `src/components/timescales/GeoCosmicExplorer.tsx` ai nuovi helper condivisi, mantenendo invariati i contratti di selection e il dual-slot comparator model;
+- lasciati volutamente fuori dalla slice il merge della selection tra `Timeline` e `Timescales`, `TimelineSelectionPayload`, `handleSingleSelect/handleGroupSelect`, `useExplorerDrilldown` oltre al helper lineare geologico di `EraCard`, per evitare over-abstraction prematura;
+- introdotto `src/tests/temporalScale.test.ts` e rafforzate `src/tests/timescalesOverview.test.tsx`, `src/tests/phenomenaComparator.test.tsx` e `src/tests/geoCosmicExplorer.test.tsx` con regressioni mirate sui nuovi helper condivisi.
+
+**Boundary espliciti dopo la slice 5**
+- la convergenza si ferma agli helper di scala/formatter a basso rischio: nessun tentativo di unificare ancora il contratto di selection tra `Timeline` e `Timescales`;
+- `Timeline.tsx`, `timeline-core/interaction.ts` e il dual-slot model di `PhenomenaComparator` restano invariati: niente toggle helper condiviso, niente cleanup contract comune, niente rinomina forzata del payload runtime;
+- la durata geologica lineare di `EraCard` e l’hook `useExplorerDrilldown` restano separati in questa slice; eventuali duration helpers condivisi sono considerati solo come opzione successiva;
+- il mobile hardening principale è ora chiuso sulle surface più sensibili (`Settings`, DOB flow, comparator, overview, explorer), ma non esistono ancora visual regression / e2e mobile dedicati;
+- i controlli densi timeline/age-table sono stati solo hardenizzati via layout/touch-target, non ridisegnati come primitive separate.
+
+**Esito verificato (slice 5)**
+- `npm test -- --run` → ✅ 104 test passati su 15 file;
+- `npm run build` → ✅ produzione compilata con successo;
+- `npm run lint` → ⚠️ solo 1 warning preesistente in `src/context/UserProfileContext.tsx`.
+
 **Criterio di successo**
 - esperienza mobile coerente tra `Milestones`, `Timescales`, `Settings`.
 
@@ -711,6 +788,8 @@ Il cleanup non deve più essere un atto puntuale alla fine, ma una pipeline cont
 ### Fase 4 — Timeline 3D architecture
 
 **Obiettivo:** riallineare il 3D al nuovo model senza trasformarlo nella priorità del refactor.
+
+**Stato:** 🟡 avviata il 2026-04-23, slice 2 verificata — pure 3D scene adapter + runtime policy extraction
 
 **Scope consigliato**
 - adapter condivisi 2D/3D;
@@ -722,6 +801,30 @@ Il cleanup non deve più essere un atto puntuale alla fine, ma una pipeline cont
 - scena 3D più indipendente dalla vecchia timeline 2D;
 - stessa semantica eventi/lane del nuovo core;
 - preparazione per future ottimizzazioni senza introdurre nuovo stack.
+
+**Deliverable prodotti finora (slice 1 / adapter kickoff)**
+- introdotto `src/components/timeline-core/buildTimeline3DScene.ts` come adapter puro per la scena 3D, con contract esplicito per lanes, ticks, focus e marker projection;
+- riusato il lane order canonico del `timeline-core` e la semantica condivisa di `TimelineEvent`, evitando che `Timeline3D.tsx` continui a mantenere in locale il proprio mapping temporale principale;
+- migrato `src/components/3d/Timeline3D.tsx` a un ruolo soprattutto render-only, lasciando invariati `Timeline3DWrapper.tsx`, lazy import, fallback WebGL e quality profile `balanced / low-power`;
+- introdotto `src/tests/buildTimeline3DScene.test.ts` per coprire il nuovo adapter e proteggere la parità minima del math 3D rispetto al contract timeline condiviso.
+
+**Deliverable prodotti finora (slice 2 / runtime policy extraction)**
+- introdotto `src/components/3d/runtimePolicy.ts` come modulo puro dedicato al runtime contract del 3D: availability, toggle state, quality-profile resolution e renderer budgets condivisi;
+- `src/components/3d/Timeline3DWrapper.tsx` ora usa `resolveTimeline3DAvailability` e `resolveTimeline3DQualityProfile` invece di branch inline su `WEB_GL_SUPPORTED` e media query;
+- `src/components/3d/Timeline3D.tsx` ora consuma `getTimeline3DProfileConfig` per camera, DPR, stars, lighting, orbit-controls, performance budget e hint copy, riducendo ulteriore logica policy nel renderer;
+- `src/pages/Milestones.tsx` ora usa `resolveTimeline3DToggleState` per titolo/label/disabled del toggle 3D, così il gating sperimentale non duplica più copy e condizioni in pagina;
+- introdotti `src/tests/timeline3DRuntime.test.ts` e `src/tests/timeline3DWrapper.test.tsx` per proteggere policy pure + wiring wrapper.
+
+**Boundary espliciti dopo la slice 2**
+- nessuna convergenza ancora su `selectionKey`, focus/hover model o detail inspection condivisa tra 2D e 3D;
+- nessuna migrazione ancora del 3D verso `timeline-core/interaction.ts` o verso un inspector contract condiviso con la timeline 2D;
+- il toggle `show3D` resta nel `PreferencesContext` e non viene ancora sostituito da uno state machine/runtime controller più ricco;
+- nessuna migrazione ancora di renderer/event marker 3D verso un contract di interazione compatibile con `timeline-core/interaction.ts`.
+
+**Esito verificato (slice 2)**
+- `npm test -- --run` → ✅ 116 test passati su 18 file;
+- `npm run build` → ✅ produzione compilata con successo;
+- `npm run lint` → ⚠️ solo 1 warning preesistente in `src/context/UserProfileContext.tsx`.
 
 **Criterio di successo**
 - il 3D resta opzionale ma non più “special case” fragile.

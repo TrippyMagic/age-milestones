@@ -12,11 +12,12 @@
  *  - "Explore ›" button (only on units with children) → drills one level deeper.
  *  - Breadcrumb links → navigate back to any ancestor level.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useGeologicalEras } from "../../hooks/useGeologicalEras";
 import { useExplorerDrilldown } from "../../hooks/useExplorerDrilldown";
 import { EraCard } from "./EraCard";
 import { formatMya, formatMyaDuration } from "../../utils/formatDuration";
+import { absoluteLogPercent } from "../../utils/temporalScale";
 import type { GeologicalUnit, CosmicMilestone } from "../../types/geological";
 import { RANK_LABELS } from "../../types/geological";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui";
@@ -34,18 +35,32 @@ function ExplorerSkeleton() {
 
 // ── Detail panel for the selected geological unit ──────────────
 function EraDetailPanel({
+  detailId,
   unit,
   onClose,
   onExplore,
 }: {
+  detailId: string;
   unit: GeologicalUnit;
   onClose: () => void;
   onExplore: (unit: GeologicalUnit) => void;
 }) {
   const hasKids = Boolean(unit.children?.length);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    panelRef.current?.focus();
+  }, [unit.id]);
 
   return (
-    <div className="ts-explorer__detail" role="region" aria-label={`Details: ${unit.name}`}>
+    <div
+      id={detailId}
+      ref={panelRef}
+      className="ts-explorer__detail"
+      role="region"
+      aria-label={`Details: ${unit.name}`}
+      tabIndex={-1}
+    >
       {/* Header */}
       <div className="ts-explorer__detail-header">
         <span
@@ -115,6 +130,9 @@ function EraDetailPanel({
 // ── Geological tab ─────────────────────────────────────────────
 function GeologicalExplorer({ geological }: { geological: GeologicalUnit[] }) {
   const explorer = useExplorerDrilldown(geological);
+  const detailPanelId = explorer.selected ? `ts-explorer-detail-${explorer.selected.id}` : undefined;
+  const currentLevelLabel = explorer.currentParent?.name ?? "All Eons";
+  const unitLabel = explorer.currentItems.length === 1 ? "unit" : "units";
 
   const maxDuration = useMemo(
     () =>
@@ -127,6 +145,29 @@ function GeologicalExplorer({ geological }: { geological: GeologicalUnit[] }) {
 
   return (
     <div className="ts-explorer">
+      <div className="ts-explorer__summary" role="status" aria-live="polite">
+        <div className="ts-explorer__nav-row">
+          <div className="ts-explorer__summary-copy">
+            <p className="ts-explorer__summary-eyebrow">Geological explorer</p>
+            <h3 className="ts-explorer__summary-title">{currentLevelLabel}</h3>
+            <p className="ts-explorer__summary-text">
+              {explorer.currentItems.length} {unitLabel} visible at this level. Use “Show details” to inspect a unit or “Explore sub-units” to drill deeper.
+            </p>
+          </div>
+
+          {!explorer.isAtRoot && (
+            <button
+              type="button"
+              className="ts-explorer__back-btn"
+              onClick={explorer.drillUp}
+            >
+              ← Back one level
+            </button>
+          )}
+        </div>
+
+      </div>
+
       {/* ── Breadcrumb ── */}
       <nav className="ts-explorer__breadcrumb" aria-label="Geological navigation">
         {explorer.breadcrumbs.map((crumb, idx) => {
@@ -134,7 +175,7 @@ function GeologicalExplorer({ geological }: { geological: GeologicalUnit[] }) {
           return (
             <span key={crumb.depth} className="ts-explorer__breadcrumb-item">
               {isLast ? (
-                <span className="ts-explorer__breadcrumb-current">{crumb.label}</span>
+                <span className="ts-explorer__breadcrumb-current" aria-current="page">{crumb.label}</span>
               ) : (
                 <>
                   <button
@@ -153,22 +194,29 @@ function GeologicalExplorer({ geological }: { geological: GeologicalUnit[] }) {
       </nav>
 
       {/* ── Cards grid ── */}
-      <div className="ts-explorer__grid">
-        {explorer.currentItems.map(unit => (
-          <EraCard
-            key={unit.id}
-            unit={unit}
-            isSelected={explorer.selected?.id === unit.id}
-            maxDuration={maxDuration}
-            onSelect={u => explorer.setSelected(explorer.selected?.id === u.id ? null : u)}
-            onDrillDown={explorer.drillDown}
-          />
-        ))}
-      </div>
+      {explorer.currentItems.length > 0 ? (
+        <div className="ts-explorer__grid">
+          {explorer.currentItems.map(unit => (
+            <EraCard
+              key={unit.id}
+              unit={unit}
+              isSelected={explorer.selected?.id === unit.id}
+              maxDuration={maxDuration}
+              detailPanelId={detailPanelId}
+              onSelect={u => explorer.setSelected(explorer.selected?.id === u.id ? null : u)}
+              onDrillDown={explorer.drillDown}
+            />
+          ))}
+        </div>
+      ) : (
+        <p className="ts-explorer__empty">No geological sub-units are available at this level.</p>
+      )}
 
       {/* ── Detail panel ── */}
       {explorer.selected && (
         <EraDetailPanel
+          key={explorer.selected.id}
+          detailId={detailPanelId ?? `ts-explorer-detail-${explorer.selected.id}`}
           unit={explorer.selected}
           onClose={() => explorer.setSelected(null)}
           onExplore={explorer.drillDown}
@@ -181,13 +229,14 @@ function GeologicalExplorer({ geological }: { geological: GeologicalUnit[] }) {
 // ── Cosmic timeline item ───────────────────────────────────────
 const COSMIC_LOG_MIN = Math.log10(0.01);        // ~10,000 yr ago
 const COSMIC_LOG_MAX = Math.log10(13800 + 1);   // Big Bang
+const COSMIC_ABSOLUTE_LOG_SCALE = {
+  minLog: COSMIC_LOG_MIN,
+  maxLog: COSMIC_LOG_MAX,
+  inputOffset: 0.001,
+} as const;
 
 function cosmicBarPct(timeAgoMya: number): number {
-  if (timeAgoMya <= 0) return 0;
-  const log = Math.log10(timeAgoMya + 0.001);
-  return Math.max(0, Math.min(100,
-    ((log - COSMIC_LOG_MIN) / (COSMIC_LOG_MAX - COSMIC_LOG_MIN)) * 100,
-  ));
+  return absoluteLogPercent(timeAgoMya, COSMIC_ABSOLUTE_LOG_SCALE);
 }
 
 function CosmicMilestoneItem({

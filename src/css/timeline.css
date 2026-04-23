@@ -414,6 +414,7 @@
   top: 16px;
   right: 16px;
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
   z-index: var(--z-controls);
   pointer-events: auto;
@@ -1006,6 +1007,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  min-height: 36px;
   padding: 4px 10px;               /* mobile base */
   border-radius: 999px;
   border: 1px solid rgba(129, 140, 248, 0.35);
@@ -1061,6 +1063,26 @@
   .timeline {
     padding: 10px;
     border-radius: 20px;
+  }
+
+  .timeline__controls {
+    top: 12px;
+    right: 12px;
+    gap: 6px;
+  }
+
+  .timeline__ctrl-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .timeline__category-filters {
+    gap: 6px;
+  }
+
+  .timeline__category-filter {
+    min-height: 38px;
+    padding: 6px 12px;
   }
 
   .timeline__axis {

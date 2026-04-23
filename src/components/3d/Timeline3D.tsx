@@ -16,54 +16,27 @@ import { AdaptiveDpr, AdaptiveEvents, Html, Line, OrbitControls, Stars } from "@
 import * as THREE from "three";
 
 import { EventMarker3D } from "./EventMarker3D";
-import type { TimelineEvent } from "../timeline/types";
-import { generateTicks, type Range, type TimelineTick } from "../../utils/scaleTransform";
-
-type QualityProfile = "balanced" | "low-power";
-type Tick = TimelineTick;
-
-const PERSONAL_LANE_Y = 1.85;
-const GLOBAL_LANE_Y = -1.85;
-const LANE_OFFSET_Y = 0.5;
-
-function toX(value: number, range: Range): number {
-  if (range.end <= range.start) return 0;
-  return ((value - range.start) / (range.end - range.start)) * 20 - 10;
-}
-
-function buildTicks(range: Range): Tick[] {
-  const ticks = generateTicks(range, "linear");
-  if (ticks.length <= 10) return ticks;
-
-  const step = Math.ceil(ticks.length / 10);
-  return ticks.filter((_, index) => index % step === 0 || index === ticks.length - 1);
-}
-
-const getLaneBaseY = (event: TimelineEvent) =>
-  (event.lane ?? "personal") === "global" ? GLOBAL_LANE_Y : PERSONAL_LANE_Y;
-
-const getMarkerY = (event: TimelineEvent) =>
-  getLaneBaseY(event) + (event.placement === "below" ? -LANE_OFFSET_Y : LANE_OFFSET_Y);
-
-const getCameraConfig = (qualityProfile: QualityProfile) =>
-  qualityProfile === "low-power"
-    ? { position: [0, 3.9, 18] as [number, number, number], fov: 58 }
-    : { position: [0, 4.5, 16] as [number, number, number], fov: 55 };
-
-const getDpr = (qualityProfile: QualityProfile): [number, number] =>
-  qualityProfile === "low-power" ? [1, 1.15] : [1, 1.75];
-
-const getStarsConfig = (qualityProfile: QualityProfile) =>
-  qualityProfile === "low-power"
-    ? { radius: 72, depth: 42, count: 900, factor: 3 }
-    : { radius: 90, depth: 55, count: 2200, factor: 4 };
+import type { TimelineEvent } from "../Timeline";
+import type { Range } from "../../utils/scaleTransform";
+import {
+  buildTimeline3DScene,
+  TIMELINE_3D_AXIS_MAX_X,
+  TIMELINE_3D_AXIS_MIN_X,
+} from "../timeline-core";
+import {
+  getTimeline3DProfileConfig,
+  type Timeline3DQualityProfile,
+} from "./runtimePolicy";
 
 const laneAxisPoints = (y: number): [number, number, number][] => [[-10, y, 0], [10, y, 0]];
 
-function FocusRing({ x, qualityProfile }: { x: number; qualityProfile: QualityProfile }) {
+const getLaneLineColor = (lane: "personal" | "global") =>
+  lane === "personal" ? "#818cf8" : "#475569";
+
+function FocusRing({ x, qualityProfile }: { x: number; qualityProfile: Timeline3DQualityProfile }) {
   const meshRef = useRef<THREE.Mesh>(null);
   const beamPoints = useMemo<[number, number, number][]>(
-    () => [[0, GLOBAL_LANE_Y - 0.8, 0], [0, PERSONAL_LANE_Y + 0.8, 0]],
+    () => [[0, -2.65, 0], [0, 2.65, 0]],
     [],
   );
 
@@ -94,93 +67,93 @@ type SceneProps = {
   events: TimelineEvent[];
   range: Range;
   focusValue: number;
-  qualityProfile: QualityProfile;
+  qualityProfile: Timeline3DQualityProfile;
 };
 
 function TimelineScene({ events, range, focusValue, qualityProfile }: SceneProps) {
-  const ticks = useMemo(() => buildTicks(range), [range]);
-  const focusX = toX(focusValue, range);
-  const personalAxisPoints = useMemo<[number, number, number][]>(() => laneAxisPoints(PERSONAL_LANE_Y), []);
-  const globalAxisPoints = useMemo<[number, number, number][]>(() => laneAxisPoints(GLOBAL_LANE_Y), []);
-  const starsConfig = useMemo(() => getStarsConfig(qualityProfile), [qualityProfile]);
+  const scene = useMemo(
+    () => buildTimeline3DScene({ events, range, focusValue }),
+    [events, range, focusValue],
+  );
+  const profileConfig = useMemo(() => getTimeline3DProfileConfig(qualityProfile), [qualityProfile]);
 
   return (
     <>
-      <ambientLight intensity={qualityProfile === "low-power" ? 0.4 : 0.32} />
-      <directionalLight position={[6, 10, 5]} intensity={qualityProfile === "low-power" ? 0.7 : 0.9} color="#c8c8ff" />
-      <pointLight position={[0, 6, 4]} intensity={qualityProfile === "low-power" ? 0.28 : 0.4} color="#818cf8" />
+      <ambientLight intensity={profileConfig.lighting.ambientIntensity} />
+      <directionalLight position={[6, 10, 5]} intensity={profileConfig.lighting.directionalIntensity} color="#c8c8ff" />
+      <pointLight position={[0, 6, 4]} intensity={profileConfig.lighting.pointIntensity} color="#818cf8" />
 
       <AdaptiveDpr pixelated />
       <AdaptiveEvents />
 
       <Stars
-        radius={starsConfig.radius}
-        depth={starsConfig.depth}
-        count={starsConfig.count}
-        factor={starsConfig.factor}
+        radius={profileConfig.stars.radius}
+        depth={profileConfig.stars.depth}
+        count={profileConfig.stars.count}
+        factor={profileConfig.stars.factor}
         saturation={0.6}
         fade
       />
 
-      <Line points={personalAxisPoints} color="#818cf8" lineWidth={2.5} />
-      <Line points={globalAxisPoints} color="#475569" lineWidth={2.2} />
+      {scene.lanes.map(lane => (
+        <group key={lane.lane}>
+          <Line
+            points={laneAxisPoints(lane.axisY)}
+            color={getLaneLineColor(lane.lane)}
+            lineWidth={lane.lane === "personal" ? 2.5 : 2.2}
+          />
+          <Html center distanceFactor={10} position={[-9.35, lane.axisY + 0.55, 0]}>
+            <span className={`timeline-3d__lane-label timeline-3d__lane-label--${lane.lane}`}>
+              {lane.label}
+            </span>
+          </Html>
+        </group>
+      ))}
 
-      <Html center distanceFactor={10} position={[-9.35, PERSONAL_LANE_Y + 0.55, 0]}>
-        <span className="timeline-3d__lane-label timeline-3d__lane-label--personal">Personal</span>
-      </Html>
-      <Html center distanceFactor={10} position={[-9.35, GLOBAL_LANE_Y + 0.55, 0]}>
-        <span className="timeline-3d__lane-label timeline-3d__lane-label--global">Global</span>
-      </Html>
-
-      {ticks.map(tick => {
-        const x = toX(tick.value, range);
-        if (x < -10.2 || x > 10.2) return null;
+      {scene.ticks.map(tick => {
+        const x = tick.x;
+        if (x < TIMELINE_3D_AXIS_MIN_X - 0.2 || x > TIMELINE_3D_AXIS_MAX_X + 0.2) return null;
 
         return (
           <group key={tick.id} position={[x, 0, 0]}>
             <Line
-              points={[[0, GLOBAL_LANE_Y - 0.38, 0], [0, PERSONAL_LANE_Y + 0.38, 0]] as [number, number, number][]}
+              points={[[0, -2.23, 0], [0, 2.23, 0]] as [number, number, number][]}
               color="#6366f1"
               lineWidth={1}
               transparent
               opacity={0.24}
             />
-            <Html center distanceFactor={10} position={[0, GLOBAL_LANE_Y - 0.78, 0]}>
+            <Html center distanceFactor={10} position={[0, -2.63, 0]}>
               <span className="timeline-3d__tick">{tick.label}</span>
             </Html>
           </group>
         );
       })}
 
-      {events.map(event => {
-        const x = toX(event.value, range);
-        const axisY = getLaneBaseY(event);
-        const y = getMarkerY(event);
-        const isPersonal = (event.lane ?? "personal") === "personal";
-
+      {scene.markers.map(marker => {
         return (
           <EventMarker3D
-            key={event.id}
-            event={event}
-            x={x}
-            y={y}
-            axisY={axisY}
-            isPersonal={isPersonal}
-            isProjection={event.semanticKind === "projection"}
+            key={marker.id}
+            event={marker.event}
+            x={marker.x}
+            y={marker.y}
+            axisY={marker.axisY}
+            isPersonal={marker.isPersonal}
+            isProjection={marker.isProjection}
             qualityProfile={qualityProfile}
           />
         );
       })}
 
-      <FocusRing x={focusX} qualityProfile={qualityProfile} />
+      <FocusRing x={scene.focusX} qualityProfile={qualityProfile} />
 
       <OrbitControls
         enablePan={false}
         enableDamping
-        dampingFactor={qualityProfile === "low-power" ? 0.08 : 0.1}
-        minDistance={qualityProfile === "low-power" ? 6 : 5}
-        maxDistance={qualityProfile === "low-power" ? 26 : 30}
-        maxPolarAngle={Math.PI * 0.78}
+        dampingFactor={profileConfig.orbitControls.dampingFactor}
+        minDistance={profileConfig.orbitControls.minDistance}
+        maxDistance={profileConfig.orbitControls.maxDistance}
+        maxPolarAngle={profileConfig.orbitControls.maxPolarAngle}
         makeDefault
       />
     </>
@@ -192,28 +165,22 @@ type Timeline3DProps = SceneProps & {
 };
 
 export default function Timeline3D({ events, range, focusValue, onExitTo2D, qualityProfile }: Timeline3DProps) {
-  const camera = useMemo(() => getCameraConfig(qualityProfile), [qualityProfile]);
+  const profileConfig = useMemo(() => getTimeline3DProfileConfig(qualityProfile), [qualityProfile]);
 
   return (
-    <div className={`timeline-3d${qualityProfile === "low-power" ? " timeline-3d--low-power" : ""}`}>
+    <div className={profileConfig.containerClassName}>
       <div className="timeline-3d__header">
-        <span className="timeline-3d__hint">
-          {qualityProfile === "low-power" ? "Experimental 3D · low power mode" : "Drag to orbit · Scroll to zoom"}
-        </span>
+        <span className="timeline-3d__hint">{profileConfig.headerHint}</span>
         <button type="button" className="timeline-3d__exit-btn" onClick={onExitTo2D}>
           ↩ Back to 2D
         </button>
       </div>
 
       <Canvas
-        camera={camera}
-        dpr={getDpr(qualityProfile)}
-        gl={{
-          antialias: qualityProfile !== "low-power",
-          alpha: false,
-          powerPreference: qualityProfile === "low-power" ? "low-power" : "high-performance",
-        }}
-        performance={{ min: qualityProfile === "low-power" ? 0.35 : 0.5 }}
+        camera={profileConfig.camera}
+        dpr={profileConfig.dpr}
+        gl={profileConfig.gl}
+        performance={{ min: profileConfig.performanceMin }}
         frameloop="always"
         style={{ background: "#090c1a" }}
       >

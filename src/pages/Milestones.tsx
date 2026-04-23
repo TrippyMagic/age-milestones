@@ -20,6 +20,10 @@ import { SectionErrorBoundary } from "../components/SectionErrorBoundary";
 import { getAboutSectionHref } from "../utils/aboutLinks";
 import { resolveGlobalLaneNotice } from "../utils/globalLaneNotice";
 import { Banner, Button, FormActions, Tabs, TabsContent, TabsList, TabsTrigger } from "../ui";
+import {
+  resolveTimeline3DAvailability,
+  resolveTimeline3DToggleState,
+} from "../components/3d/runtimePolicy";
 
 const FUTURE_WINDOW_YEARS = 40;
 const LOOKBACK_YEARS = 20;
@@ -264,6 +268,14 @@ export default function Milestones() {
 
   const CATEGORIES = Object.keys(CATEGORY_META) as EventCategory[];
   const LANE_KEYS = Object.keys(LANE_META) as TimelineLane[];
+  const timeline3DAvailability = useMemo(() => resolveTimeline3DAvailability(WEB_GL_SUPPORTED), []);
+  const timeline3DToggle = useMemo(
+    () => resolveTimeline3DToggleState({
+      availability: timeline3DAvailability,
+      show3D,
+    }),
+    [show3D, timeline3DAvailability],
+  );
   const visibleGlobalItems = allEvents.filter(event => (event.lane ?? "personal") === "global");
   const noTimelineItems = allEvents.length === 0;
   const noGlobalItems = visibleGlobalItems.length === 0;
@@ -439,17 +451,11 @@ export default function Milestones() {
                 type="button"
                 className={`timeline__experimental-btn${show3D ? " timeline__experimental-btn--active" : ""}`}
                 onClick={() => setShow3D(!show3D)}
-                disabled={!WEB_GL_SUPPORTED}
-                title={
-                  !WEB_GL_SUPPORTED
-                    ? "WebGL is not supported in this browser"
-                    : show3D
-                    ? "Leave the experimental 3D scene"
-                    : "Open the experimental 3D scene"
-                }
+                disabled={timeline3DToggle.disabled}
+                title={timeline3DToggle.title}
               >
                 <span aria-hidden="true">🌐</span>
-                {show3D ? "Exit experimental 3D" : "Open experimental 3D"}
+                {timeline3DToggle.label}
               </button>
             </div>
 

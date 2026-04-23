@@ -114,11 +114,15 @@ export default function Settings() {
         <div className="personalize__grid">
           <Panel title="Personal metrics">
             <Stack gap="md">
+              <p className="personalize__section-summary">
+                Fill in only what you know. Numeric fields accept rough values and stay optional.
+              </p>
               <Field label="Resting heart rate" hint="Refines Heartbeats, Breaths" className="personalize__field" htmlFor="settings-resting-heart-rate">
                 <div className="ui-input-row personalize__input-row">
                   <input
                     id="settings-resting-heart-rate"
                     type="number"
+                    inputMode="numeric"
                     className="ui-input personalize__input"
                     placeholder="e.g. 68"
                     min={30}
@@ -135,6 +139,7 @@ export default function Settings() {
                   <input
                     id="settings-height"
                     type="number"
+                    inputMode="numeric"
                     className="ui-input personalize__input"
                     placeholder="e.g. 175"
                     min={50}
@@ -151,6 +156,7 @@ export default function Settings() {
                   <input
                     id="settings-weight"
                     type="number"
+                    inputMode="numeric"
                     className="ui-input personalize__input"
                     placeholder="e.g. 70"
                     min={20}
@@ -166,6 +172,9 @@ export default function Settings() {
 
           <Panel title="Lifestyle modifiers">
             <Stack gap="md">
+              <p className="personalize__section-summary">
+                These controls refine estimates without locking any feature if you leave them blank.
+              </p>
               <Field label="Activity level" hint="Refines Steps, Km walked, Calories" className="personalize__field" htmlFor="settings-activity-level">
                 <select
                   id="settings-activity-level"
@@ -185,6 +194,7 @@ export default function Settings() {
                   <input
                     id="settings-sleep-hours"
                     type="number"
+                    inputMode="decimal"
                     className="ui-input personalize__input"
                     placeholder="e.g. 7.5"
                     min={2}
@@ -202,6 +212,7 @@ export default function Settings() {
                   <input
                     id="settings-screen-hours"
                     type="number"
+                    inputMode="decimal"
                     className="ui-input personalize__input"
                     placeholder="e.g. 5"
                     min={0}

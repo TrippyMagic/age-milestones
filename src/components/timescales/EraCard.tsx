@@ -6,6 +6,7 @@
  * Clicking selects the card; if the unit has children an "Explore" button
  * allows drilling deeper.
  */
+import type { CSSProperties } from "react";
 import type { GeologicalUnit } from "../../types/geological";
 import { RANK_ABBR } from "../../types/geological";
 import { formatMya, formatMyaDuration } from "../../utils/formatDuration";
@@ -15,6 +16,7 @@ type EraCardProps = {
   isSelected: boolean;
   /** Max duration among sibling cards — used to normalise the log bar. */
   maxDuration: number;
+  detailPanelId?: string;
   onSelect: (unit: GeologicalUnit) => void;
   onDrillDown: (unit: GeologicalUnit) => void;
 };
@@ -34,6 +36,7 @@ export function EraCard({
   unit,
   isSelected,
   maxDuration,
+  detailPanelId,
   onSelect,
   onDrillDown,
 }: EraCardProps) {
@@ -44,7 +47,7 @@ export function EraCard({
   return (
     <div
       className={`ts-era-card${isSelected ? " ts-era-card--selected" : ""}`}
-      style={{ "--era-color": unit.color } as React.CSSProperties}
+      style={{ "--era-color": unit.color } as CSSProperties}
       role="article"
     >
       {/* ── Header ── */}
@@ -84,17 +87,19 @@ export function EraCard({
           className={`ts-era-card__btn-select${isSelected ? " ts-era-card__btn-select--active" : ""}`}
           onClick={() => onSelect(unit)}
           aria-pressed={isSelected}
+          aria-expanded={isSelected}
+          aria-controls={detailPanelId}
         >
-          {isSelected ? "Selected" : "Details"}
+          {isSelected ? "Hide details" : "Show details"}
         </button>
         {hasKids && (
           <button
             type="button"
             className="ts-era-card__btn-explore"
             onClick={() => onDrillDown(unit)}
-            aria-label={`Explore ${unit.name}`}
+            aria-label={`Explore sub-units inside ${unit.name}`}
           >
-            Explore
+            Explore sub-units
             <span className="ts-era-card__btn-explore-icon" aria-hidden="true">›</span>
           </button>
         )}

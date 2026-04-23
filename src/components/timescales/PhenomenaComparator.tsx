@@ -3,16 +3,21 @@
  * Side-by-side comparison of two timescale phenomena.
  * Shows ratio, human-readable sentence, and visual log-scale bars.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PhenomenaSearch } from "./PhenomenaSearch";
 import { formatDuration, formatRatioValue } from "../../utils/formatDuration";
+import { absoluteLogPercent } from "../../utils/temporalScale";
 import type { TimescalePhenomenon } from "../../types/phenomena";
 import { PHENOMENON_CATEGORY_META, PHENOMENA_LOG_MIN, PHENOMENA_LOG_MAX } from "../../types/phenomena";
 
 // ── Bar positions on the absolute [PHENOMENA_LOG_MIN, PHENOMENA_LOG_MAX] scale ──
+const PHENOMENA_ABSOLUTE_LOG_SCALE = {
+  minLog: PHENOMENA_LOG_MIN,
+  maxLog: PHENOMENA_LOG_MAX,
+} as const;
+
 const barPct = (dur: number): number => {
-  const log = Math.log10(dur);
-  return ((log - PHENOMENA_LOG_MIN) / (PHENOMENA_LOG_MAX - PHENOMENA_LOG_MIN)) * 100;
+  return absoluteLogPercent(dur, PHENOMENA_ABSOLUTE_LOG_SCALE);
 };
 
 // ── Selected card ────────────────────────────────────────────
@@ -80,6 +85,22 @@ export function PhenomenaComparator({ phenomena, status }: ComparatorProps) {
   const [slotA, setSlotA] = useState<TimescalePhenomenon | null>(null);
   const [slotB, setSlotB] = useState<TimescalePhenomenon | null>(null);
 
+  useEffect(() => {
+    if (slotA && slotB && slotA.id === slotB.id) {
+      setSlotB(null);
+    }
+  }, [slotA, slotB]);
+
+  const handleSelectA = (phenomenon: TimescalePhenomenon) => {
+    setSlotA(phenomenon);
+    setSlotB(prev => prev?.id === phenomenon.id ? null : prev);
+  };
+
+  const handleSelectB = (phenomenon: TimescalePhenomenon) => {
+    setSlotB(phenomenon);
+    setSlotA(prev => prev?.id === phenomenon.id ? null : prev);
+  };
+
   // Ratio computation
   const ratio     = slotA && slotB ? slotA.durationSeconds / slotB.durationSeconds : null;
   const aLonger   = ratio !== null && ratio >= 1;
@@ -91,22 +112,38 @@ export function PhenomenaComparator({ phenomena, status }: ComparatorProps) {
   const shorterLabel = aLonger ? (slotB?.label ?? "") : (slotA?.label ?? "");
 
   const isLoading = status === "loading";
+  const statusMessage = slotA && slotB
+    ? `Comparing ${slotA.label} and ${slotB.label}.`
+    : "Choose two different phenomena to unlock the ratio and absolute scale comparison.";
 
   return (
     <div className="ts-comparator__wrapper">
+      <div className="ts-comparator__intro">
+        <p className="ts-comparator__eyebrow">Comparator workflow</p>
+        <p className="ts-comparator__note">
+          Pick two distinct entries, then compare their ratio and where each one sits on the full logarithmic timescale.
+          The other slot’s selection is hidden automatically so you can’t compare the same phenomenon twice.
+        </p>
+        <p className="ts-comparator__status" aria-live="polite">
+          {statusMessage}
+        </p>
+      </div>
+
       <div className="ts-comparator">
         {/* ── Slot A ── */}
         <div className="ts-comparator__slot">
-          <p className="ts-comparator__slot-heading">Phenomenon A</p>
+          <h3 className="ts-comparator__slot-heading">Phenomenon A</h3>
           {isLoading
             ? <div className="ts-loading__row" style={{ height: 44 }} />
             : (
               <PhenomenaSearch
                 phenomena={phenomena}
                 selected={slotA}
-                onSelect={setSlotA}
+                onSelect={handleSelectA}
+                searchLabel="Search phenomenon A"
                 placeholder="Select phenomenon A…"
                 excludeId={slotB?.id}
+                excludedLabel={slotB?.label ?? null}
               />
             )
           }
@@ -132,16 +169,18 @@ export function PhenomenaComparator({ phenomena, status }: ComparatorProps) {
 
         {/* ── Slot B ── */}
         <div className="ts-comparator__slot">
-          <p className="ts-comparator__slot-heading">Phenomenon B</p>
+          <h3 className="ts-comparator__slot-heading">Phenomenon B</h3>
           {isLoading
             ? <div className="ts-loading__row" style={{ height: 44 }} />
             : (
               <PhenomenaSearch
                 phenomena={phenomena}
                 selected={slotB}
-                onSelect={setSlotB}
+                onSelect={handleSelectB}
+                searchLabel="Search phenomenon B"
                 placeholder="Select phenomenon B…"
                 excludeId={slotA?.id}
+                excludedLabel={slotA?.label ?? null}
               />
             )
           }

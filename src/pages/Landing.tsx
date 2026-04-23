@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import Footer from "../components/common/Footer.tsx";
@@ -11,18 +10,7 @@ import { Banner, Button } from "../ui";
 
 export default function Landing() {
   const nav = useNavigate();
-  const { birthDate, birthTime } = useBirthDate();
-
-  const storedSummary = useMemo(() => {
-    if (!birthDate) return null;
-    const [hour = "00"] = birthTime.split(":");
-    const formatted = birthDate.toLocaleDateString(undefined, {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    });
-    return `${formatted} • ${hour.padStart(2, "0")}:00`;
-  }, [birthDate, birthTime]);
+  const { birthDate } = useBirthDate();
 
   return (
     <>
@@ -54,9 +42,6 @@ export default function Landing() {
                       You can do it here or manage it from Settings.
                     </p>
                   </Banner>
-                )}
-                {storedSummary && (
-                  <p className="landing__summary">Current: {storedSummary}</p>
                 )}
                 <div className="landing__buttons">
                   <Button

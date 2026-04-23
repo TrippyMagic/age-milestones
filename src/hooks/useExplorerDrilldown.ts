@@ -4,7 +4,7 @@
  * The explorer operates as a stack: each "drill down" pushes a unit onto the
  * path; each "drill up" or breadcrumb click pops back to that depth.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { GeologicalUnit } from "../types/geological";
 
 export type Breadcrumb = {
@@ -18,6 +18,8 @@ export type UseExplorerDrilldownResult = {
   currentItems: GeologicalUnit[];
   /** Breadcrumb trail from root to current level. */
   breadcrumbs: Breadcrumb[];
+  /** Parent unit for the current level (null at root). */
+  currentParent: GeologicalUnit | null;
   /** Currently selected unit shown in the detail panel (null = none). */
   selected: GeologicalUnit | null;
   /** Drill one level deeper into a unit that has children. */
@@ -45,6 +47,8 @@ export function useExplorerDrilldown(
     return last.children ?? [];
   }, [path, root]);
 
+  const currentParent = path[path.length - 1] ?? null;
+
   const breadcrumbs = useMemo<Breadcrumb[]>(() => [
     { label: "All Eons", depth: -1 },
     ...path.map((unit, i) => ({ label: unit.name, depth: i })),
@@ -71,9 +75,16 @@ export function useExplorerDrilldown(
     setSelected(null);
   };
 
+  useEffect(() => {
+    if (!selected) return;
+    if (currentItems.some(unit => unit.id === selected.id)) return;
+    setSelected(null);
+  }, [currentItems, selected]);
+
   return {
     currentItems,
     breadcrumbs,
+    currentParent,
     selected,
     drillDown,
     drillUp,
