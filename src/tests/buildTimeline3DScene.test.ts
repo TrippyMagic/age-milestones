@@ -72,7 +72,13 @@ describe("buildTimeline3DScene", () => {
     const scene = buildTimeline3DScene({
       events: [
         makeEvent("personal-above", new Date("2000-03-01").getTime(), "personal", "above"),
-        makeEvent("global-below", new Date("2000-06-01").getTime(), "global", "below", "projection"),
+        {
+          ...makeEvent("global-below", new Date("2000-06-01").getTime(), "global", "below", "projection"),
+          label: "Halley return",
+          subLabel: "Comet visibility window.",
+          projectionType: "astronomical",
+          certainty: "high",
+        },
       ],
       range,
       focusValue: range.start,
@@ -83,13 +89,25 @@ describe("buildTimeline3DScene", () => {
 
     expect(personalMarker?.axisY).toBe(TIMELINE_3D_LANE_Y.personal);
     expect(personalMarker?.y).toBe(TIMELINE_3D_LANE_Y.personal + TIMELINE_3D_LANE_OFFSET_Y);
-    expect(personalMarker?.isPersonal).toBe(true);
-    expect(personalMarker?.isProjection).toBe(false);
+    expect(personalMarker?.selectionKey).toBe("personal-above");
+    expect(personalMarker?.semanticLabel).toBe("Personal marker");
 
     expect(globalMarker?.axisY).toBe(TIMELINE_3D_LANE_Y.global);
     expect(globalMarker?.y).toBe(TIMELINE_3D_LANE_Y.global - TIMELINE_3D_LANE_OFFSET_Y);
-    expect(globalMarker?.isPersonal).toBe(false);
-    expect(globalMarker?.isProjection).toBe(true);
+    expect(globalMarker?.semanticKind).toBe("projection");
+    expect(globalMarker?.semanticLabel).toBe("Future projection");
+    expect(globalMarker?.color).toBe("#f59e0b");
+    expect(globalMarker?.metaLabels).toEqual([
+      "Comet visibility window.",
+      "Astronomical",
+      "High confidence",
+    ]);
+    expect(globalMarker?.detailItems[0]).toEqual(expect.objectContaining({
+      id: "global-below",
+      label: "Halley return",
+      projectionType: "astronomical",
+      certainty: "high",
+    }));
   });
 
   it("thins dense tick output while preserving the last visible tick", () => {

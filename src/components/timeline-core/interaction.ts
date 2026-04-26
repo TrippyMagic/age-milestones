@@ -24,6 +24,17 @@ export type TimelineSelectionPayload = {
   detailItems: DetailPanelItem[];
 };
 
+export type TimelineSingleEventDescriptor = TimelineSelectionPayload & {
+  id: string;
+  title: string;
+  color: string;
+  ariaLabel: string;
+  semanticLabel: string;
+  metaLabels: string[];
+  semanticKind?: TimelineEvent["semanticKind"];
+  markerShape: NonNullable<TimelineEvent["markerShape"]>;
+};
+
 export type TimelineInteractiveTarget = TimelineSelectionPayload & {
   id: string;
   lane: TimelineLane;
@@ -74,6 +85,20 @@ export const toDetailPanelItem = (event: TimelineEvent): DetailPanelItem => ({
   certainty: event.certainty,
 });
 
+export const createTimelineEventSelectionPayload = (
+  event: TimelineEvent,
+): TimelineSelectionPayload => ({
+  selectionKey: event.id,
+  detailItems: [toDetailPanelItem(event)],
+});
+
+export const resolveTimelineEventColor = (event: TimelineEvent): string => {
+  if (event.color) return event.color;
+  if (event.category) return CATEGORY_META[event.category].color;
+  if (event.semanticKind === "projection") return "#f59e0b";
+  return "#a5b4fc";
+};
+
 export const getTimelineSemanticLabel = (
   item: Pick<TimelineEvent, "semanticKind"> | Pick<DetailPanelItem, "semanticKind">,
 ): string => {
@@ -91,6 +116,33 @@ export const getTimelineSemanticLabel = (
 
 export const getTimelineGroupVisualWidthPx = (count: number): number =>
   Math.max(24, Math.min(54, 20 + count * 5));
+
+export const getTimelineEventMetaLabels = (event: TimelineEvent): string[] => {
+  const labels: string[] = [];
+  if (event.subLabel) labels.push(event.subLabel);
+  if (event.category) labels.push(CATEGORY_META[event.category].label);
+  if (event.projectionType) labels.push(PROJECTION_TYPE_META[event.projectionType].label);
+  if (event.certainty) labels.push(PROJECTION_CERTAINTY_META[event.certainty].label);
+  return labels;
+};
+
+export const buildTimelineSingleEventDescriptor = (
+  event: TimelineEvent,
+): TimelineSingleEventDescriptor => {
+  const semanticLabel = getTimelineSemanticLabel(event);
+  const metaLabels = getTimelineEventMetaLabels(event);
+  return {
+    id: event.id,
+    title: event.label,
+    color: resolveTimelineEventColor(event),
+    ariaLabel: [event.label, semanticLabel, ...metaLabels].join(". "),
+    semanticLabel,
+    metaLabels,
+    semanticKind: event.semanticKind,
+    markerShape: event.markerShape ?? "dot",
+    ...createTimelineEventSelectionPayload(event),
+  };
+};
 
 const getTimelineTargetShape = (target: TimelineInteractiveTarget): TimelineTargetGeometryShape => {
   if (target.kind === "group") return "capsule";
@@ -187,26 +239,13 @@ export const resolveTimelineTargetAtPoint = ({
 
 export const resolveTimelineItemColor = (item: RenderItem): string => {
   if (item.type === "single") {
-    if (item.event.color) return item.event.color;
-    if (item.event.category) return CATEGORY_META[item.event.category].color;
-    if (item.event.semanticKind === "projection") return "#f59e0b";
-    return "#a5b4fc";
+    return resolveTimelineEventColor(item.event);
   }
 
   const firstColoredEvent = item.events.find(event => event.color || event.category);
-  if (firstColoredEvent?.color) return firstColoredEvent.color;
-  if (firstColoredEvent?.category) return CATEGORY_META[firstColoredEvent.category].color;
+  if (firstColoredEvent) return resolveTimelineEventColor(firstColoredEvent);
   if (item.grouping === "edge-start" || item.grouping === "edge-end") return "#cbd5e1";
   return "#818cf8";
-};
-
-const describeSingleAriaLabel = (event: TimelineEvent): string => {
-  const parts = [event.label, getTimelineSemanticLabel(event)];
-  if (event.subLabel) parts.push(event.subLabel);
-  if (event.category) parts.push(CATEGORY_META[event.category].label);
-  if (event.projectionType) parts.push(PROJECTION_TYPE_META[event.projectionType].label);
-  if (event.certainty) parts.push(PROJECTION_CERTAINTY_META[event.certainty].label);
-  return parts.join(". ");
 };
 
 const describeGroupAriaLabel = (grouping: RenderGroup["grouping"], count: number): string => {
@@ -228,7 +267,7 @@ export const buildTimelineInteractiveTargets = ({
 }: BuildTimelineInteractiveTargetsOptions): TimelineInteractiveTarget[] =>
   items.map(item => {
     if (item.type === "single") {
-      const detailItem = toDetailPanelItem(item.event);
+      const descriptor = buildTimelineSingleEventDescriptor(item.event);
       return {
         id: item.id,
         lane,
@@ -245,13 +284,13 @@ export const buildTimelineInteractiveTargets = ({
           ? TIMELINE_SINGLE_VISUAL_SIZE_PX + 4
           : TIMELINE_SINGLE_VISUAL_SIZE_PX,
         count: 1,
-        color: resolveTimelineItemColor(item),
-        selectionKey: item.event.id,
-        detailItems: [detailItem],
-        ariaLabel: describeSingleAriaLabel(item.event),
-        title: item.event.label,
-        semanticKind: item.event.semanticKind,
-        markerShape: item.event.markerShape ?? "dot",
+        color: descriptor.color,
+        selectionKey: descriptor.selectionKey,
+        detailItems: descriptor.detailItems,
+        ariaLabel: descriptor.ariaLabel,
+        title: descriptor.title,
+        semanticKind: descriptor.semanticKind,
+        markerShape: descriptor.markerShape,
       };
     }
 

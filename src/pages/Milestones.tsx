@@ -530,6 +530,7 @@ export default function Milestones() {
                   range={timeline.range}
                   focusValue={focusValue}
                   onExitTo2D={() => setShow3D(false)}
+                  onFocusValueChange={setFocusValue}
                 />
               </SectionErrorBoundary>
             ) : (

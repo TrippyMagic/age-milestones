@@ -6,10 +6,12 @@ import {
 } from "../../utils/scaleTransform";
 import {
   LANE_META,
+  type DetailPanelItem,
   type TimelineEvent,
   type TimelineLane,
 } from "../timeline/types";
 import { TIMELINE_LANE_ORDER } from "./buildTimelineScene";
+import { buildTimelineSingleEventDescriptor } from "./interaction";
 
 export const TIMELINE_3D_AXIS_MIN_X = -10;
 export const TIMELINE_3D_AXIS_MAX_X = 10;
@@ -31,13 +33,20 @@ export type Timeline3DSceneTick = TimelineTick & {
 
 export type Timeline3DSceneMarker = {
   id: string;
-  event: TimelineEvent;
+  value: number;
   lane: TimelineLane;
   x: number;
   axisY: number;
   y: number;
-  isPersonal: boolean;
-  isProjection: boolean;
+  title: string;
+  color: string;
+  ariaLabel: string;
+  semanticLabel: string;
+  metaLabels: string[];
+  selectionKey: string;
+  detailItems: DetailPanelItem[];
+  semanticKind?: TimelineEvent["semanticKind"];
+  markerShape: NonNullable<TimelineEvent["markerShape"]>;
 };
 
 export type Timeline3DScene = {
@@ -107,16 +116,24 @@ export const buildTimeline3DScene = ({
       const lane = normalizeTimeline3DLane(event);
       const axisY = TIMELINE_3D_LANE_Y[lane];
       const y = axisY + (event.placement === "below" ? -TIMELINE_3D_LANE_OFFSET_Y : TIMELINE_3D_LANE_OFFSET_Y);
+      const descriptor = buildTimelineSingleEventDescriptor(event);
 
       return {
-        id: event.id,
-        event,
+        id: descriptor.id,
+        value: event.value,
         lane,
         x: toTimeline3DX(event.value, range),
         axisY,
         y,
-        isPersonal: lane === "personal",
-        isProjection: event.semanticKind === "projection",
+        title: descriptor.title,
+        color: descriptor.color,
+        ariaLabel: descriptor.ariaLabel,
+        semanticLabel: descriptor.semanticLabel,
+        metaLabels: descriptor.metaLabels,
+        selectionKey: descriptor.selectionKey,
+        detailItems: descriptor.detailItems,
+        semanticKind: descriptor.semanticKind,
+        markerShape: descriptor.markerShape,
       } satisfies Timeline3DSceneMarker;
     });
 

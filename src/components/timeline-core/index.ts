@@ -23,9 +23,13 @@ export {
 export { buildRenderItems } from "./buildRenderItems";
 export {
   buildTimelineInteractiveTargets,
+  buildTimelineSingleEventDescriptor,
+  createTimelineEventSelectionPayload,
+  getTimelineEventMetaLabels,
   getTimelineGroupVisualWidthPx,
   getTimelineSemanticLabel,
   getTimelineTargetGeometry,
+  resolveTimelineEventColor,
   resolveTimelineItemColor,
   resolveTimelineTargetAtPoint,
   toDetailPanelItem,
@@ -36,6 +40,7 @@ export {
   TIMELINE_SINGLE_VISUAL_SIZE_PX,
   type TimelineInteractiveTarget,
   type TimelineSelectionPayload,
+  type TimelineSingleEventDescriptor,
   type TimelineTargetGeometry,
 } from "./interaction";
 

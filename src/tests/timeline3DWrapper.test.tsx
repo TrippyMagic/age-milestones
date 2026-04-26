@@ -28,6 +28,7 @@ const baseProps = {
   range: { start: 0, end: 10 },
   focusValue: 5,
   onExitTo2D: vi.fn(),
+  onFocusValueChange: vi.fn(),
 };
 
 afterEach(() => {

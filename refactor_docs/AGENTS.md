@@ -1,13 +1,13 @@
 # AGENTS.md — Kronoscope
 
 > Reference document for AI agents and contributors.
-> Last updated: 23 aprile 2026 — refactor_4 phase 4 slice 1 verified.
+> Last updated: 26 aprile 2026 — refactor_4 phase 4 completed.
 
 ## Project overview
 
 Kronoscope is a React 19 + TypeScript SPA built with Vite that lets users enter their birth date (and optionally time) and explore their lifetime expressed through unusual units, perspectives, and timescales. The live deployment is on Vercel.
 
-> **Planning status note (2026-04-23):** this file is aligned to the Fase 0 audit baseline plus the verified Fase 4 slice 1 state, but some structural lists remain high-level summaries. The authoritative refactor_4 documents are:
+> **Planning status note (2026-04-26):** this file is aligned to the Fase 0 audit baseline plus the completed Fase 4 state, but some structural lists remain high-level summaries. The authoritative refactor_4 documents are:
 > - `refactor_docs/refactor_3/PLAN.md` — completed roadmap for the current product baseline
 > - `refactor_docs/refactor_4/PLAN.md` — current structural refactor baseline
 > - `refactor_docs/refactor_4/DECISIONS.md` — ADR / decision log for refactor_4
@@ -32,7 +32,7 @@ Kronoscope is a React 19 + TypeScript SPA built with Vite that lets users enter 
 | 3D | `@react-three/fiber` v9, `@react-three/drei` v10 (lazy-loaded, excluded from main bundle) |
 | Analytics | `@vercel/analytics` v1 |
 | Linting | ESLint 9 flat config (`typescript-eslint`, `react-hooks`, `react-refresh`) |
-| Testing | Vitest v1 + `@testing-library/react` + `jsdom` (phase 4 slice 1 verified: 16 files / 109 tests) |
+| Testing | Vitest v1 + `@testing-library/react` + `jsdom` (phase 4 completed: 19 files / 120 tests) |
 | Styling | Plain CSS via `src/css/index.css` + 9 imported modules; `src/css/ui.css` is the active refactor_4 UI-system stylesheet and `timeline.css` now hosts the shared hybrid canvas layer plus the accessible overlay for both timeline lanes |
 
 ---
@@ -45,7 +45,7 @@ npm run dev          # start Vite dev server (HMR)
 npm run build        # tsc type-check + Vite production build → dist/
 npm run preview      # preview the production build locally
 npm run lint         # run ESLint across the project
-npm test             # run Vitest tests (phase 4 slice 1 verified: 109 tests across 16 files)
+npm test             # run Vitest tests (phase 4 completed: 120 tests across 19 files)
 ```
 
 ---
@@ -138,9 +138,9 @@ kronoscope/
     │   ├── scaleOverlay.tsx         # "But how much is it?" popup + dot-grid + equivalences
     │   ├── Timeline.tsx             # Backward-compat re-export barrel → timeline/Timeline
     │   ├── 3d/
-    │   │   ├── EventMarker3D.tsx    # R3F event sphere + Html label
-    │   │   ├── Timeline3D.tsx       # R3F Canvas scene (OrbitControls, markers, axis tube)
-    │   │   └── Timeline3DWrapper.tsx# Lazy-loading shell + WebGL check + fallbacks
+    │   │   ├── EventMarker3D.tsx    # R3F renderer for shared single-marker descriptor + persistent selected label
+    │   │   ├── Timeline3D.tsx       # R3F Canvas scene consuming shared scene math + single-marker contract from timeline-core
+    │   │   └── Timeline3DWrapper.tsx# Lazy-loading shell + WebGL check + shared detail inspector / focus sync keyed by selectionKey
     │   ├── common/
     │   │   ├── Footer.tsx           # Page footer
     │   │   ├── Headers.tsx          # <Title> and <Navbar> components
@@ -190,6 +190,7 @@ kronoscope/
         ├── buildTimeline3DScene.test.ts # Vitest: pure 3D adapter lane/tick/focus/marker math
         ├── format.test.ts           # Vitest: formatNice, formatBig, formatSmall
         ├── scaleTransform.test.ts   # Vitest: clamp, linearRatio, logRatio, applyZoom, ticks
+        ├── timeline3DInteraction.test.tsx # RTL: 3D inspector bridge, focus sync, stale-selection cleanup
         └── temporalScale.test.ts    # Vitest: shared absolute-log helpers for Timescales
 ```
 
@@ -361,15 +362,19 @@ What now exists in the current Timescales stack:
 
 ### Fase 4 current status
 
-Refactor 4 Fase 4 has started and is verified through slice 1.
+Refactor 4 Fase 4 is complete and verified.
 
 What now exists in the current 3D stack:
 
 - `src/components/timeline-core/buildTimeline3DScene.ts` now centralizes the pure 3D scene adapter for lane order, focus clamping, tick thinning, and marker projection
-- `src/components/3d/Timeline3D.tsx` now consumes adapter output instead of duplicating its own core scene math inline
-- `src/components/3d/Timeline3DWrapper.tsx` keeps the same lazy-loading, WebGL fallback, and `balanced / low-power` quality-profile gating
+- `src/components/3d/runtimePolicy.ts` now centralizes availability, quality-profile resolution, renderer budgets, and toggle copy for the experimental 3D runtime
+- `src/components/timeline-core/interaction.ts` now also owns the shared single-marker descriptor (`selectionKey`, detail items, semantic copy, color, aria/title metadata) used by both the 2D runtime and the 3D scene adapter
+- `src/components/3d/Timeline3D.tsx` now consumes adapter output instead of duplicating its own core scene math inline and forwards only `selectionKey + focusValue` for marker activation
+- `src/components/3d/EventMarker3D.tsx` now renders the shared marker descriptor directly and keeps the marker label/highlight visible while selected
+- `src/components/3d/Timeline3DWrapper.tsx` now keeps the same lazy-loading/WebGL gating while also hosting a shared HTML inspector via `TimelineDetailPanel`, syncing the selected marker back to the shared `focusValue`, and deriving detail state from `selectedSelectionKey`
 - `src/tests/buildTimeline3DScene.test.ts` protects the kickoff adapter against regressions in lane order, focus bounds, axis projection, marker placement, and dense tick thinning
-- phase 4 slice 1 explicitly does **not** unify 2D/3D selection or focus semantics yet; `timeline-core/interaction.ts` remains 2D-first in the current baseline
+- `src/tests/buildTimelineInteraction.test.ts`, `timeline3DRuntime.test.ts`, `timeline3DWrapper.test.tsx`, and `timeline3DInteraction.test.tsx` now also protect the shared single-marker descriptor, runtime policy, lazy wrapper wiring, shared inspector opening, focus sync, and stale-selection cleanup
+- phase 4 now stops short of a full 2D/3D interaction merge by design: keyboard-first 3D marker semantics, group selection, and full `TimelineInteractiveTarget` parity remain future work
 
 ### Scale overlay
 
@@ -420,6 +425,7 @@ What now exists in the current 3D stack:
 | `src/tests/phenomenaComparator.test.tsx` | Comparator keyboard search flow, duplicate exclusion, empty-state and ratio panel state |
 | `src/tests/settingsDobFlow.test.tsx` | Shared DOB persistence, Settings navbar guardrail and Landing clear-flow consistency |
 | `src/tests/timescalesOverview.test.tsx` | Timescales overview filter summary, pinned detail panel, loading/error shell states |
+| `src/tests/timeline3DInteraction.test.tsx` | 3D shared inspector bridge, focus sync from marker selection, stale-selection cleanup when visible events change |
 | `src/tests/timelineGlobalOverlay.test.tsx` | shared overlay activation, personal/global parity, pointer hit-testing, axis click invariants |
 | `src/tests/format.test.ts` | `formatNice`, `formatBig`, `formatSmall` |
 | `src/tests/temporalScale.test.ts` | shared absolute-log ratio/percent helpers and log exponent formatting |

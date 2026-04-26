@@ -24,6 +24,8 @@ Kronoscope is a React 19 + Vite application that helps you visualise your life f
 - **Phase 3 slices 1–5 verified** — `Timescales` overview now has a dedicated filter shell and pinned detail fallback, `GeoCosmicExplorer` adds stronger breadcrumb/back semantics plus mobile-safe detail flow, the comparator now has a keyboard-safe accessible search flow with duplicate exclusion and dedicated RTL coverage, the shared DOB/Settings surfaces are mobile-hardened with synced summary + guardrails, and `Timescales` absolute-log mapping now converges on shared pure helpers in `src/utils/temporalScale.ts`
 - **Phase 4 slice 1 verified** — the experimental 3D timeline now consumes a pure `buildTimeline3DScene` adapter from `src/components/timeline-core/`, aligning lane order, focus clamping, tick thinning, and marker projection without yet forcing a shared 2D/3D selection contract
 - **Phase 4 slice 2 verified** — the experimental 3D runtime now shares a dedicated `src/components/3d/runtimePolicy.ts` contract for WebGL availability, quality-profile selection, renderer budgets, and toggle copy across `Timeline3DWrapper`, `Timeline3D`, and `Milestones`
+- **Phase 4 slice 3 verified** — 3D marker clicks now emit shared `TimelineSelectionPayload` detail data, `Timeline3DWrapper` reuses `TimelineDetailPanel` outside the canvas, and selected markers sync the shared `focusValue` back into `Milestones` so the 2D time map stays aligned when you return
+- **Phase 4 completed** — the final slice moves single-marker color/copy/detail descriptors into `src/components/timeline-core/`, so the 3D scene adapter emits shared marker contracts and the R3F renderer no longer reconstructs palette or metadata locally
 - **DOB guardrails** — explicit blocking states when birth date is missing, plus reliability warnings when optional profile details are incomplete
 - **Optional 3D timeline** — WebGL-powered (Three.js, lazy-loaded), lane-aware, and automatically reduced to a low-power profile on mobile / reduced-motion devices
 - **Personal milestone markers stay personal** — markers such as `10,000 days old`, `500 months old`, and `1 billion seconds old` remain on the Personal lane instead of mixing with global events
@@ -59,9 +61,9 @@ Run the unit tests with:
 npm test
 ```
 
-### Verified baseline snapshot (2026-04-23)
+### Verified baseline snapshot (2026-04-26)
 
-- `npm test -- --run` → **116 tests passed across 18 files**
+- `npm test -- --run` → **120 tests passed across 19 files**
 - `npm run build` → **production build succeeds**
 - `npm run lint` → **passes with 1 non-blocking warning** in `src/context/UserProfileContext.tsx`
 
@@ -81,9 +83,9 @@ Current implementation status:
 - phase 1 completed with `src/ui` adopted across active form/banner/actions/tabs surfaces
 - phase 2 completed with `src/components/timeline-core/`, unified `TimelineSceneCanvas` + `TimelineInteractiveOverlay`, canvas-native pointer hit-testing, personal/global lane parity on the new overlay model, pruning of `SubTimeline`, and removal of legacy timeline `scaleMode`
 - phase 3 completed through five verified slices: overview hardening, `GeoCosmicExplorer` detail/mobile semantics hardening, comparator search/accessibility hardening, cross-page mobile consistency for `Settings` + the shared DOB flow, and low-risk shared temporal helpers for absolute-log mapping/formatting in `Timescales`
-- phase 4 has progressed through two verified slices: `src/components/timeline-core/buildTimeline3DScene.ts` centralizes the pure 3D scene adapter, while `src/components/3d/runtimePolicy.ts` now centralizes availability, profile budgets, and toggle/fallback copy for the experimental 3D runtime
+- phase 4 is now complete: `src/components/timeline-core/buildTimeline3DScene.ts` centralizes the pure 3D scene adapter, `src/components/3d/runtimePolicy.ts` centralizes availability/profile budgets/toggle copy, the shared inspector bridge keeps 3D selection aligned with `Milestones`, and the final slice moves the single-marker descriptor (color/copy/detail metadata) into `timeline-core`
 - `src/utils/temporalScale.ts` now hosts the shared absolute-log ratio/percent helpers and small exponent formatter used by the migrated `Timescales` consumers
-- 2D/3D selection convergence is still deferred: the new slice aligns scene math first and leaves `selectionKey`/detail-inspector semantics untouched for now
+- 2D/3D convergence is now sufficient to close phase 4 for single markers: the 3D runtime reuses shared detail/copy/color descriptors and syncs focus back to the 2D page state, while keyboard-first 3D marker semantics and full `TimelineInteractiveTarget` parity remain future work
 - `src/pages/Settings.tsx` and `src/components/BirthDatePicker.tsx` are the first migrated runtime surfaces
 - `src/pages/Timescales.tsx` and `src/components/timescales/GeoCosmicExplorer.tsx` are the first migrated tab systems
 - `src/pages/Milestones.tsx` now uses the same tabs system for the perspectives panel, including progressive unlock behavior

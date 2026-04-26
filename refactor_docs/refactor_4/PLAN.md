@@ -1,13 +1,13 @@
 # PLAN — Refactor 4: UI Platform Stabilization & Timeline Systems
 
-**Data:** 2026-04-23  
-**Stato:** 🟡 In corso — Fase 0 completata, Fase 1 completata, Fase 2 completata, Fase 3 completata, Fase 4 slice 2 verificata
+**Data:** 2026-04-26  
+**Stato:** 🟡 In corso — Fase 0 completata, Fase 1 completata, Fase 2 completata, Fase 3 completata, Fase 4 completata
 
 ---
 
-## Snapshot esecutivo — aggiornamento Fase 4 slice 2 verificata
+## Snapshot esecutivo — aggiornamento Fase 4 completata (slice 4 verificata)
 
-Al 2026-04-23 la baseline di Refactor 4 è stata estesa fino alla **slice 2 verificata della Fase 4**.
+Al 2026-04-26 la baseline di Refactor 4 è stata estesa fino alla **slice 4 verificata che chiude la Fase 4**.
 
 Output prodotti:
 
@@ -58,6 +58,14 @@ Risultati chiave:
 - `src/components/3d/Timeline3DWrapper.tsx`, `src/components/3d/Timeline3D.tsx` e `src/pages/Milestones.tsx` ora consumano lo stesso contract puro per WebGL gating, qualità `balanced / low-power` e copy del toggle sperimentale.
 - introdotti `src/tests/timeline3DRuntime.test.ts` e `src/tests/timeline3DWrapper.test.tsx` per proteggere policy, fallback esplicito e wiring del profile nel lazy wrapper.
 - verifica Fase 4 slice 2 eseguita con successo: `npm test -- --run` → 116 test passati su 18 file, `npm run build` ✅, `npm run lint` ⚠️ solo warning preesistente in `UserProfileContext.tsx`.
+- Fase 4 slice 3 completata con primo bridge shared-first tra interaction 3D e inspector 2D: i marker 3D emettono ora `TimelineSelectionPayload` condivisi, `Timeline3DWrapper` riusa `TimelineDetailPanel` fuori dal canvas e la selezione aggiorna anche il `focusValue` comune di `Milestones`.
+- `src/components/3d/EventMarker3D.tsx` mantiene highlight/label anche in stato selected, mentre `src/components/timeline-core/interaction.ts` espone il nuovo helper puro `createTimelineEventSelectionPayload` per evitare payload detail duplicati nel runtime 3D.
+- introdotto `src/tests/timeline3DInteraction.test.tsx` per coprire apertura dell’inspector condiviso, sync del focus e cleanup della selezione quando un evento esce dal dataset visibile.
+- verifica Fase 4 slice 3 eseguita con successo: `npm test -- --run` → 119 test passati su 19 file, `npm run build` ✅, `npm run lint` ⚠️ solo warning preesistente in `UserProfileContext.tsx`.
+- Fase 4 slice 4 completata con convergenza del contract single-marker 3D nel `timeline-core`: `buildTimeline3DScene` emette ora marker già arricchiti con `selectionKey`, `detailItems`, colore e copy semantica condivisi, mentre il renderer 3D smette di ricostruire palette/metadata localmente.
+- `src/components/3d/EventMarker3D.tsx`, `src/components/3d/Timeline3D.tsx` e `src/components/3d/Timeline3DWrapper.tsx` consumano ora il descriptor condiviso dei marker singoli; il wrapper mantiene solo `selectedSelectionKey` e deriva il detail payload dal core invece di conservarne una copia locale.
+- ampliata la copertura con nuovi assert su `src/tests/buildTimelineInteraction.test.ts` e `src/tests/buildTimeline3DScene.test.ts`, mantenendo `src/tests/timeline3DInteraction.test.tsx` come guardrail sul bridge inspector/focus già introdotto nella slice 3.
+- verifica Fase 4 slice 4 eseguita con successo: `npm test -- --run` → 120 test passati su 19 file, `npm run build` ✅, `npm run lint` ⚠️ solo warning preesistente in `UserProfileContext.tsx`.
 
 ---
 
@@ -789,7 +797,7 @@ Il cleanup non deve più essere un atto puntuale alla fine, ma una pipeline cont
 
 **Obiettivo:** riallineare il 3D al nuovo model senza trasformarlo nella priorità del refactor.
 
-**Stato:** 🟡 avviata il 2026-04-23, slice 2 verificata — pure 3D scene adapter + runtime policy extraction
+**Stato:** ✅ completata il 2026-04-26 — slice 4 verificata: pure 3D scene adapter + runtime policy + shared inspector bridge + single-marker contract convergence
 
 **Scope consigliato**
 - adapter condivisi 2D/3D;
@@ -815,19 +823,33 @@ Il cleanup non deve più essere un atto puntuale alla fine, ma una pipeline cont
 - `src/pages/Milestones.tsx` ora usa `resolveTimeline3DToggleState` per titolo/label/disabled del toggle 3D, così il gating sperimentale non duplica più copy e condizioni in pagina;
 - introdotti `src/tests/timeline3DRuntime.test.ts` e `src/tests/timeline3DWrapper.test.tsx` per proteggere policy pure + wiring wrapper.
 
-**Boundary espliciti dopo la slice 2**
-- nessuna convergenza ancora su `selectionKey`, focus/hover model o detail inspection condivisa tra 2D e 3D;
-- nessuna migrazione ancora del 3D verso `timeline-core/interaction.ts` o verso un inspector contract condiviso con la timeline 2D;
-- il toggle `show3D` resta nel `PreferencesContext` e non viene ancora sostituito da uno state machine/runtime controller più ricco;
-- nessuna migrazione ancora di renderer/event marker 3D verso un contract di interazione compatibile con `timeline-core/interaction.ts`.
+**Deliverable prodotti finora (slice 3 / selection + inspector bridge)**
+- `src/components/timeline-core/interaction.ts` ora espone `createTimelineEventSelectionPayload`, così il 3D riusa lo stesso shape `selectionKey + detailItems` già usato dal runtime timeline 2D invece di ricreare payload locali;
+- `src/components/3d/EventMarker3D.tsx` supporta attivazione pointer/click e mantiene highlight + label quando il marker è selezionato, rendendo leggibile lo stato anche dopo l’apertura dell’inspector fuori canvas;
+- `src/components/3d/Timeline3D.tsx` inoltra la selezione del marker come payload condiviso, mentre `src/components/3d/Timeline3DWrapper.tsx` ospita ora un inspector HTML riusando `TimelineDetailPanel` e pulisce la selezione stale quando l’evento esce dal dataset visibile;
+- `src/pages/Milestones.tsx` passa il setter di `focusValue` al wrapper 3D, quindi un marker selezionato in 3D riallinea subito il focus condiviso che verrà ritrovato anche tornando alla timeline 2D;
+- introdotto `src/tests/timeline3DInteraction.test.tsx` per coprire inspector shared-first, focus sync e cleanup della selezione.
 
-**Esito verificato (slice 2)**
-- `npm test -- --run` → ✅ 116 test passati su 18 file;
+**Deliverable prodotti infine (slice 4 / single-marker contract convergence)**
+- `src/components/timeline-core/interaction.ts` ora espone `buildTimelineSingleEventDescriptor`, `resolveTimelineEventColor` e i metadata labels condivisi dei marker singoli, così colore, copy semantica e payload detail vivono in un solo layer puro riusabile da 2D e 3D;
+- `src/components/timeline-core/buildTimeline3DScene.ts` emette marker già arricchiti con `selectionKey`, `detailItems`, `semanticLabel`, `metaLabels`, `ariaLabel`, `markerShape` e `color`, invece di delegare questi dettagli al renderer R3F;
+- `src/components/3d/EventMarker3D.tsx` è ora un puro renderer del marker descritto dal core condiviso e non mantiene più palette o metadata label locali;
+- `src/components/3d/Timeline3D.tsx` inoltra solo `selectionKey + focusValue`, mentre `src/components/3d/Timeline3DWrapper.tsx` conserva solo `selectedSelectionKey` e deriva il detail descriptor dal dataset corrente, riducendo stato duplicato e drift tra scene/wrapper;
+- i test del core e del 3D proteggono ora anche il contract condiviso di copy/color/detail dei marker singoli, non solo focus math e inspector wiring.
+
+**Boundary espliciti a chiusura Fase 4**
+- la convergenza della Fase 4 si ferma ai marker singoli: group selection 3D, overlay button accessibile e parity completa con `TimelineInteractiveTarget` restano fuori scope;
+- non esiste ancora una semantica keyboard-first dei marker 3D comparabile all’overlay della timeline 2D; il percorso attivo resta pointer/touch-first con inspector HTML esterno al canvas;
+- hover e selection condividono ora copy/color/detail single-marker e il `focusValue`, ma non esiste ancora uno store cross-runtime di hover/focus oltre questa sincronizzazione minima;
+- il toggle `show3D` resta nel `PreferencesContext` e non viene ancora sostituito da uno state machine/runtime controller più ricco.
+
+**Esito verificato (slice 4 / chiusura Fase 4)**
+- `npm test -- --run` → ✅ 120 test passati su 19 file;
 - `npm run build` → ✅ produzione compilata con successo;
 - `npm run lint` → ⚠️ solo 1 warning preesistente in `src/context/UserProfileContext.tsx`.
 
 **Criterio di successo**
-- il 3D resta opzionale ma non più “special case” fragile.
+- il 3D resta opzionale ma non più “special case” fragile: scene math, runtime policy e contract single-marker condiviso vivono ora su boundary espliciti e testati.
 
 ---
 
@@ -967,7 +989,7 @@ va registrata prima o contestualmente all’implementazione.
 - [x] `scaleMode` legacy deprecato o rimosso dove non più utile
 - [x] `SubTimeline` e altri orphan gestiti correttamente
 - [ ] Timescales riallineato al nuovo model esplorativo
-- [ ] 3D riallineato al contratto eventi condiviso
+- [x] 3D riallineato al contratto eventi condiviso
 - [ ] Coverage integration/UI regression aggiunta
 - [ ] Dead code ripulito senza regressioni funzionali
 - [ ] Specs e documentazione aggiornate per riflettere il nuovo piano

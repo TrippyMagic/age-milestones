@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   buildRenderItems,
   buildTimelineInteractiveTargets,
+  buildTimelineSingleEventDescriptor,
+  createTimelineEventSelectionPayload,
   getTimelineTargetGeometry,
   TIMELINE_GROUP_TARGET_HEIGHT_PX,
   TIMELINE_GROUP_VISUAL_HEIGHT_PX,
@@ -26,6 +28,53 @@ const makeEvent = (
 });
 
 describe("buildTimelineInteractiveTargets", () => {
+  it("creates a shared single-event selection payload for cross-runtime detail inspectors", () => {
+    const payload = createTimelineEventSelectionPayload(makeEvent("apollo", 123, {
+      label: "Apollo 11",
+      semanticKind: "event",
+      category: "space",
+      subLabel: "First crewed Moon landing.",
+    }));
+
+    expect(payload.selectionKey).toBe("apollo");
+    expect(payload.detailItems).toEqual([
+      expect.objectContaining({
+        id: "apollo",
+        label: "Apollo 11",
+        value: 123,
+        semanticKind: "event",
+        category: "space",
+        subLabel: "First crewed Moon landing.",
+      }),
+    ]);
+  });
+
+  it("builds a shared single-event descriptor with semantic copy, metadata labels, and resolved color", () => {
+    const descriptor = buildTimelineSingleEventDescriptor(makeEvent("voyager", 456, {
+      label: "Voyager 1 launch",
+      semanticKind: "projection",
+      subLabel: "Deep-space mission checkpoint.",
+      projectionType: "astronomical",
+      certainty: "high",
+    }));
+
+    expect(descriptor).toMatchObject({
+      id: "voyager",
+      selectionKey: "voyager",
+      title: "Voyager 1 launch",
+      semanticLabel: "Future projection",
+      color: "#f59e0b",
+      markerShape: "dot",
+    });
+    expect(descriptor.ariaLabel).toContain("Voyager 1 launch");
+    expect(descriptor.ariaLabel).toContain("Future projection");
+    expect(descriptor.metaLabels).toEqual([
+      "Deep-space mission checkpoint.",
+      "Astronomical",
+      "High confidence",
+    ]);
+  });
+
   it("builds a single-event target with selection payload and aria metadata", () => {
     const range: Range = {
       start: new Date("2000-01-01").getTime(),

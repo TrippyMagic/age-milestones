@@ -68,9 +68,18 @@ type SceneProps = {
   range: Range;
   focusValue: number;
   qualityProfile: Timeline3DQualityProfile;
+  selectedSelectionKey: string | null;
+  onSelectMarker: (selectionKey: string, focusValue: number) => void;
 };
 
-function TimelineScene({ events, range, focusValue, qualityProfile }: SceneProps) {
+function TimelineScene({
+  events,
+  range,
+  focusValue,
+  qualityProfile,
+  selectedSelectionKey,
+  onSelectMarker,
+}: SceneProps) {
   const scene = useMemo(
     () => buildTimeline3DScene({ events, range, focusValue }),
     [events, range, focusValue],
@@ -134,13 +143,10 @@ function TimelineScene({ events, range, focusValue, qualityProfile }: SceneProps
         return (
           <EventMarker3D
             key={marker.id}
-            event={marker.event}
-            x={marker.x}
-            y={marker.y}
-            axisY={marker.axisY}
-            isPersonal={marker.isPersonal}
-            isProjection={marker.isProjection}
+            marker={marker}
             qualityProfile={qualityProfile}
+            selected={selectedSelectionKey === marker.selectionKey}
+            onActivate={nextMarker => onSelectMarker(nextMarker.selectionKey, nextMarker.value)}
           />
         );
       })}
@@ -164,7 +170,15 @@ type Timeline3DProps = SceneProps & {
   onExitTo2D: () => void;
 };
 
-export default function Timeline3D({ events, range, focusValue, onExitTo2D, qualityProfile }: Timeline3DProps) {
+export default function Timeline3D({
+  events,
+  range,
+  focusValue,
+  onExitTo2D,
+  qualityProfile,
+  selectedSelectionKey,
+  onSelectMarker,
+}: Timeline3DProps) {
   const profileConfig = useMemo(() => getTimeline3DProfileConfig(qualityProfile), [qualityProfile]);
 
   return (
@@ -189,6 +203,8 @@ export default function Timeline3D({ events, range, focusValue, onExitTo2D, qual
           range={range}
           focusValue={focusValue}
           qualityProfile={qualityProfile}
+          selectedSelectionKey={selectedSelectionKey}
+          onSelectMarker={onSelectMarker}
         />
       </Canvas>
     </div>

@@ -1,7 +1,7 @@
 # DECISIONS — Refactor 4: UI Platform Stabilization & Timeline Systems
 
 **Data di apertura:** 2026-04-22  
-**Stato:** 🟡 In corso — Fase 0 completata, Fase 1 completata, Fase 2 completata, Fase 3 completata, Fase 4 slice 2 verificata
+**Stato:** 🟡 In corso — Fase 0 completata, Fase 1 completata, Fase 2 completata, Fase 3 completata, Fase 4 completata
 
 ---
 
@@ -985,6 +985,89 @@ Il wiring attivo viene riallineato così:
 - se emergeranno altri consumer 3D abbastanza generici da rendere `runtimePolicy.ts` un candidato migliore per `timeline-core/` o un adapter layer dedicato;
 - se la prossima slice richiederà una state machine/runtime controller più ricca del semplice toggle `show3D` in `PreferencesContext`;
 - se la futura convergenza 2D↔3D di focus/selection dimostrerà che parte della policy qui estratta deve essere rifusa in un contract cross-runtime più ampio.
+
+---
+
+## D-26 — Fase 4 slice 3: bridge shared-first tra marker 3D, selection payload e inspector HTML
+
+**Data:** 2026-04-26  
+**Fase:** 4  
+**Stato:** implemented
+
+### Contesto
+Dopo la slice 2, il 3D aveva già un adapter puro di scena e una policy runtime condivisa, ma restava ancora scollegato dal modello di interazione del 2D su tre punti concreti:
+
+- `EventMarker3D.tsx` esponeva solo hover tooltip locale;
+- `Timeline3DWrapper.tsx` non aveva un inspector HTML persistente fuori dal canvas;
+- `Milestones.tsx` non riceveva nessun riallineamento del `focusValue` quando un marker 3D veniva ispezionato.
+
+Il piano documentava esplicitamente che `selectionKey`, detail inspection e focus sync erano ancora fuori scope. La slice successiva più coerente doveva ridurre questo gap senza tentare ancora la convergenza completa verso `TimelineInteractiveTarget`, overlay button o keyboard-first semantics dentro la scena WebGL.
+
+### Decisione
+La slice 3 introduce una convergenza **shared-first ma limitata** tra 3D e runtime timeline:
+
+- `timeline-core/interaction.ts` espone `createTimelineEventSelectionPayload`, helper puro che costruisce `TimelineSelectionPayload` da un singolo `TimelineEvent`;
+- `Timeline3D.tsx` usa questo shape condiviso quando un marker viene attivato;
+- `Timeline3DWrapper.tsx` riusa `TimelineDetailPanel` come inspector HTML fuori dal canvas e pulisce la selezione quando l’evento non è più nel dataset visibile;
+- `Milestones.tsx` passa il setter di `focusValue` al wrapper 3D, così la selezione di un marker riallinea il focus temporale comune tra vista 3D e ritorno alla timeline 2D.
+
+### Alternative valutate
+- **Convergere subito verso `TimelineInteractiveTarget` completo anche nel 3D**: troppo ampio, perché richiederebbe group selection, geometry-based picking e overlay accessibile comparabile al 2D.
+- **Aggiungere solo un tooltip/pannello locale nel renderer 3D**: più semplice, ma non produrrebbe nessun vero contratto condiviso con la timeline 2D.
+- **Saltare direttamente a keyboard semantics complete nel canvas 3D**: desiderabile a lungo termine, ma troppo costoso per una slice incrementale che deve restare deployabile e testabile con rischio contenuto.
+
+### Impatto / conseguenze
+- il 3D consuma ora lo stesso shape `selectionKey + detailItems` usato dal runtime timeline 2D per il dettaglio;
+- il pannello dettagli non vive più solo come tooltip hover dentro il canvas, ma come inspector HTML riusabile e coerente col resto dell’app;
+- la selezione 3D aggiorna il `focusValue` condiviso, riducendo la divergenza percepita tra 3D e 2D quando l’utente torna al time map standard;
+- la suite cresce con `src/tests/timeline3DInteraction.test.tsx`, che protegge inspector opening, focus sync e stale-selection cleanup.
+
+### Trigger di revisione o rollback
+- se emergerà la necessità di un contract 3D più ricco di single-selection prima del pruning finale della Fase 5;
+- se la mancanza di keyboard semantics native nel 3D renderà insufficiente questo bridge shared-first per gli obiettivi di accessibilità del prodotto;
+- se una futura convergenza 2D↔3D richiederà di sostituire `createTimelineEventSelectionPayload` con un adapter più generale che copra anche gruppi, hover condiviso o inspector state machine.
+
+---
+
+## D-27 — Fase 4 slice 4: convergenza del contract single-marker 3D nel `timeline-core`
+
+**Data:** 2026-04-26  
+**Fase:** 4  
+**Stato:** implemented
+
+### Contesto
+Dopo la slice 3, il 3D aveva già risolto il bridge minimo `marker click -> inspector HTML -> focus sync`, ma il renderer restava ancora responsabile di ricostruire parte del view-model dei marker singoli:
+
+- palette colore locale in `EventMarker3D.tsx`;
+- semantic label (`Past event`, `Future projection`, ecc.) ancora nel renderer;
+- metadata labels (`category`, `projectionType`, `certainty`, `subLabel`) ricomposte localmente;
+- stato wrapper ancora legato a un payload detail duplicato invece che a una selection key minimale.
+
+Questo manteneva il 3D allineato al 2D solo sul piano del gesture/result, ma non ancora sul piano del contract dati condiviso per il marker singolo.
+
+### Decisione
+La slice 4 chiude la Fase 4 spostando nel `timeline-core` il descriptor condiviso dei marker singoli:
+
+- `interaction.ts` espone `buildTimelineSingleEventDescriptor`, `resolveTimelineEventColor` e i metadata labels condivisi dei marker singoli;
+- `buildTimeline3DScene.ts` emette marker già arricchiti con `selectionKey`, `detailItems`, `color`, `semanticLabel`, `ariaLabel`, `metaLabels` e `markerShape`;
+- `EventMarker3D.tsx` e `Timeline3D.tsx` diventano renderer del descriptor condiviso e inoltrano solo `selectionKey + focusValue`;
+- `Timeline3DWrapper.tsx` conserva solo `selectedSelectionKey` e deriva il detail descriptor dal dataset corrente.
+
+### Alternative valutate
+- **Chiudere la Fase 4 già alla slice 3**: troppo presto, perché il 3D continuava a duplicare nel renderer parte del contract eventi condiviso.
+- **Saltare direttamente a parity completa con `TimelineInteractiveTarget`**: fuori scala per una slice finale di Fase 4, dato che richiederebbe group selection, geometry picking e semantics accessibili comparabili al 2D.
+- **Spostare solo il colore nel core e lasciare copy/metadata nel renderer**: miglioramento parziale, ma insufficiente per dichiarare davvero riallineato il contract single-marker.
+
+### Impatto / conseguenze
+- il view-model dei marker singoli 3D converge ora sullo stesso layer puro che già governa payload, semantics e metadata del runtime timeline;
+- il renderer 3D diventa più piccolo, meno fragile e più vicino a un ruolo “scene consumer” invece che “scene + descriptor builder”;
+- il wrapper riduce stato duplicato e drift potenziale tra `events`, inspector e selection corrente;
+- la Fase 4 può considerarsi chiusa senza sforare nel perimetro di Fase 5, perché scene math, runtime policy e contract single-marker condiviso sono ora tutti espliciti e testati.
+
+### Trigger di revisione o rollback
+- se futuri requisiti 3D richiederanno un descriptor più ricco dei soli marker singoli e renderanno necessario un adapter separato dal contract interaction 2D corrente;
+- se l’evoluzione verso keyboard-first semantics o group selection mostrerà che il descriptor introdotto qui va rifuso in un contract cross-runtime più ampio;
+- se la Fase 5 dimostrerà che parte della logica spostata nel core è in realtà troppo specifica del renderer 3D e va ricollocata.
 
 ---
 

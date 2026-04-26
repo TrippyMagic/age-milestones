@@ -20,6 +20,12 @@
   contain: layout paint style;
 }
 
+.timeline-3d-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .timeline-3d canvas {
   display: block;
 }
@@ -55,6 +61,10 @@
   color: rgba(165, 180, 252, 0.62);
   letter-spacing: .06em;
   user-select: none;
+}
+
+.timeline-3d__surface-note {
+  margin: 0;
 }
 
 .timeline-3d__exit-btn {

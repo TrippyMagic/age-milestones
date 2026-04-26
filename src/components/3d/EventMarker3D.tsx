@@ -10,63 +10,37 @@ import { useMemo, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Html, Line } from "@react-three/drei";
 import * as THREE from "three";
-import type { TimelineEvent } from "../timeline/types";
-import {
-  CATEGORY_META,
-  PROJECTION_CERTAINTY_META,
-  PROJECTION_TYPE_META,
-} from "../../types/events";
-
-// ── Colour palette ─────────────────────────────────────────────
-const PERSONAL_COLOR   = "#a5b4fc";   // indigo-100 — matches app palette
-const GLOBAL_COLOR     = "#4a5568";   // slate-600
-const PROJECTION_COLOR = "#f59e0b";   // amber-500
+import type { Timeline3DSceneMarker } from "../timeline-core";
 
 // ── Component ──────────────────────────────────────────────────
 type EventMarker3DProps = {
-  event: TimelineEvent;
-  /** X position on the normalised [-10, 10] axis */
-  x: number;
-  /** Signed Y offset from axis (positive = above, negative = below) */
-  y: number;
-  /** Lane rail Y position used as the connector anchor. */
-  axisY: number;
-  isPersonal: boolean;
-  isProjection: boolean;
+  marker: Timeline3DSceneMarker;
   qualityProfile: "balanced" | "low-power";
+  selected?: boolean;
+  onActivate?: (marker: Timeline3DSceneMarker) => void;
 };
 
 export function EventMarker3D({
-  event,
-  x,
-  y,
-  axisY,
-  isPersonal,
-  isProjection,
+  marker,
   qualityProfile,
+  selected = false,
+  onActivate,
 }: EventMarker3DProps) {
   const meshRef  = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
 
-  const color = isProjection
-    ? PROJECTION_COLOR
-    : (event.color ?? (isPersonal ? PERSONAL_COLOR : GLOBAL_COLOR));
+  const isPersonal = marker.lane === "personal";
+  const isProjection = marker.semanticKind === "projection";
   const baseScale = qualityProfile === "low-power"
     ? (isProjection ? 0.15 : (isPersonal ? 0.18 : 0.13))
     : (isProjection ? 0.18 : (isPersonal ? 0.22 : 0.15));
   const segments = qualityProfile === "low-power" ? 14 : 20;
-  const semanticLabel = event.semanticKind === "projection"
-    ? "Future projection"
-    : event.semanticKind === "event"
-    ? "Past event"
-    : event.semanticKind === "marker"
-    ? "Global reference"
-    : "Personal marker";
+  const isHighlighted = hovered || selected;
 
   // Smooth scale animation on hover
   useFrame(() => {
     if (!meshRef.current) return;
-    const target = hovered ? baseScale * 1.55 : baseScale;
+    const target = isHighlighted ? baseScale * 1.55 : baseScale;
     meshRef.current.scale.setScalar(
       THREE.MathUtils.lerp(meshRef.current.scale.x, target, 0.14),
     );
@@ -74,26 +48,31 @@ export function EventMarker3D({
 
   // Connector line from sphere down to axis (computed in local space)
   const connectorPoints = useMemo<[number, number, number][]>(
-    () => [[0, 0, 0], [0, axisY - y, 0]],
-    [axisY, y],
+    () => [[0, 0, 0], [0, marker.axisY - marker.y, 0]],
+    [marker.axisY, marker.y],
   );
 
   // Tooltip position: above sphere when event is above axis, below when below
-  const labelOffsetY = y >= axisY ? 0.55 : -0.55;
+  const labelOffsetY = marker.y >= marker.axisY ? 0.55 : -0.55;
 
   return (
-    <group position={[x, y, 0]}>
+    <group position={[marker.x, marker.y, 0]}>
       {/* ── Sphere ── */}
       <mesh
         ref={meshRef}
+        onPointerDown={e => { e.stopPropagation(); }}
         onPointerOver={e => { e.stopPropagation(); setHovered(true); }}
         onPointerOut={() => setHovered(false)}
+        onClick={e => {
+          e.stopPropagation();
+          onActivate?.(marker);
+        }}
       >
         <sphereGeometry args={[1, segments, segments]} />
         <meshStandardMaterial
-          color={color}
-          emissive={color}
-          emissiveIntensity={hovered ? 1.1 : (isPersonal ? 0.5 : 0.2)}
+          color={marker.color}
+          emissive={marker.color}
+          emissiveIntensity={isHighlighted ? 1.1 : (isPersonal ? 0.5 : 0.2)}
           roughness={0.35}
           metalness={0.1}
         />
@@ -102,14 +81,14 @@ export function EventMarker3D({
       {/* ── Vertical connector to axis ── */}
       <Line
         points={connectorPoints}
-        color={color}
+        color={marker.color}
         lineWidth={0.8}
         transparent
         opacity={0.3}
       />
 
       {/* ── Hover tooltip ── */}
-      {hovered && (
+      {isHighlighted && (
         <Html
           center
           distanceFactor={10}
@@ -118,20 +97,11 @@ export function EventMarker3D({
           style={{ pointerEvents: "none" }}
         >
           <div className="timeline-3d__label">
-            <span className="timeline-3d__label-text">{event.label}</span>
-            <span className="timeline-3d__label-sub">{semanticLabel}</span>
-            {event.subLabel && (
-              <span className="timeline-3d__label-sub">{event.subLabel}</span>
-            )}
-            {event.category && (
-              <span className="timeline-3d__label-sub">{CATEGORY_META[event.category].label}</span>
-            )}
-            {event.projectionType && (
-              <span className="timeline-3d__label-sub">{PROJECTION_TYPE_META[event.projectionType].label}</span>
-            )}
-            {event.certainty && (
-              <span className="timeline-3d__label-sub">{PROJECTION_CERTAINTY_META[event.certainty].label}</span>
-            )}
+            <span className="timeline-3d__label-text">{marker.title}</span>
+            <span className="timeline-3d__label-sub">{marker.semanticLabel}</span>
+            {marker.metaLabels.map((metaLabel, index) => (
+              <span key={`${index}-${metaLabel}`} className="timeline-3d__label-sub">{metaLabel}</span>
+            ))}
           </div>
         </Html>
       )}
